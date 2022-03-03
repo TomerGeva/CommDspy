@@ -16,17 +16,20 @@ Developed by: Tomer Geva
 * to be continued
 
 ##Enumeration classes
-* prbs_type_e - enumeration for the PRBS type used
+* PrbsEnum - enumeration for the PRBS type used
   * PRBS7
   * PRBS9 
   * PRBS11
   * PRBS13
   * PRBS15
   * PRBS31
-* constellaion_e - enumeration for the constellations used
+* ConstellationEnum - enumeration for the constellations used
   * NRZ - Non-Return to Zero, assuming constellation of [-1, 1]
   * OOK - On Off Keying, assuming constellation of [0, 1]
   * PAM4 - Pulse Amplitude Modulation 4, assuming constellation of [-3, -1, 1, 3]
+* CodingEnum - enumeration of the different coding types
+  * UNCODED
+  * GRAY
 
 ## Objects
 * PrbsIterator - An iterable used to generate the next bit in the given PRBS. during initialization, a seed and the generating polynomial are given to the object. after calling iter(), next() can be used to pop the next bit in the PRBS
