@@ -10,13 +10,22 @@ prbs_types      = [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRB
 constellations  = [ConstellationEnum.OOK, ConstellationEnum.NRZ, ConstellationEnum.PAM4]
 codings         = [CodingEnum.UNCODED, CodingEnum.GRAY]
 
+def test_noise_awgn():
+    """
+    :return: Testing the AWGN function
+    """
+    for prbs_type in prbs_types:
+        for constellation in constellations:
+            test.awgn_test(prbs_type, constellation)
+
 def test_prbs_analisys():
     """
     :return: Testing both the prbs_ana and the prbs_ana_econ
     """
     loss_th = 10
     for prbs_type in prbs_types:
-        test.prbs_analysis_test(prbs_type, loss_th, lock_th=15)
+        test.prbs_analysis_test(prbs_type, loss_th, lock_th=15, econ=False)
+        # test.prbs_analysis_test(prbs_type, loss_th, lock_th=15, econ=True)
 
 def test_lock_pattern_to_signal_1():
     """

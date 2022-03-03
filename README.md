@@ -31,6 +31,9 @@ Developed by: Tomer Geva
   * UNCODED
   * GRAY
 
+## Sub-package: noise
+A sub package that holds all the functions wich involve in noise generation
+* awgn - a function that adds Additive White Gaussian Noise in a power to create a wanted SNR
 ## Objects
 * PrbsIterator - An iterable used to generate the next bit in the given PRBS. during initialization, a seed and the generating polynomial are given to the object. after calling iter(), next() can be used to pop the next bit in the PRBS
 
