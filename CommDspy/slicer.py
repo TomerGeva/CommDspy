@@ -23,7 +23,7 @@ def slicer(slicer_in_mat, levels=None):
         x = slicer_in_mat.shape[0]
         y = 0
     if levels is None:
-        levels = np.array([-3, -1, 1, 3])
+        levels = np.array([-3, -1, 1, 3]).astype(float)
     # ==================================================================================================================
     # Creating the diff matrix --> col vec minus row vec --> matrix
     # ==================================================================================================================
