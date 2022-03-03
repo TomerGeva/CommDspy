@@ -4,11 +4,12 @@ import random
 from test.auxiliary import read_1line_csv
 from CommDspy import prbs_ana, prbs_ana_econ
 
-def prbs_analysis_test(prbs_type, loss_th, lock_th):
+def prbs_analysis_test(prbs_type, loss_th, lock_th, shift_idx=None):
     """
     :param prbs_type:
     :param loss_th:
     :param lock_th:
+    :param shift_idx
     :return:
     """
     # ==================================================================================================================
@@ -17,7 +18,7 @@ def prbs_analysis_test(prbs_type, loss_th, lock_th):
     ref_filename = os.path.join(os.getcwd(),'test_data',prbs_type.name + '_seed_ones.csv')
     ref_prbs_bin = read_1line_csv(ref_filename)
     prbs_len     = len(ref_prbs_bin)
-    shift_idx    = random.randint(0, prbs_len)
+    shift_idx    = random.randint(0, prbs_len) if shift_idx is None else shift_idx
     p_err        = 1e-2
     assert_str  = '|{0:^6s}|'.format(prbs_type.name)
     # ==================================================================================================================
