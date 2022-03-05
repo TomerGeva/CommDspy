@@ -34,7 +34,6 @@ def test_lock_pattern_to_signal_1():
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    bits_per_symbol = 2
     p_err           = 1e-4
     for prbs_type in prbs_types:
         pattern_length = 2 ** prbs_type.value - 1
@@ -43,12 +42,9 @@ def test_lock_pattern_to_signal_1():
         # ----------------------------------------------------------------------------------------------------------
         poly_coeff = cdsp.get_polynomial(prbs_type)
         init_seed  = np.array([1] * prbs_type.value)
-        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length,
-                                    bits_per_symbol=bits_per_symbol,
-                                    bit_order_inv=False,
-                                    pn_inv=False)
+        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length)
         # ----------------------------------------------------------------------------------------------------------
-        # Injecting aerror to signal
+        # Injecting errors to signal
         # ----------------------------------------------------------------------------------------------------------
         signal = np.tile(prbs_seq, 2)
         prob = np.random.random(signal.shape)
@@ -62,12 +58,11 @@ def test_lock_pattern_to_signal_1():
 
 def test_lock_pattern_to_signal_2():
     """
-    :return:Testing the locking of the pattern on a signal length of 2 PRBS cycles with a small amount of errors
+    :return:Testing the locking of the pattern on a signal length of 1 PRBS cycles with a small amount of errors
     """
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    bits_per_symbol = 2
     p_err           = 1e-4
     for prbs_type in prbs_types:
         pattern_length = 2 ** prbs_type.value - 1
@@ -76,10 +71,7 @@ def test_lock_pattern_to_signal_2():
         # ----------------------------------------------------------------------------------------------------------
         poly_coeff = cdsp.get_polynomial(prbs_type)
         init_seed  = np.array([1] * prbs_type.value)
-        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length,
-                                    bits_per_symbol=bits_per_symbol,
-                                    bit_order_inv=False,
-                                    pn_inv=False)
+        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length)
         # ----------------------------------------------------------------------------------------------------------
         # Injecting aerror to signal
         # ----------------------------------------------------------------------------------------------------------
@@ -95,12 +87,11 @@ def test_lock_pattern_to_signal_2():
 
 def test_lock_pattern_to_signal_3():
     """
-    :return:Testing the locking of the pattern on a signal length of 2 PRBS cycles with a small amount of errors
+    :return:Testing the locking of the pattern on a signal length of less than 1 PRBS cycle with a small amount of errors
     """
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    bits_per_symbol = 2
     p_err           = 1e-4
     for prbs_type in prbs_types:
         pattern_length = 2 ** prbs_type.value - 1
@@ -109,10 +100,7 @@ def test_lock_pattern_to_signal_3():
         # ----------------------------------------------------------------------------------------------------------
         poly_coeff = cdsp.get_polynomial(prbs_type)
         init_seed  = np.array([1] * prbs_type.value)
-        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length,
-                                    bits_per_symbol=bits_per_symbol,
-                                    bit_order_inv=False,
-                                    pn_inv=False)
+        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length)
         # ----------------------------------------------------------------------------------------------------------
         # Injecting error to signal
         # ----------------------------------------------------------------------------------------------------------
@@ -141,7 +129,7 @@ def test_lock_pattern_to_signal_binary_1():
             reader = csv.reader(csvfile)
             ref_prbs_bin = np.array(next(reader)).astype(int)
         # ----------------------------------------------------------------------------------------------------------
-        # Injecting aerror to signal
+        # Injecting error to signal
         # ----------------------------------------------------------------------------------------------------------
         signal    = np.tile(ref_prbs_bin, 2)
         prob      = np.random.random(signal.shape)
@@ -167,7 +155,7 @@ def test_lock_pattern_to_signal_binary_2():
             reader = csv.reader(csvfile)
             ref_prbs_bin = np.array(next(reader)).astype(int)
         # ----------------------------------------------------------------------------------------------------------
-        # Injecting aerror to signal
+        # Injecting error to signal
         # ----------------------------------------------------------------------------------------------------------
         signal = ref_prbs_bin
         prob = np.random.random(signal.shape)
@@ -216,8 +204,7 @@ def test_prbs_gen_1():
     # ==============================================================================================================
     for prbs_type in prbs_types:
         pattern_length = 2 ** prbs_type.value - 1
-        for bits_per_symbol in [1, 2]:
-            test.prbs_gen_test(prbs_type, pattern_length, bits_per_symbol, False, False)
+        test.prbs_gen_test(prbs_type, pattern_length)
 
 def test_prbs_gen_2():
     """
@@ -229,8 +216,7 @@ def test_prbs_gen_2():
     for prbs_type in prbs_types:
         pattern_length = 2 ** prbs_type.value - 1
         required_length = random.randint(0, pattern_length)
-        for bits_per_symbol in [1, 2]:
-            test.prbs_gen_test(prbs_type, required_length, bits_per_symbol, False, False)
+        test.prbs_gen_test(prbs_type, required_length)
 
 def test_prbs_gen_3():
     """
@@ -243,8 +229,18 @@ def test_prbs_gen_3():
     for prbs_type in prbs_types:
         pattern_length = 2 ** prbs_type.value - 1
         required_length = random.randint(pattern_length+1, 2*pattern_length)
-        for bits_per_symbol in [1, 2]:
-            test.prbs_gen_test(prbs_type, required_length, bits_per_symbol, False, False)
+        test.prbs_gen_test(prbs_type, required_length)
+
+def test_prbs_gen_4():
+    """
+    :return: Testing the generation of all PRBS values except PRBS 31 in all constellations for very small pattern lengths
+    """
+    # ==============================================================================================================
+    # Partial length PRBS generator tests
+    # ==============================================================================================================
+    for prbs_type in prbs_types:
+        required_length = random.randint(1, prbs_type.value)
+        test.prbs_gen_test(prbs_type, required_length)
 
 def test_coding_1():
     """

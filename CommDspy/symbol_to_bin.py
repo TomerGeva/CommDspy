@@ -1,10 +1,55 @@
 import numpy as np
-from CommDspy.auxiliary import get_constellation
+from CommDspy.auxiliary import get_levels
 from CommDspy.constants import CodingEnum, ConstellationEnum
 
 
+def bin2symbol(bin_mat, num_of_symbols, bit_order_inv=True, inv_msb=False, inv_lsb=False, pn_inv=False):
+    """
+    :param bin_mat: Matrix of binary numbers, ir not 1 1-d vector, flattens it in row major order. THIS should match the
+                    fit the wanted symbols completely, otherwise the redundant bits will be removed
+    :param num_of_symbols: number of UNCODED symbols wanted. CURRETLY SUPPORTS MULTIPLICATIONS OF 2 (2, 4, 8, etc)
+    :param bit_order_inv: If True, the bit order is swapped in the creation of the symbol stream:
+                          01 <--> 10
+                          00 <--> 00
+                          11 <--> 11
+    :param inv_msb:
+    :param inv_lsb:
+    :param pn_inv: If True the P-N were inverted in the creation of the symbol stream
+    :return: Function converts the binary stream to symbol stream. Example, for the case of 4 symbols this function
+             returns an array with [0,1,2,3] values
+    """
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    bin_vec         = np.reshape(bin_mat, [-1, 1])
+    bits_per_symbol = np.log2(num_of_symbols)
+    trim            = len(bin_vec) % num_of_symbols
+    # ==================================================================================================================
+    # Taking into consideration the bits_per_symbol
+    # ==================================================================================================================
+    multiple_bin = np.tile(bin_vec, bits_per_symbol) if bits_per_symbol > 1 else bin_vec
+    if num_of_symbols > 1:
+        trimmed_bin = multiple_bin[:-1*trim] if trim > 0 else multiple_bin
+        trimmed_bin = np.reshape(trimmed_bin, [-1, bits_per_symbol])
+        # ----------------------------------------------------------------------------------------------------------
+        # Modifying the pattern according to the flags, and converting binary to UN-CODED symbols
+        # ----------------------------------------------------------------------------------------------------------
+        if bit_order_inv:
+            trimmed_bin = np.fliplr(multiple_bin)
+        if inv_msb:
+            trimmed_bin[0, :] = 1 - trimmed_bin[0, :]
+        if inv_lsb:
+            trimmed_bin[-1, :] = 1 - trimmed_bin[-1, :]
+        if pn_inv:
+            trimmed_bin = 1 - trimmed_bin
+        pattern = trimmed_bin.dot(2 ** np.arange(bits_per_symbol))
+    else:
+        if pn_inv:
+            multiple_bin = 1 - multiple_bin
+        pattern = multiple_bin
+    return pattern
 
-def symbol2bin(symbol_mat, constellation, coding, pn_inv=False, bit_order_inv=False, inv_msb=False, inv_lsb=False):
+def symbol2bin(symbol_mat, constellation, coding, bit_order_inv=False, inv_msb=False, inv_lsb=False, pn_inv=False):
     """
     :param symbol_mat: Numpy array of coded symbols.
                 * If PAM4 assuming that the constellation is [-3x,-x,x,3x]
@@ -14,20 +59,20 @@ def symbol2bin(symbol_mat, constellation, coding, pn_inv=False, bit_order_inv=Fa
                           CommDspy.constants.ConstellationEnum
     :param coding: Enumeration stating the wanted coding, only effective if constellation has more than 2 constellation
                    points. Should be taken from CommDspy.constants.CodingEnum
-    :param pn_inv: If True the P-N were inverted in the creation of the symbol stream
     :param bit_order_inv: If True, the bit order is swapped in the creation of the symbol stream:
                           01 <--> 10
                           00 <--> 00
                           11 <--> 11
     :param inv_msb:
     :param inv_lsb:
+    :param pn_inv: If True the P-N were inverted in the creation of the symbol stream
     :return: Function performs decoding and then converts the symbols to binary. Note that the function supports OOK,
              NRZ and PAM4.
     """
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    bits_per_symbol = int(np.log2(len(get_constellation(constellation))))
+    bits_per_symbol = int(np.log2(len(get_levels(constellation))))
     # ==================================================================================================================
     # Setting base levels
     # ==================================================================================================================

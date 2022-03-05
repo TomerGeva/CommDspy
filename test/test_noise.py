@@ -3,7 +3,7 @@ import os
 import random
 from CommDspy.constants import ConstellationEnum, CodingEnum
 from CommDspy.noise import awgn
-from CommDspy import code_pattern, get_constellation
+from CommDspy import code_pattern, get_levels
 from test.auxiliary import read_1line_csv
 
 
@@ -51,7 +51,7 @@ def awgn_test(prbs_type, constellation, snr_db=None):
     # ==================================================================================================================
     # Checking
     # ==================================================================================================================
-    ref_signal_power = np.mean(get_constellation(constellation) ** 2)
+    ref_signal_power = np.mean(get_levels(constellation) ** 2)
     noise_power_ref  = ref_signal_power / snr_lin
     noise_power_hat_var = 2 * noise_power_ref ** 2 / (prbs_len - 1)
     assert np.abs(noise_power_hat - noise_power_ref) < 3 * np.sqrt(noise_power_hat_var),assert_str + ' AWGN SNR test Failed !!!'

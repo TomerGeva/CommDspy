@@ -25,22 +25,28 @@ def get_polynomial(prbs_type):
         return np.array([None])
     return poly_coeff
 
-def get_constellation(constellation):
+def get_levels(constellation, full_scale=False):
     """
     :param constellation: Enumeration of the wanted constellation
+    :param full_scale: Boolean stating if we want the levels to be scaled such that the mean power of the levels will be
+                       1 (0 dB)
     :return: The constellation as written in the documentation
     """
     if constellation == ConstellationEnum.NRZ:
-        return np.array([-1, 1])
+        levels = np.array([-1, 1])
     elif constellation == ConstellationEnum.OOK:
-        return np.array([0, 1])
+        levels = np.array([0, 1])
     elif constellation == ConstellationEnum.PAM4:
-        return np.array([-3, -1, 1, 3])
+        levels = np.array([-3, -1, 1, 3])
     else:
         print("Constellation type not supported :)")
         return None
+    if full_scale:
+        return levels / np.sqrt(np.mean(levels ** 2))
+    else:
+        return levels
 
-def code_pattern(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UNCODED, pn_inv=False):
+def code_pattern(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UNCODED, pn_inv=False, full_scale=False):
     """
     :param pattern: Uncoded pattern, should be a numpy array of non-negative integers stating the index in the
      constellation point. Examples:
@@ -51,6 +57,8 @@ def code_pattern(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnu
     :param coding: Enumeration stating the wanted coding, only effective if constellation has more than 2 constellation
                    points. Should be taken from CommDspy.constants.CodingEnum
     :param pn_inv: Boolean stating if the pattern should be inverted after the coding
+    :param full_scale: Boolean stating if we want the levels to be scaled such that the mean power of the levels will be
+                       1 (0 dB)
     :return: Coded pattern, meaning the pattern at the constellation points
                 1. After gray coding if needed
                 2. Inverted if needed
@@ -58,7 +66,7 @@ def code_pattern(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnu
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    levels          = get_constellation(constellation)
+    levels          = get_levels(constellation, full_scale)
     bits_per_symbol = int(np.log2(len(levels)))
     # ==================================================================================================================
     # Gray coding
@@ -72,3 +80,17 @@ def code_pattern(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnu
         levels = -1 * levels
 
     return levels[pattern]
+
+def power(signal):
+    """
+    :param signal:
+    :return: Computes the mean power of the signal
+    """
+    return np.mean(signal ** 2)
+
+def rms(signal):
+    """
+    :param signal:
+    :return: Computes the RMS of the signal
+    """
+    return np.sqrt(np.mean(signal ** 2))

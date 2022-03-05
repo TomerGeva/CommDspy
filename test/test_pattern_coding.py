@@ -14,7 +14,7 @@ def coding_pattern_test(constellation, coding, pn_inv):
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    levels  = cdsp.get_constellation(constellation)
+    levels  = cdsp.get_levels(constellation)
     assert levels.any() is not None, 'Constellation ' + constellation.name + ' type not supported'
     bits       = int(np.log2(len(levels)))
     pattern    = np.random.randint(0, 2**bits, 10)

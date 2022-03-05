@@ -1,5 +1,5 @@
 import numpy as np
-
+from scipy.signal import lfilter
 
 def awgn(signal, snr):
     """
@@ -21,3 +21,24 @@ def awgn(signal, snr):
     # Creating the noise and adding it to the signal
     # ==================================================================================================================
     return signal + np.random.normal(0, np.sqrt(noise_power), signal.shape)
+
+def awgn_channel(signal, b, a, snr=None):
+    """
+    :param signal: the input signal you want to pass through the channel
+    :param b: nominator polynomial values (FIR).
+    :param a: denominator polynomial values (IIR) if a[0] is not 0, normelizes all parameters by a[0]
+    :param snr: SNR of the AWGN signal if the SNR is None, does not add noise
+    :return: The signal after passing through the channel and added the AWGN. We assume that the input signal is clean.
+             Assuming initial conditions for the channel are zero
+                                                noise
+                                                  |
+                            |---------------|     v
+                signal ---> |   channel     | --> + ---> output
+                            |---------------|
+    """
+    ch_out = lfilter(b, a, signal)
+    if snr is not None:
+        return awgn(ch_out)
+    else:
+        return ch_out
+
