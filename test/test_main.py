@@ -194,6 +194,9 @@ def test_lock_pattern_to_signal_binary_3():
         pattern = np.concatenate((ref_prbs_bin[shift_idx:], ref_prbs_bin[:shift_idx]))
         test.lock_pattern_to_signal_binary_test(pattern, signal, shift_idx)
 
+def test_bin2symbol():
+    test.bin2symbol_test()
+
 def test_prbs_gen_1():
     """
     :return: Testing the generation of all PRBS values except PRBS 31 in all constellations for 1 complete pattern
