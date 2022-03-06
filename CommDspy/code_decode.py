@@ -38,5 +38,46 @@ def coding(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UNCO
 
     return levels[pattern]
 
-def decoding():
-    pass
+def decoding(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UNCODED, pn_inv=False):
+    """
+    :param pattern: Numpy array of coded symbols.
+                * If PAM4 assuming that the constellation is [-3x,-x,x,3x]
+                * If NRZ assuming that the constellation is [-x,x]
+                * If OOK assuming that the constellation is [0, x]
+    :param constellation: Enumeration stating the constellation. Should be taken from:
+                          CommDspy.constants.ConstellationEnum
+    :param coding: Enumeration stating the wanted coding, only effective if constellation has more than 2 constellation
+                   points. Should be taken from CommDspy.constants.CodingEnum
+    :param pn_inv: If True the P-N were inverted in the creation of the symbol stream
+    :return: Function performs decoding and then converts the symbols to binary. Note that the function supports OOK,
+             NRZ and PAM4.
+    """
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    bits_per_symbol = int(np.log2(len(get_levels(constellation))))
+    # ==================================================================================================================
+    # Setting base levels
+    # ==================================================================================================================
+    if bits_per_symbol == 2:
+        if coding == CodingEnum.GRAY:
+            levels = np.array([0, 1, 3, 2])
+        else:
+            levels = np.array([0, 1, 2, 3])
+    else:
+        levels = np.array([0, 1])
+    # ==================================================================================================================
+    # PN-inv
+    # ==================================================================================================================
+    if pn_inv:
+        pattern *= -1
+    # ==================================================================================================================
+    # Converting symbols to indices, i.e. performing decoding
+    # ==================================================================================================================
+    if constellation != ConstellationEnum.OOK:
+        idx_mat = ((pattern + abs(np.min(pattern))) / (2 * np.min(abs(pattern)))).astype(int)
+    elif constellation == ConstellationEnum.OOK:
+        idx_mat = (pattern / (np.max(pattern))).astype(int)
+    idx_vec = np.reshape(idx_mat, (-1, 1))
+    symbol_idx_vec = levels[idx_vec]
+    return np.reshape(symbol_idx_vec, pattern.shape)
