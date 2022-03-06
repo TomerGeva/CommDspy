@@ -45,3 +45,23 @@ def bin2symbol_test():
         sym_vec_ref = bit_vec_ref.dot(2 ** np.arange(np.log2(num_of_symbols)))
     assert np.all(sym_vec_ref == sym_dut), assert_str
 
+def symbol2bin_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    num_of_symbols = 2 ** random.randint(1, 3)
+    test_pattern_len = random.randint(1, 100)
+    bit_vec = np.random.randint(0, 2, test_pattern_len)
+    bit_order_inv = random.random() > 0.5
+    inv_msb = random.random() > 0.5
+    inv_lsb = random.random() > 0.5
+    pn_inv = random.random() > 0.5
+    assert_str = '|Pattern len {0:^5d}| symbol number {1:3d} ; bit order inv {2:^6s} ; msb_inv = {3:^6s} ; lsb_inv = {4:^6s} ; pn_inv = {5:^6s} Falied!!!!'.format(
+        test_pattern_len,
+        num_of_symbols,
+        'True' if bit_order_inv else 'False',
+        'True' if inv_msb else 'False',
+        'True' if inv_lsb else 'False',
+        'True' if pn_inv else 'False'
+    )
+    pass

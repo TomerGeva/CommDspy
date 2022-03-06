@@ -27,11 +27,17 @@ Function receives an UNCODED symbol sequence, returns the binary representation 
   * pn_inv=False - Boolean stating if we want to invert all bits
 ### coding
 Function used to code the pattern. Function is inputted with:
-  * pattern - Input pattern which should be coded
+  * pattern - Input pattern of UNCODED symbols which should be coded
   * constellation=ConstellationEnum.PAM4 - Wanted constellation
   * coding=CodingEnum.UNCODED - Wanted coding, either UNCODED or GRAY
   * pn_inv=False - Boolean stating if we want to invert the levels after coding
   * full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
+### decoding
+Function used to decode the pattern. Function is inputted with:
+* pattern - Input pattern of coded symbols which should be decoded
+* constellation=ConstellationEnum.PAM4 - Constellation used for the coding of the pattern signal
+* coding=CodingEnum.UNCODED - Coding used in the creation of the pattern signal, either GRAY of UNCODED
+* pn_inv=False - Boolean stating if the levels were inverted after coding
 ### slicer
 Function receives data matrix from the slicer input and performs the slicing operation. If the user does not insert levels it assumes [-3,-1,1,3]
 ### prbs_ana
