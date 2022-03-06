@@ -3,7 +3,7 @@ import os
 import random
 from CommDspy.constants import ConstellationEnum, CodingEnum
 from CommDspy.noise import awgn
-from CommDspy import code_pattern, get_levels
+from CommDspy import coding, get_levels
 from test.auxiliary import read_1line_csv
 
 
@@ -41,7 +41,7 @@ def awgn_test(prbs_type, constellation, snr_db=None):
         ref_pattern = np.reshape(np.tile(ref_prbs_bin, 2), [-1, 2]).dot(np.array([1, 2]))
     else:
         ref_pattern = ref_prbs_bin
-    ref_pattern = code_pattern(ref_pattern, constellation, coding=CodingEnum.UNCODED, pn_inv=False)
+    ref_pattern = coding(ref_pattern, constellation, coding=CodingEnum.UNCODED, pn_inv=False)
     # ==================================================================================================================
     # Calling DUT
     # ==================================================================================================================

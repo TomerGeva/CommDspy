@@ -1,7 +1,9 @@
 import numpy as np
 from scipy import linalg
 from CommDspy.prbs_generator import prbs_generator
-from CommDspy.auxiliary import get_polynomial, get_levels, code_pattern
+from CommDspy.symbol_to_bin import bin2symbol
+from CommDspy.code_decode import coding
+from CommDspy.auxiliary import get_polynomial, get_levels
 from CommDspy.lock_pattern import lock_pattern_to_signal
 
 
@@ -54,11 +56,9 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
     poly_coeff = get_polynomial(prbs_type)
     if poly_coeff[0] == -1:
         return True, 0, [0]
-    prbs_seq, _ = prbs_generator(poly_coeff, init_seed, prbs_len,
-                                 bits_per_symbol=bits_per_symbol,
-                                 bit_order_inv=bit_order_inv,
-                                 pn_inv=pn_inv_precoding)
-    prbs_coded = code_pattern(prbs_seq, levels, gray_coded, pn_inv_postcoding)
+    prbs_seq, _ = prbs_generator(poly_coeff, init_seed, 2 * prbs_len)
+    prbsq       = bin2symbol(prbs_seq, len(levels), bit_order_inv, False, False, pn_inv_precoding)
+    prbs_coded  = coding(prbsq, levels, gray_coded, pn_inv_postcoding)
     # ==================================================================================================================
     # Locking on the pattern beginning
     # ==================================================================================================================

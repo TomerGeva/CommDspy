@@ -4,9 +4,25 @@ Repository for the communication signal processing package
 Developed by: Tomer Geva
 
 ##Information of the package functions:
+* prbs_gen - Function receives polynomial coefficients and an initial seed, creates binary PRBS sequences of the requested length . The function is inputted with:
+  * poly_coeff - a coefficent vector for the generating polynomial of the PRBS pattern
+  * init_seed - initial seed used to generate the pattern
+  * output_length - wanted pattern length
+* bin2symbol - Function receives a binary sequence and computes the UNCODED symbols matching the binary sequence. The function is inputted wiith:
+  * bin_mat - The binary sequencewanted to be converted 
+  * num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS POWERS OF 2 (2, 4, 8, ...)
+  * bit_order_inv=False - Booleans stating if we want to invert the bit order (By default, MSB is the rightmost bit and the LSB is the leftmost bits)
+  * inv_msb=False - Boolean stating if we want to invert the msb
+  * inv_lsb=False - Boolean stating if we want to invert the msb
+  * pn_inv=False - Boolean stating if we want to invert all bits
+* coding - Function used to code the pattern. Function is inputted with:
+  * pattern - Input pattern which should be coded
+  * constellation=ConstellationEnum.PAM4 - Wanted constellation
+  * coding=CodingEnum.UNCODED - Wanted coding, either UNCODED or GRAY
+  * pn_inv=False - Boolean stating if we want to invert the levels after coding
+  * full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
 * slicer - Function receives data matrix from the slicer input and performs the slicing operation. If the user does not insert levels it assumes [-3,-1,1,3]
 * symbol2bin - Function receives symbol matrix and converts the matrix to binary stream according to the flags, For further information read function description
-* prbs_gen - Function receives polynomial coefficients and an initial seed, creates binary PRBS sequences of the requested length
 * prbs_ana - Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
   * builds a reference PRBS sequence
   * synchronizes on the pattern
