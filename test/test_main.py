@@ -17,6 +17,13 @@ def test_init():
     random.seed(seed)
     np.random.seed(seed)
 
+def test_channel_estimation_prbs():
+    """
+    :return: Testing the channel_estimation_prbs function
+    """
+    for prbs_type in prbs_types:
+        test.channel_estimation_prbs_test(prbs_type)
+
 def test_noise_awgn():
     """
     :return: Testing the AWGN function
@@ -59,7 +66,7 @@ def test_lock_pattern_to_signal_1():
         # ----------------------------------------------------------------------------------------------------------
         # Shifting the pattern and checking
         # ----------------------------------------------------------------------------------------------------------
-        shift_idx = random.randint(0, len(prbs_seq))
+        shift_idx = random.randint(0, len(prbs_seq)-1)
         pattern = np.concatenate((prbs_seq[shift_idx:], prbs_seq[:shift_idx]))
         test.lock_pattern_to_signal_test(pattern, signal, shift_idx)
 
@@ -88,7 +95,7 @@ def test_lock_pattern_to_signal_2():
         # ----------------------------------------------------------------------------------------------------------
         # Shifting the pattern and checking
         # ----------------------------------------------------------------------------------------------------------
-        shift_idx = random.randint(0, len(prbs_seq))
+        shift_idx = random.randint(0, len(prbs_seq)-1)
         pattern = np.concatenate((prbs_seq[shift_idx:], prbs_seq[:shift_idx]))
         test.lock_pattern_to_signal_test(pattern, signal, shift_idx)
 
@@ -118,7 +125,7 @@ def test_lock_pattern_to_signal_3():
         # ----------------------------------------------------------------------------------------------------------
         # Shifting the pattern and checking
         # ----------------------------------------------------------------------------------------------------------
-        shift_idx = random.randint(0, len(prbs_seq))
+        shift_idx = random.randint(0, len(prbs_seq)-1)
         pattern = np.concatenate((prbs_seq[shift_idx:], prbs_seq[:shift_idx]))
         test.lock_pattern_to_signal_test(pattern, signal, shift_idx)
 
@@ -144,7 +151,7 @@ def test_lock_pattern_to_signal_binary_1():
         # ----------------------------------------------------------------------------------------------------------
         # Shifting the pattern and checking
         # ----------------------------------------------------------------------------------------------------------
-        shift_idx = random.randint(0, len(ref_prbs_bin))
+        shift_idx = random.randint(0, len(ref_prbs_bin)-1)
         pattern   = np.concatenate((ref_prbs_bin[shift_idx:], ref_prbs_bin[:shift_idx]))
         test.lock_pattern_to_signal_binary_test(pattern, signal, shift_idx)
 
@@ -170,7 +177,7 @@ def test_lock_pattern_to_signal_binary_2():
         # ----------------------------------------------------------------------------------------------------------
         # Shifting the pattern and checking
         # ----------------------------------------------------------------------------------------------------------
-        shift_idx = random.randint(0, len(ref_prbs_bin))
+        shift_idx = random.randint(0, len(ref_prbs_bin)-1)
         pattern = np.concatenate((ref_prbs_bin[shift_idx:], ref_prbs_bin[:shift_idx]))
         test.lock_pattern_to_signal_binary_test(pattern, signal, shift_idx)
 
@@ -197,7 +204,7 @@ def test_lock_pattern_to_signal_binary_3():
         # ----------------------------------------------------------------------------------------------------------
         # Shifting the pattern and checking
         # ----------------------------------------------------------------------------------------------------------
-        shift_idx = random.randint(0, len(ref_prbs_bin))
+        shift_idx = random.randint(0, len(ref_prbs_bin)-1)
         pattern = np.concatenate((ref_prbs_bin[shift_idx:], ref_prbs_bin[:shift_idx]))
         test.lock_pattern_to_signal_binary_test(pattern, signal, shift_idx)
 
@@ -377,6 +384,7 @@ def test_coding_2():
                 test.coding_pattern_test(constellation, coding, pn_inv)
 
 if __name__ == '__main__':
+    test.channel_estimation_prbs_test(PrbsEnum.PRBS15)
     pass
     # test.prbs_analysis_test(PrbsEnum.PRBS15, 10, lock_th=15, shift_idx=24634)
     # test_prbs_analisys()

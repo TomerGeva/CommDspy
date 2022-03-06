@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import linalg
+from CommDspy.constants import CodingEnum
 from CommDspy.prbs_generator import prbs_generator
 from CommDspy.symbol_to_bin import bin2symbol
 from CommDspy.code_decode import coding
@@ -13,7 +14,7 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
                             normalize=False,
                             bit_order_inv=False,
                             pn_inv_precoding=False,
-                            gray_coded=True,
+                            code=CodingEnum.UNCODED,
                             pn_inv_postcoding=False):
     """
     :param prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox. In the case of PRBSxQ
@@ -34,7 +35,7 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
     :param bit_order_inv: Boolean indicating if the bit order in the signal generation is flipped.
     :param pn_inv_precoding: Boolean indicating if the P and N were flipped in the signal capture process before the
                              coding.
-    :param gray_coded: Boolean indicating if the signal is GRAY coded, if False, UNCODED
+    :param code: Enumeration of the coding type used in the signal, taken from CommDspy.constants.CodingEnum
     :param pn_inv_postcoding: Boolean indicating if the P and N were flipped in the signal capture process after the
                               coding.
     :return:
@@ -46,10 +47,9 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    levels          = get_levels(constellation, prbs_full_scale)
+    levels          = get_levels(constellation)
     init_seed       = np.array([1] * prbs_type.value)
     prbs_len        = 2 ** len(init_seed) - 1
-    bits_per_symbol = int(np.log2(len(levels)))
     # ==================================================================================================================
     # Getting reference PRBS and coding
     # ==================================================================================================================
@@ -58,11 +58,11 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
         return True, 0, [0]
     prbs_seq, _ = prbs_generator(poly_coeff, init_seed, 2 * prbs_len)
     prbsq       = bin2symbol(prbs_seq, len(levels), bit_order_inv, False, False, pn_inv_precoding)
-    prbs_coded  = coding(prbsq, levels, gray_coded, pn_inv_postcoding)
+    prbs_coded  = coding(prbsq, constellation, code, pn_inv_postcoding, prbs_full_scale)
     # ==================================================================================================================
     # Locking on the pattern beginning
     # ==================================================================================================================
-    prbs_coded_aligned, xcorr = lock_pattern_to_signal(prbs_coded, signal)
+    prbs_coded_aligned, _ = lock_pattern_to_signal(prbs_coded, signal)
     prbs_coded_aligned = np.concatenate((prbs_coded_aligned, prbs_coded_aligned[:channel_postcursor + channel_precursor + 1]))
     # ==================================================================================================================
     # Averaging to help remove noise from captured signal + shifting to account for post-cursors
@@ -82,6 +82,9 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
     ls_result = np.linalg.lstsq(partial_hankel, signal_shift, rcond=-1)
     # A = partial_hankel ; b = signal_shift
     # x = (A^T * A)^{-1} * A^T * b --> least squares solution : ch_est = np.linalg.inv(A.T @ A) @ A.T @ b
+    # --------------------------------------------------------------------------------------------------------------
+    # Extracting the results
+    # --------------------------------------------------------------------------------------------------------------
     ch_est = ls_result[0][::-1] / np.max(ls_result[0]) if normalize else ls_result[0][::-1]
     err    = ls_result[1]
     return ch_est, err

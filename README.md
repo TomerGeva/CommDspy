@@ -39,7 +39,9 @@ Function used to decode the pattern. Function is inputted with:
 * coding=CodingEnum.UNCODED - Coding used in the creation of the pattern signal, either GRAY of UNCODED
 * pn_inv=False - Boolean stating if the levels were inverted after coding
 ### slicer
-Function receives data matrix from the slicer input and performs the slicing operation. If the user does not insert levels it assumes [-3,-1,1,3]
+Function receives data matrix from the slicer input and performs the slicing operation.
+* slicer_in_mat - Inputs to slice
+* levels=None - constellation points. The decision thresholds are at the midpoints to the constellations. If the user does not insert levels it assumes [-3,-1,1,3]
 ### prbs_ana
 Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
   * builds a reference PRBS sequence
@@ -48,6 +50,7 @@ Function receives a slicer out capture matrix (or slicer in matrix after offine 
   * function returns the "lost lock" indication, nunber of correct bits and the vector with '0' in the correct locations, '1' in the error locations
 ### prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
   Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
+### channel_estimation_prbs - THIS FUNCTION IS STILL SUBJECT TO TESTING
 
 
 ## Enumeration classes

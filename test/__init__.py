@@ -5,3 +5,4 @@ from test.test_pattern_coding import coding_pattern_test, decoding_pattern_test
 from test.test_pattern_lock import lock_pattern_to_signal_binary_test, lock_pattern_to_signal_test
 from test.test_prbs_analysis import prbs_analysis_test
 from test.test_noise import awgn_test
+from test.test_channel_estimation import channel_estimation_prbs_test
