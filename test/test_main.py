@@ -201,6 +201,9 @@ def test_lock_pattern_to_signal_binary_3():
         pattern = np.concatenate((ref_prbs_bin[shift_idx:], ref_prbs_bin[:shift_idx]))
         test.lock_pattern_to_signal_binary_test(pattern, signal, shift_idx)
 
+def test_symbol2bin():
+    test.symbol2bin_test()
+
 def test_decoding_1():
     """
     :return: Testing the coding function

@@ -35,9 +35,9 @@ def bin2symbol(bin_mat, num_of_symbols, bit_order_inv=False, inv_msb=False, inv_
         if bit_order_inv:
             trimmed_bin = np.fliplr(trimmed_bin)
         if inv_msb:
-            trimmed_bin[-1, :] = 1 - trimmed_bin[-1, :]
+            trimmed_bin[:, -1] = 1 - trimmed_bin[:, -1]
         if inv_lsb:
-            trimmed_bin[0, :] = 1 - trimmed_bin[0, :]
+            trimmed_bin[:, 0] = 1 - trimmed_bin[:, 0]
         if pn_inv:
             trimmed_bin = 1 - trimmed_bin
         pattern = trimmed_bin.dot(2 ** np.arange(bits_per_symbol))
@@ -77,10 +77,10 @@ def symbol2bin(symbol_mat, num_of_symbols, bit_order_inv=False, inv_msb=False, i
     if pn_inv:
         symbol_mat_binary = 1 - symbol_mat_binary
     if bits_per_symbol > 1:
+        if inv_msb:
+            symbol_mat_binary[:, -1] = 1 - symbol_mat_binary[:, -1]
+        if inv_lsb:
+            symbol_mat_binary[:, 0]  = 1 - symbol_mat_binary[:, 0]
         if bit_order_inv:
             symbol_mat_binary = np.fliplr(symbol_mat_binary)
-        if inv_msb:
-            symbol_mat_binary[0, :] = 1 - symbol_mat_binary[0, :]
-        if inv_lsb:
-            symbol_mat_binary[1, :] = 1 - symbol_mat_binary[-1, :]
-    return np.reshape(symbol_mat_binary, [-1])
+    return np.reshape(symbol_mat_binary, [-1]).astype(int)
