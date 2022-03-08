@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import linalg
 from CommDspy.constants import PrbsEnum, ConstellationEnum
 
 
@@ -59,3 +60,48 @@ def rms(signal):
     :return: Computes the RMS of the signal
     """
     return np.sqrt(np.mean(signal ** 2))
+
+def buffer(signal, length, overlap=0, delay=0, clip=False):
+    """
+    :param signal: Input signal
+    :param length: Length of the output rows
+    :param overlap: Integer value which controls the amount of overlap or underlap in the buffered data frames.
+                       - If >0, there will be P samples of data from the end of one frame
+                         (column) that will be repeated at the start of the next data frame.
+                       - If <0, the buffering operation will skip P samples of data after each
+                         frame, effectively skipping over data in X, and thus reducing the
+                         buffer "frame rate".
+                       - If empty or omitted, P is assumed to be zero (no overlap or underlap).
+    :param delay: Initial condition options. default (0) begins filling the buffer immediately. delay = d > 0 sets the
+                  first `d` values to zero
+    :param clip: Indicating if we want to clip the not-complete rows from the matrix. If False, returns all the signal
+                 where the final row is padded with zeros to match the row length. If true, clips the last row.
+    :return: Buffer a signal vector into a matrix of data frames. This function mimics the MATLAB buffer function
+    """
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    full_len = delay + len(signal) + length
+    stride   = length-overlap
+    # ==================================================================================================================
+    # Taking delay into consideration
+    # ==================================================================================================================
+    signal_full = np.concatenate((np.zeros(delay), signal, np.zeros(length))) if delay > 0 else np.concatenate((signal, np.zeros(length)))
+    # ==================================================================================================================
+    # Creating the full overlapping hankel matrix
+    # ==================================================================================================================
+    hankel_mat = linalg.hankel(signal_full, signal_full[::-1][:length])
+    # ==================================================================================================================
+    # Extracting the wanted columns - overlaps of 0 means jumps of "length"
+    # ==================================================================================================================
+    rows = np.arange(0, full_len, stride)
+    matrix = hankel_mat[rows, :].astype(type(signal[0]))
+    # ==================================================================================================================
+    # Clipping if needed
+    # ==================================================================================================================
+    rows_to_remove = np.sum(np.any(np.array([np.arange(full_len - length - max(overlap, 0), full_len)]).T - rows == 0, axis=1))
+    if rows_to_remove > 0:
+        matrix = matrix[:-1*rows_to_remove]
+    if clip and matrix[-1,:] not in linalg.hankel(signal, signal[::-1][:length])[:-1]:
+        matrix = matrix[:-1]
+    return matrix

@@ -17,11 +17,38 @@ def test_init():
     random.seed(seed)
     np.random.seed(seed)
 
+def test_buffer():
+    a = np.array([1, 2, 3, 4, 5, 6, 7])
+    matrix_dut = cdsp.buffer(a, 2, delay=2, overlap=0, clip=False)
+    matrix_ref = np.array([[0, 0], [1, 2], [3, 4], [5, 6], [7, 0]])
+    assert np.all(matrix_dut == matrix_ref), 'Does not work'
+    matrix_dut = cdsp.buffer(a, 2, delay=2, overlap=0, clip=True)
+    matrix_ref = np.array([[0, 0], [1, 2], [3, 4], [5, 6]])
+    assert np.all(matrix_dut == matrix_ref), 'Does not work'
+    matrix_dut = cdsp.buffer(a, 2, delay=0, overlap=1, clip=True)
+    matrix_ref = np.array([[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7]])
+    assert np.all(matrix_dut == matrix_ref), 'Does not work'
+    matrix_dut = cdsp.buffer(a, 2, delay=0, overlap=1, clip=False)
+    matrix_ref = np.array([[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7]])
+    assert np.all(matrix_dut == matrix_ref), 'Does not work'
+    matrix_dut = cdsp.buffer(a, 2, delay=0, overlap=-1, clip=False)
+    matrix_ref = np.array([[1, 2], [4, 5], [7, 0]])
+    assert np.all(matrix_dut == matrix_ref), 'Does not work'
+    matrix_dut = cdsp.buffer(a, 2, delay=0, overlap=-1, clip=True)
+    matrix_ref = np.array([[1, 2], [4, 5]])
+    assert np.all(matrix_dut == matrix_ref), 'Does not work'
+    matrix_dut = cdsp.buffer(a, 2, delay=0, overlap=-2, clip=False)
+    matrix_ref = np.array([[1, 2], [5, 6]])
+    assert np.all(matrix_dut == matrix_ref), 'Does not work'
+    matrix_dut = cdsp.buffer(a, 2, delay=0, overlap=-2, clip=True)
+    matrix_ref = np.array([[1, 2], [5, 6]])
+    assert np.all(matrix_dut == matrix_ref), 'Does not work'
+
 def test_channel_estimation_prbs():
     """
     :return: Testing the channel_estimation_prbs function
     """
-    for prbs_type in prbs_types:
+    for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
         test.channel_estimation_prbs_test(prbs_type)
 
 def test_noise_awgn():
@@ -384,7 +411,6 @@ def test_coding_2():
                 test.coding_pattern_test(constellation, coding, pn_inv)
 
 if __name__ == '__main__':
-    test.channel_estimation_prbs_test(PrbsEnum.PRBS15)
     pass
     # test.prbs_analysis_test(PrbsEnum.PRBS15, 10, lock_th=15, shift_idx=24634)
     # test_prbs_analisys()

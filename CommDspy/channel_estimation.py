@@ -17,8 +17,7 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
                             code=CodingEnum.UNCODED,
                             pn_inv_postcoding=False):
     """
-    :param prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox. In the case of PRBSxQ
-                      patterns, use the bits_per_symbol to generate the pattern
+    :param prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox.
     :param signal: The signal we want to use to estimate the channel
     :param constellation: Enumeration stating the constellation. Should be taken from:
                           CommDspy.constants.ConstellationEnum
@@ -77,8 +76,8 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
     # --------------------------------------------------------------------------------------------------------------
     # Finding The matrix A for the least squares
     # --------------------------------------------------------------------------------------------------------------
-    full_hankel    = linalg.hankel(prbs_coded_aligned, prbs_coded_aligned[::-1])
-    partial_hankel = full_hankel[:prbs_len, :channel_postcursor + channel_precursor + 1].astype(float)
+    full_hankel    = linalg.hankel(prbs_coded_aligned, prbs_coded_aligned[::-1][:channel_postcursor + channel_precursor + 1])
+    partial_hankel = full_hankel[:prbs_len, :].astype(float)
     ls_result = np.linalg.lstsq(partial_hankel, signal_shift, rcond=-1)
     # A = partial_hankel ; b = signal_shift
     # x = (A^T * A)^{-1} * A^T * b --> least squares solution : ch_est = np.linalg.inv(A.T @ A) @ A.T @ b

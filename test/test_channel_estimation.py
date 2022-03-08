@@ -13,7 +13,7 @@ def channel_estimation_prbs_test(prbs_type):
     num_precursors  = random.randint(0, 8)
     num_postcursors = random.randint(0, 32)
     constellation   = cdsp.constants.ConstellationEnum.PAM4 if bits_per_symbol > 1 else (cdsp.constants.ConstellationEnum.NRZ if random.random() > 0.5 else cdsp.constants.ConstellationEnum.OOK)
-    coding          = cdsp.constants.CodingEnum.UNCODED if random.random() > 0.5 else cdsp.constants.CodingEnum.GRAY
+    coding          = cdsp.constants.CodingEnum.UNCODED # if random.random() > 0.5 else cdsp.constants.CodingEnum.GRAY
     poly_coeff      = cdsp.get_polynomial(prbs_type)
     init_seed       = np.array([1] * prbs_type.value)
     prbs_len        = 2 ** len(init_seed) - 1

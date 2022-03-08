@@ -4,6 +4,23 @@ Repository for the communication signal processing package
 Developed by: Tomer Geva
 
 ## Information of the package functions:
+### get_polynomial
+Function receives the PRBS type enumeration (detailed below) and returns the commonly used generating polymonial coefficients for the PRBS pattern
+### get_levels
+Function receives the constellation enumeration (detailed below) and returns the levels in the constellation. The function containg a "full_scale" flag. In case this flag is True, the levels are scaled such that random data which is coded to this constellation will have mean power of 1 (0 [dB])
+### power
+Function receives a signal, returns the mean power of the signal
+### rms
+Function receives a signal, returns the RMS of the signal
+### buffer
+Function receives a signal and breaks is into overlapping parts. Function is inputted with:
+* signal - Input numpy array vector to be buffered
+* length - The length of the chunks to be returned, should be a non-zero integer
+* overlap=0 - The number of overlapping symbols in the signal between each rows. Default is 0, i.e. no overlap. for values larger than 0, there will be overlap and for values smaller than 0 the following row will skip the respective number of symbols
+* delay=0 - The number of zero padding to perform over the beginning of the signal
+* clip=False - If False, padding the end of the signal with zeros such that the last row will have "length" length. If True, clips the data to match the length "length"
+
+Function returns a 2D numpy array with "length" length rows. 
 ### prbs_gen
 Function receives polynomial coefficients and an initial seed, creates binary PRBS sequences of the requested length . The function is inputted with:
 * poly_coeff - a coefficent vector for the generating polynomial of the PRBS pattern
@@ -44,18 +61,37 @@ Function receives data matrix from the slicer input and performs the slicing ope
 * levels=None - constellation points. The decision thresholds are at the midpoints to the constellations. If the user does not insert levels it assumes [-3,-1,1,3]
 ### prbs_ana
 Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
-  * builds a reference PRBS sequence
-  * synchronizes on the pattern
-  * checks BER
-  * function returns the "lost lock" indication, nunber of correct bits and the vector with '0' in the correct locations, '1' in the error locations
-### prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
-  Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
-### channel_estimation_prbs - THIS FUNCTION IS STILL SUBJECT TO TESTING
+1. builds a reference PRBS sequence
+2. synchronizes on the pattern
+3. checks BER
+4. returns the "lost lock" indication, nunber of correct bits and the vector with '0' in the correct locations, '1' in the error locations
 
+The function is inputted with:
+* prbs_type - Enumeration stating the type of PRBS we used for the data-in
+* data_in - The data we want to check the errors on
+* init_lock - indicating if the data-in is aligned with the reference PRBS (with init seed of ones)
+* loss_th=100 - number of erred bit in the data to consider loss of PRBS lock
+### prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
+Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
+### channel_estimation_prbs
+Function which performs channel estimation, assuming that the original pattern is a PRBS pattern using the get_polynomial generating polynomials. Function is inputted with:
+* prbs_type - Enumeration stating the type of PRBS used to generate the original data
+* signal - Channel output data we use to estimate the channel
+* constellation - Constellation used in the coding of the symbols
+* prbs_full_scale=False - Flag stating if the transmission has a mean power of 1 (0 [dB])
+* channel_postcursor=500 - Number of postcursors we want to use for the channel estimation
+* channel_precursor=19 - Number of precursors we want to use for the channel estimation
+* normalize=False - If ture, normalizes the channel impulse response ot have a peak value of 1
+* bit_order_inv=False -  Boolean indicating if the bit order in the signal generation is flipped
+* pn_inv_precoding=False - Boolean indicating if the P and N were flipped in the signal capture process before the coding
+* code=CodingEnum.UNCODED - Enumeration of the coding type used in the signal, taken from CommDspy.constants.CodingEnum
+* pn_inv_postcoding=False - Boolean indicating if the P and N were flipped in the signal capture process after the coding
+
+Function returns the channel impulse response and the sum of squared residuals between the "signal" and the estimated channel's output
 
 ## Enumeration classes
 ### PrbsEnum 
-enumeration for the PRBS type used
+Enumeration for the PRBS type used
   * PRBS7
   * PRBS9 
   * PRBS11
@@ -63,7 +99,7 @@ enumeration for the PRBS type used
   * PRBS15
   * PRBS31
 ### ConstellationEnum
-enumeration for the constellations used
+Enumeration for the constellations used
   * NRZ - Non-Return to Zero, assuming constellation of [-1, 1]
   * OOK - On Off Keying, assuming constellation of [0, 1]
   * PAM4 - Pulse Amplitude Modulation 4, assuming constellation of [-3, -1, 1, 3]
@@ -75,7 +111,15 @@ enumeration of the different coding types
 ## Sub-package: noise
 A sub package that holds all the functions wich involve in noise generation 
 ### awgn
-Function that adds Additive White Gaussian Noise in a power to create a wanted SNR
+Function that adds Additive White Gaussian Noise in a power to create a wanted SNR. Function is inputted with:
+* signal - input we and to add the AWGN to
+* snr - the SNR of the signal w.r.t the added noise
+### awgn_channel
+Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
+* signal - the signal we want to pass through the channel
+* b - The polynomial coefficients of the channel's nominator
+* a - The polynomial coefficients of the channel's denominator. if a[0] is not 1, all a and b coefficients are normalized by a[0]
+* snr=None - The AWGN SNR to be added to the channel output, If None, does not add noise at all
 ## Objects
 * PrbsIterator - An iterable used to generate the next bit in the given PRBS. during initialization, a seed and the generating polynomial are given to the object. after calling iter(), next() can be used to pop the next bit in the PRBS
 

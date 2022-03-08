@@ -33,7 +33,7 @@ def awgn_channel(signal, b, a, snr=None):
                                                 noise
                                                   |
                             |---------------|     v
-                signal ---> |   channel     | --> + ---> output
+                signal ---> |    channel    | --> + ---> output
                             |---------------|
     """
     ch_out = lfilter(b, a, signal)
