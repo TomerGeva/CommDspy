@@ -22,11 +22,14 @@ def awgn(signal, snr):
     # ==================================================================================================================
     return signal + np.random.normal(0, np.sqrt(noise_power), signal.shape)
 
-def awgn_channel(signal, b, a, snr=None):
+def awgn_channel(signal, b, a, zi=None, snr=None):
     """
-    :param signal: the input signal you want to pass through the channel
-    :param b: nominator polynomial values (FIR).
-    :param a: denominator polynomial values (IIR) if a[0] is not 0, normelizes all parameters by a[0]
+    :param signal: The input signal you want to pass through the channel
+    :param b: Nominator polynomial values (FIR).
+    :param a: Denominator polynomial values (IIR) if a[0] is not 0, normalizes all parameters by a[0]
+    :param zi: Initial condition for the channel, i.e. the memory of the channel at the beginning of the filtering.
+               Should have a length of {max(len(a), len(b)) - 1} if provided. If None, assumes zeros as initial
+               conditions
     :param snr: SNR of the AWGN signal if the SNR is None, does not add noise
     :return: The signal after passing through the channel and added the AWGN. We assume that the input signal is clean.
              Assuming initial conditions for the channel are zero
@@ -36,7 +39,7 @@ def awgn_channel(signal, b, a, snr=None):
                 signal ---> |    channel    | --> + ---> output
                             |---------------|
     """
-    ch_out = lfilter(b, a, signal)
+    ch_out = lfilter(b, a, signal, zi=zi)
     if snr is not None:
         return awgn(ch_out)
     else:
