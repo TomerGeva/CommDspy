@@ -415,7 +415,8 @@ def test_coding_2():
                 test.coding_pattern_test(constellation, coding, pn_inv)
 
 if __name__ == '__main__':
-    test_equalization()
+    test_channel_estimation_prbs()
+    # test_equalization()
     pass
     # test.prbs_analysis_test(PrbsEnum.PRBS15, 10, lock_th=15, shift_idx=24634)
     # test_prbs_analisys()
