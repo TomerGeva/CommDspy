@@ -89,6 +89,31 @@ Function which performs channel estimation, assuming that the original pattern i
 
 Function returns the channel impulse response and the sum of squared residuals between the "signal" and the estimated channel's output
 
+### equalization_prbs - THIS FUNCTION IS SUBJECT TO TESTING
+Function which preform equalization over the input signal, estimation the MMSE equalizer to be used to invert the 
+    ISI in the signal and recover the original data, using either an FFE or/and a DFE with controllable number of taps. Function is inputted with:
+* prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox. In the case of PRBSxQ
+                      patterns, use the bits_per_symbol to generate the pattern 
+* signal: The signal we want to use to estimate the channel 
+* constellation: Enumeration stating the constellation. Should be taken from CommDspy.constants.ConstellationEnum 
+* prbs_full_scale: Boolean stating if we want the levels to be scaled such that the mean power of the levels  at the transmitter will be 1 (0 [dB]), i.e. that the PRBS pattern will be coded to power of 0 [dB]
+* ffe_postcursor: Number of postcursors in the FFE estimation 
+* ffe_precursor: Number of precursors in the FFE estimation 
+* dfe_taps: Number of postcursors in the DFE estimation 
+* normalize: Boolean stating if the user wants to normalize the Rx FFE such that the peak will have value of 1 
+* The Following flags are only relevant for constellation with multiple bits per symbol:
+  * bit_order_inv: Boolean indicating if the bit order in the signal generation is flipped. 
+  * pn_inv_precoding: Boolean indicating if the P and N were flipped in the signal capture process before the coding. 
+  * gray_coded: Boolean indicating if the signal is GRAY coded, if False, UNCODED 
+  * pn_inv_postcoding: Boolean indicating if the P and N were flipped in the signal capture process after the coding.
+
+Function returns:
+* ffe: The equalization FFE, normalized such that the cursor will have a value of 1 
+* dfe: The equalization DFE 
+* dig_gain: The digital gain of the system. Note that this is highly dependant on the constellation 
+* ls_err: Sum of squared residuals 
+* mse: normalized MSE, meaning the MSE divided by the variance of the constellation, in dB units
+
 ## Enumeration classes
 ### PrbsEnum 
 Enumeration for the PRBS type used

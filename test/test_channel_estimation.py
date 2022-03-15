@@ -68,3 +68,5 @@ def channel_estimation_prbs_test(prbs_type):
                                                normalize=True)
 
     assert np.all(np.abs(channel_dut[0] - channel_ref) < 1e-10), assert_str + ' channel estimation Failed!'
+    assert np.allclose(channel_dut[0], channel_ref), assert_str + ' channel estimation Failed!'
+

@@ -39,6 +39,6 @@ def lock_pattern_to_signal(pattern, signal):
     # Correlating the NRZ sequences to find the alignment
     # ==================================================================================================================
     xcorr = correlate(pattern_rep, signal_part, mode='valid')
-    # start_idx = np.argmax(xcorr)
-    start_idx = np.argmax(np.abs(xcorr))
+    start_idx = np.argmax(xcorr)
+    # start_idx = np.argmax(np.abs(xcorr))
     return pattern_rep[start_idx:start_idx + pattern_len], xcorr

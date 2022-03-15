@@ -17,6 +17,10 @@ def test_init():
     random.seed(seed)
     np.random.seed(seed)
 
+def test_equalization():
+    for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
+        test.equalization_prbs_test(prbs_type)
+
 def test_buffer():
     a = np.array([1, 2, 3, 4, 5, 6, 7])
     matrix_dut = cdsp.buffer(a, 2, delay=2, overlap=0, clip=False)
@@ -411,6 +415,7 @@ def test_coding_2():
                 test.coding_pattern_test(constellation, coding, pn_inv)
 
 if __name__ == '__main__':
+    test_equalization()
     pass
     # test.prbs_analysis_test(PrbsEnum.PRBS15, 10, lock_th=15, shift_idx=24634)
     # test_prbs_analisys()

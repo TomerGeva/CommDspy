@@ -25,7 +25,7 @@ def lock_pattern_to_signal_binary_test(pattern, signal, shift_idx):
     # Checking
     # ==================================================================================================================
     assert np.all(pattern_aligned_ref == pattern_aliged_dut), 'Patterns are not aligned'
-    assert (pattern_len - shift_idx) == np.argmax(xcorr), 'Correlation maximum is not in the right location'
+    assert (pattern_len - shift_idx) == np.argmax(xcorr), f'Correlation maximum is not in the right location, shift if {shift_idx}'
 
 def lock_pattern_to_signal_test(pattern, signal, shift_idx):
     """
@@ -50,5 +50,5 @@ def lock_pattern_to_signal_test(pattern, signal, shift_idx):
     # Checking
     # ==================================================================================================================
     assert np.all(pattern_aligned_ref == pattern_aliged_dut), 'Patterns are not aligned'
-    assert (pattern_len - shift_idx) == np.argmax(xcorr), 'Correlation maximum is not in the right location'
+    assert (pattern_len - shift_idx) == np.argmax(xcorr), f'Correlation maximum is not in the right location, shift if {shift_idx}'
 
