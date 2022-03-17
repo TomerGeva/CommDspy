@@ -78,8 +78,11 @@ def equalization_prbs_test(prbs_type):
                                      gray_coded=True,
                                      pn_inv_postcoding=pn_inv_postcoding)
     # ==================================================================================================================
+    # Passing the signal through the Rx FFE, checking the results
+    # ==================================================================================================================
+    ffe_out = cdsp.noise.awgn_channel(channel_out, equ_dut[0], 1, None)[len(equ_dut[0])+1:]
+    ref_pattern_test = ref_pattern[-1*len(ffe_out):]
+    # ==================================================================================================================
     # Comparing results
     # ==================================================================================================================
-    dut_ffe = equ_dut[0] / equ_dut[0][0]
-    assert np.all(np.abs(dut_ffe - channel_ref) < 1e-3), assert_str
-    assert np.allclose(np.around(dut_ffe, decimals=3), np.around(channel_ref, decimals=3))
+    assert np.all(np.abs(ffe_out - ref_pattern_test) < 1e-3), assert_str

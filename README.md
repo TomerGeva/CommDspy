@@ -89,7 +89,7 @@ Function which performs channel estimation, assuming that the original pattern i
 
 Function returns the channel impulse response and the sum of squared residuals between the "signal" and the estimated channel's output
 
-### equalization_prbs - THIS FUNCTION IS SUBJECT TO TESTING
+### equalization_prbs
 Function which preform equalization over the input signal, estimation the MMSE equalizer to be used to invert the 
     ISI in the signal and recover the original data, using either an FFE or/and a DFE with controllable number of taps. Function is inputted with:
 * prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox. In the case of PRBSxQ
