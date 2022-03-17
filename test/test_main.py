@@ -414,5 +414,7 @@ def test_coding_2():
             for pn_inv in [True, False]:
                 test.coding_pattern_test(constellation, coding, pn_inv)
 
-# if __name__ == '__main__':
-#     pass
+
+if __name__ == '__main__':
+    # print(cdsp.dig_delay_fir_coeffs(n=3, alpha=1, forward=True))
+    pass

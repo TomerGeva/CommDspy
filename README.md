@@ -119,6 +119,12 @@ Function returns:
 * ls_err: Sum of squared residuals 
 * mse: normalized MSE, meaning the MSE divided by the variance of the constellation, in dB units
 
+### dig_delay_fir_coeffs
+Function uses Lagrange interpolation polynomials to produce digital delay filter coefficients. Function is inputted with:
+* n - The order of the filter
+* alpha - the fractional delay wanted. alpha must be between 0 and 1
+* forward - Boolean stating the favorite location when the filter order is odd. If filter order is 1 then forward must be True for the function to work
+
 ## Enumeration classes
 ### PrbsEnum 
 Enumeration for the PRBS type used
