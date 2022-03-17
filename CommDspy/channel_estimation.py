@@ -79,7 +79,7 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
     # --------------------------------------------------------------------------------------------------------------
     full_hankel    = linalg.hankel(prbs_coded_aligned, prbs_coded_aligned[::-1][:channel_postcursor + channel_precursor + 1])
     partial_hankel = full_hankel[:prbs_len, :].astype(float)
-    ls_result = least_squares(partial_hankel, signal_shift)
+    ls_result      = least_squares(partial_hankel, signal_shift)
     # A = partial_hankel ; b = signal_shift
     # x = (A^T * A)^{-1} * A^T * b --> least squares solution : ch_est = np.linalg.inv(A.T @ A) @ A.T @ b
     # --------------------------------------------------------------------------------------------------------------

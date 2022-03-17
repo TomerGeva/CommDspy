@@ -5,12 +5,14 @@ from CommDspy.auxiliary import get_polynomial, get_levels
 from CommDspy.lock_pattern import lock_pattern_to_signal
 from CommDspy.code_decode import coding
 from CommDspy.symbol_to_bin import bin2symbol
+from CommDspy.misc.least_squares import least_squares
 
 
 def equalization_prbs(prbs_type, signal, constellation,
                       prbs_full_scale=False,
                       ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
                       normalize=False,
+                      regularization='None', reg_lambda=0,
                       bit_order_inv=False,
                       pn_inv_precoding=False,
                       gray_coded=True,
@@ -30,6 +32,12 @@ def equalization_prbs(prbs_type, signal, constellation,
     :param ffe_precursor: Number of precursors in the FFE estimation
     :param dfe_taps: Number of postcursors in the DFE estimation
     :param normalize: Boolean stating if the user wants to normalize the Rx FFE such that the peak will have value of 1
+    :param regularization: String indicating the regularization in the computation of the equalizer. Can be either:
+            - 'None' - Ordinary Least Squares (OLS) solving without regularization
+            - 'ridge' - Applying ridge regression, L2 regularization
+            - 'lasso' - Applying lasso regression, L1 regularization
+    :param reg_lambda: If regularization is not 'None', and reg_lambda != 0, applies the wanted regularization with a
+                       regularization factor of reg_lambda
     %
     The Following flags are only relevant for constellation with multiple bits per symbol:
     :param bit_order_inv: Boolean indicating if the bit order in the signal generation is flipped.
@@ -93,7 +101,7 @@ def equalization_prbs(prbs_type, signal, constellation,
     # ==================================================================================================================
     # Performing least squares to find the optimal equalization
     # ==================================================================================================================
-    ls_result = np.linalg.lstsq(mat_ffe_dfe, prbs_coded_shift, rcond=-1)
+    ls_result = least_squares(mat_ffe_dfe, prbs_coded_shift, regularization, reg_lambda) if regularization != 'None' and reg_lambda > 0 else least_squares(mat_ffe_dfe, prbs_coded_shift)
     # ==================================================================================================================
     # Extracting results
     # ==================================================================================================================

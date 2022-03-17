@@ -85,3 +85,50 @@ def ridge_regression_manual(a_mat, b, reg_lambda):
     x_hat = np.linalg.inv(a_mat.T @ a_mat + reg_lambda * np.eye(a_mat.shape[1])) @ a_mat.T @ b
     ssr = np.sum(np.power(a_mat @ x_hat - b, 2))
     return x_hat, ssr
+
+def lasso_regression_manual(a_mat, b, reg_lambda, mu=1e-3, tol=1e-8, max_steps=10000, return_path=False):
+    """
+    :param a_mat:
+    :param b:
+    :param reg_lambda:
+    :param mu: learning rate: omega_t = omega_{t-1} - mu * Grad(Loss)
+    :param tol: stopping condition, when the change is smaller than the tolerance we stop
+    :param max_steps: maximal number of learning steps to perform
+    :param return_path: If True, returns the path for all the training steps
+    :return: lasso- regularized least squares. Since a close-from solution does not exist, performing gradient descent
+    """
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    omega = np.random.rand(a_mat.shape[1])
+    omega_mat       = np.zeros((a_mat.shape[1], max_steps))
+    omega_mat[:, 0] = omega
+    # ==================================================================================================================
+    # Beginning iterations
+    # ==================================================================================================================
+    for step in range(1, max_steps):
+        # ----------------------------------------------------------------------------------------------------------
+        # Computing gradient of the lasso regularized loss
+        # ----------------------------------------------------------------------------------------------------------
+        grad = -2 * a_mat.T.dot(b - a_mat.dot(omega)) + reg_lambda * np.sign(np.around(omega, decimals=4))
+        # ----------------------------------------------------------------------------------------------------------
+        # Updating parameters
+        # ----------------------------------------------------------------------------------------------------------
+        omega -= mu * grad
+        omega_mat[:, step] = omega
+        # ----------------------------------------------------------------------------------------------------------
+        # Checking stopping condition
+        # ----------------------------------------------------------------------------------------------------------
+        if np.all(np.abs(omega - omega_mat[:,step-1]) < tol):
+            break
+    reached_tol =  step != max_steps - 1
+    # ==================================================================================================================
+    # Computing Sum of Square Residuals
+    # ==================================================================================================================
+    ssr = np.sum(np.power(a_mat @ omega - b, 2))
+    if return_path:
+        return omega, ssr, reached_tol, omega_mat[:, :step+1]
+    else:
+        return omega, ssr
+
+

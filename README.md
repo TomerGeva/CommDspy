@@ -100,7 +100,12 @@ Function which preform equalization over the input signal, estimation the MMSE e
 * ffe_postcursor: Number of postcursors in the FFE estimation 
 * ffe_precursor: Number of precursors in the FFE estimation 
 * dfe_taps: Number of postcursors in the DFE estimation 
-* normalize: Boolean stating if the user wants to normalize the Rx FFE such that the peak will have value of 1 
+* normalize: Boolean stating if the user wants to normalize the Rx FFE such that the peak will have value of 1
+* regularization: String indicating the regularization in the computation of the equalizer. Can be either:
+  * 'None' - Ordinary Least Squares (OLS) solving without regularization
+  * 'ridge' - Applying ridge regression, L2 regularization
+  * 'lasso' - Applying lasso regression, L1 regularization
+* reg_lambda: If regularization is not 'None', and reg_lambda != 0, applies the wanted regularization with a regularization factor of reg_lambda
 * The Following flags are only relevant for constellation with multiple bits per symbol:
   * bit_order_inv: Boolean indicating if the bit order in the signal generation is flipped. 
   * pn_inv_precoding: Boolean indicating if the P and N were flipped in the signal capture process before the coding. 
