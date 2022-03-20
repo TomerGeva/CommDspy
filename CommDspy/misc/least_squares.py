@@ -110,7 +110,7 @@ def lasso_regression_manual(a_mat, b, reg_lambda, mu=1e-3, tol=1e-8, max_steps=1
         # ----------------------------------------------------------------------------------------------------------
         # Computing gradient of the lasso regularized loss
         # ----------------------------------------------------------------------------------------------------------
-        grad = -2 * a_mat.T.dot(b - a_mat.dot(omega)) + reg_lambda * np.sign(np.around(omega, decimals=4))
+        grad = (-1/a_mat.shape[1]) * a_mat.T.dot(b - a_mat.dot(omega)) + reg_lambda * np.sign(np.around(omega, decimals=4))
         # ----------------------------------------------------------------------------------------------------------
         # Updating parameters
         # ----------------------------------------------------------------------------------------------------------
