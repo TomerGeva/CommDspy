@@ -17,6 +17,14 @@ def test_init():
     random.seed(seed)
     np.random.seed(seed)
 
+def test_dig_delay_fir_coeffs():
+    assert np.allclose(cdsp.dig_delay_fir_coeffs(1, 0), [1, 0])
+    assert np.allclose(cdsp.dig_delay_fir_coeffs(1, 1), [0, 1])
+    assert np.allclose(cdsp.dig_delay_fir_coeffs(2, 0), [0, 1, 0])
+    assert np.allclose(cdsp.dig_delay_fir_coeffs(2, 1), [0, 0, 1])
+    assert np.allclose(cdsp.dig_delay_fir_coeffs(3, 0), [0, 1, 0, 0])
+    assert np.allclose(cdsp.dig_delay_fir_coeffs(3, 0, forward=False), [0, 0, 1, 0])
+
 def test_equalization():
     for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
         test.equalization_prbs_test(prbs_type)

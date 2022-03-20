@@ -85,4 +85,4 @@ def equalization_prbs_test(prbs_type):
     # ==================================================================================================================
     # Comparing results
     # ==================================================================================================================
-    assert np.all(np.abs(ffe_out - ref_pattern_test) < 1e-3), assert_str
+    assert np.all(np.abs(ffe_out - ref_pattern_test) < 1e-2), assert_str
