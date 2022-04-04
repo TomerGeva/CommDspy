@@ -11,4 +11,4 @@ from CommDspy.prbs_analysis import prbs_analysis as prbs_ana
 from CommDspy.prbs_analysis import prbs_analysis_economy as prbs_ana_econ
 from CommDspy.channel_estimation import channel_estimation_prbs
 from CommDspy.equalization import equalization_prbs
-from CommDspy.digital_delay import dig_delay_fir_coeffs, digital_oversample
+from CommDspy.digital_delay import dig_delay_lagrange_coeffs, dig_delay_sinc_coeffs, digital_oversample

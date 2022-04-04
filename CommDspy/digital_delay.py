@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import lfilter
 
-def dig_delay_fir_coeffs(n, alpha, forward=True):
+def dig_delay_lagrange_coeffs(n, alpha, forward=True):
     """
     :param n: The order of the interpolation polynomial
     :param alpha: Fractional delay value, should be between 0 and 1
@@ -57,6 +57,32 @@ def dig_delay_fir_coeffs(n, alpha, forward=True):
 
     return nom_vec / den_vec
 
+def dig_delay_sinc_coeffs(n, alpha, forward=True):
+    """
+    :param n: The order of the interpolation polynomial
+    :param alpha: Fractional delay value, should be between 0 and 1
+    :param forward: Only used for even values of n.
+                If True, assumes the 0-delay coefficient is n//2
+                If False, assumes the 0-delay coefficient is n//2 + 1
+    :return: The function computes the FIR coefficients based on the normalized "sinc" function. The since function is
+    equal to 0 for all integer values except 0, where the limit value is 1. This means that for 0 delay we will get the
+    original sequence. For a delay value between 0 and 1 we will use sinc interpolation coefficients to re-create the
+    oversampled channel.
+    """
+    # ==================================================================================================================
+    # Setting vector of indices
+    # ==================================================================================================================
+    if n % 2 == 0:
+        ii_vec = np.arange(-(n // 2), n // 2 + 1, 1)
+    elif forward:
+        ii_vec = np.arange(-(n // 2), n // 2 + 2, 1)
+    else:
+        ii_vec = np.arange(-(n // 2) - 1, n // 2 + 1, 1)
+    # ==================================================================================================================
+    # Creating the filter parameters
+    # ==================================================================================================================
+    return np.sinc(ii_vec + alpha)
+
 def digital_oversample(signal_vec, osr, order=16):
     """
     :param signal_vec: Input signal vector
@@ -92,7 +118,7 @@ def digital_oversample(signal_vec, osr, order=16):
     # Creating the digital delay samples
     # ==================================================================================================================
     for ii, alpha in enumerate(alphas):
-        fir_coeffs        = dig_delay_fir_coeffs(order, alpha)
+        fir_coeffs        = dig_delay_lagrange_coeffs(order, alpha)
         output_mat[:, ii+1] = lfilter(fir_coeffs[::-1], 1, signal_vec)[order:]
     # ==================================================================================================================
     # Flattening and adding the last symbol
