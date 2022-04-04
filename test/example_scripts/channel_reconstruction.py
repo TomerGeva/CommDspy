@@ -2,7 +2,6 @@ import numpy as np
 import random
 import csv
 import os
-import test
 from CommDspy.constants import PrbsEnum, ConstellationEnum, CodingEnum
 import CommDspy as cdsp
 import json

@@ -83,13 +83,13 @@ def dig_delay_sinc_coeffs(n, alpha, forward=True):
     # ==================================================================================================================
     return np.sinc(ii_vec + alpha)
 
-def digital_oversample(signal_vec, osr, order=16):
+def digital_oversample(signal_vec, osr, order=16, method='sinc'):
     """
     :param signal_vec: Input signal vector
     :param osr: Over Sampling Rate
-    :param order: Lagrange interpolation order, also determines the trim from the end of the vector. The trimming logic
+    :param order: Interpolation order, also determines the trim from the end of the vector. The trimming logic
      is as follows:
-    The Lagrange polynomials are computed such that the symbol will be at the middle of the polynomial. Therefroe, the
+    The Lagrange polynomials are computed such that the symbol will be at the middle of the polynomial. Therefore, the
     trimming is:
      - For an even order, we get the current symbol exactly in the middle and the trimming is even at the beginning and
        the end. Example: when the order is 2  we have [pre, curr, post] and we get a trim of 1 symbol at the beginning
@@ -97,6 +97,9 @@ def digital_oversample(signal_vec, osr, order=16):
      - For an odd order, we always use the default of `forward=True` in the `dig_delay_fir_coeffs` meaning that there is
        1 extra coefficient at theright side, meaning that the trimming will be order//2 at the beginning and order//2+1
        at the end
+    :param method: Indication how to perform the oversampling, can be one of the following:
+        - 'sinc'     --> Using sinc interpolation
+        - 'lagrange' --> Using Lagrange polynomials
     :return: Function uses the digital delay to up-sample the input signal. Note that in the process of up-sampling we
     trim the beginning of the signal. Function returns:
     - The new up-sampled signal after trimming
@@ -118,7 +121,7 @@ def digital_oversample(signal_vec, osr, order=16):
     # Creating the digital delay samples
     # ==================================================================================================================
     for ii, alpha in enumerate(alphas):
-        fir_coeffs        = dig_delay_lagrange_coeffs(order, alpha)
+        fir_coeffs        = _get_dd_coeffs(method, order, alpha)
         output_mat[:, ii+1] = lfilter(fir_coeffs[::-1], 1, signal_vec)[order:]
     # ==================================================================================================================
     # Flattening and adding the last symbol
@@ -127,3 +130,11 @@ def digital_oversample(signal_vec, osr, order=16):
     x1 = np.arange(0, len(signal_vec) - trim_pre - trim_post + 1)
     x2 = np.arange(0, len(temp)) / osr
     return temp, x2, x1
+
+def _get_dd_coeffs(method, n, alpha, forawrd=True):
+    if method == 'sinc':
+        return dig_delay_sinc_coeffs(n, alpha, forawrd)
+    elif method == 'lagrange':
+        return dig_delay_lagrange_coeffs(n, alpha, forawrd)
+    else:
+        raise AttributeError('Illegal method inserted, please use another (read the documentation)')
