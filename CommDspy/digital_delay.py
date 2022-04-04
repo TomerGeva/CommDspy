@@ -81,7 +81,7 @@ def dig_delay_sinc_coeffs(n, alpha, forward=True):
     # ==================================================================================================================
     # Creating the filter parameters
     # ==================================================================================================================
-    return np.sinc(ii_vec + alpha)
+    return np.sinc(ii_vec - alpha)
 
 def digital_oversample(signal_vec, osr, order=16, method='sinc'):
     """
