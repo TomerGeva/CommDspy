@@ -2,7 +2,7 @@ import numpy as np
 import os
 import random
 from CommDspy.constants import ConstellationEnum, CodingEnum
-from CommDspy.noise import awgn
+from CommDspy.channel import awgn
 from CommDspy import coding, get_levels
 from test.auxiliary import read_1line_csv
 

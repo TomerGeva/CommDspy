@@ -1,4 +1,4 @@
-from CommDspy import noise
+from CommDspy import channel
 from CommDspy.constants import PrbsEnum, ConstellationEnum, CodingEnum
 from CommDspy.auxiliary import get_polynomial, get_levels, power, rms, buffer
 from CommDspy.prbs_generator import prbs_generator as prbs_gen
