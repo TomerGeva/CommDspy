@@ -1,13 +1,12 @@
 import numpy as np
 from scipy import linalg
 from CommDspy.constants import CodingEnum
-from CommDspy.prbs_generator import prbs_generator
-from CommDspy.symbol_to_bin import bin2symbol
-from CommDspy.code_decode import coding
+from CommDspy.tx.prbs_generator import prbs_generator
+from CommDspy.tx.bin2symbol import bin2symbol
+from CommDspy.tx.coding import  coding
 from CommDspy.auxiliary import get_polynomial, get_levels
-from CommDspy.lock_pattern import lock_pattern_to_signal
+from CommDspy.rx.lock_pattern import lock_pattern_to_signal
 from CommDspy.misc.least_squares import least_squares
-
 
 def channel_estimation_prbs(prbs_type, signal, constellation,
                             prbs_full_scale=False,

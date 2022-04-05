@@ -44,10 +44,10 @@ def equalization_prbs_test(prbs_type):
     # --------------------------------------------------------------------------------------------------------------
     if bits_per_symbol > 1:
         ref_prbs_bin_mult = np.tile(ref_prbs_bin, bits_per_symbol)
-        ref_pattern = cdsp.bin2symbol(ref_prbs_bin_mult, 2 ** bits_per_symbol, False, False, False, False)
+        ref_pattern = cdsp.tx.bin2symbol(ref_prbs_bin_mult, 2 ** bits_per_symbol, False, False, False, False)
     else:
         ref_pattern = ref_prbs_bin
-    ref_pattern = cdsp.coding(ref_pattern, constellation, coding)
+    ref_pattern = cdsp.tx.coding(ref_pattern, constellation, coding)
     # --------------------------------------------------------------------------------------------------------------
     # Creating repetitions of the pattern
     # --------------------------------------------------------------------------------------------------------------
@@ -62,25 +62,25 @@ def equalization_prbs_test(prbs_type):
     # ==================================================================================================================
     # Passing data through the channel
     # ==================================================================================================================
-    channel_out = cdsp.noise.awgn_channel(ref_pattern, [1], channel_ref, None)[len(channel_ref)+1:]
+    channel_out = cdsp.channel.awgn_channel(ref_pattern, [1], channel_ref, None)[len(channel_ref)+1:]
     # ==================================================================================================================
     # Running DUT
     # ==================================================================================================================
     precursors        = np.argmax(abs(channel_ref))
     pn_inv_postcoding = channel_ref[precursors] != np.max(channel_ref)
     postcursors       = len(channel_ref) - precursors - 1
-    equ_dut = cdsp.equalization_prbs(prbs_type, channel_out, constellation,
-                                     prbs_full_scale=False,
-                                     ffe_postcursor=postcursors, ffe_precursor=precursors, dfe_taps=0,
-                                     normalize=False,
-                                     bit_order_inv=False,
-                                     pn_inv_precoding=False,
-                                     gray_coded=True,
-                                     pn_inv_postcoding=pn_inv_postcoding)
+    equ_dut = cdsp.equalization_estimation_prbs(prbs_type, channel_out, constellation,
+                                                prbs_full_scale=False,
+                                                ffe_postcursor=postcursors, ffe_precursor=precursors, dfe_taps=0,
+                                                normalize=False,
+                                                bit_order_inv=False,
+                                                pn_inv_precoding=False,
+                                                gray_coded=True,
+                                                pn_inv_postcoding=pn_inv_postcoding)
     # ==================================================================================================================
     # Passing the signal through the Rx FFE, checking the results
     # ==================================================================================================================
-    ffe_out = cdsp.noise.awgn_channel(channel_out, equ_dut[0], 1, None)[len(equ_dut[0])+1:]
+    ffe_out = cdsp.channel.awgn_channel(channel_out, equ_dut[0], 1, None)[len(equ_dut[0])+1:]
     ref_pattern_test = ref_pattern[-1*len(ffe_out):]
     # ==================================================================================================================
     # Comparing results

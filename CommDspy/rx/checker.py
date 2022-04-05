@@ -1,11 +1,10 @@
 import numpy as np
-from CommDspy.prbs_generator import prbs_generator
+from CommDspy.tx.prbs_generator import prbs_generator
+from CommDspy.tx.prbs_iterator import PrbsIterator
 from CommDspy.auxiliary import get_polynomial
-from CommDspy.lock_pattern import lock_pattern_to_signal_binary
-from CommDspy.prbs_iterator import PrbsIterator
+from CommDspy.rx.lock_pattern import lock_pattern_to_signal_binary
 
-
-def prbs_analysis(prbs_type, data_in, init_lock, loss_th=100):
+def prbs_checker(prbs_type, data_in, init_lock, loss_th=100):
     """
     :param prbs_type: should be an enumeration from the toolbox
     :param data_in: received bits after slicing - 1 dimensional binary array
@@ -50,7 +49,7 @@ def prbs_analysis(prbs_type, data_in, init_lock, loss_th=100):
     lost_lock           = np.sum(error_bit) >= loss_th
     return lost_lock, correct_bit_count, error_bit
 
-def prbs_analysis_economy(prbs_type, data_in, init_lock, lock_th=13, loss_th=100):
+def prbs_checker_economy(prbs_type, data_in, init_lock, lock_th=13, loss_th=100):
     """
     :param prbs_type: Should be an enumeration from the toolbox
     :param data_in: Received bits after slicing

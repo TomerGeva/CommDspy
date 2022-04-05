@@ -1,25 +1,24 @@
 import numpy as np
 from scipy import linalg
-from CommDspy.prbs_generator import prbs_generator
+from CommDspy.tx.prbs_generator import prbs_generator
+from CommDspy.tx.bin2symbol import bin2symbol
+from CommDspy.tx.coding import coding
 from CommDspy.auxiliary import get_polynomial, get_levels
-from CommDspy.lock_pattern import lock_pattern_to_signal
-from CommDspy.code_decode import coding
-from CommDspy.symbol_to_bin import bin2symbol
+from CommDspy.rx.lock_pattern import lock_pattern_to_signal
 from CommDspy.misc.least_squares import least_squares
 
-
-def equalization_prbs(prbs_type, signal, constellation,
-                      prbs_full_scale=False,
-                      ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
-                      normalize=False,
-                      regularization='None', reg_lambda=0,
-                      bit_order_inv=False,
-                      pn_inv_precoding=False,
-                      gray_coded=True,
-                      pn_inv_postcoding=False):
+def equalization_estimation_prbs(prbs_type, signal, constellation,
+                                 prbs_full_scale=False,
+                                 ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
+                                 normalize=False,
+                                 regularization='None', reg_lambda=0,
+                                 bit_order_inv=False,
+                                 pn_inv_precoding=False,
+                                 gray_coded=True,
+                                 pn_inv_postcoding=False):
     """
-    Function which preform equalization over the input signal, estimation the MMSE equalizer to be used to invert the
-    ISI in the signal and recover the original data, using either an FFE or/and a DFE with controllable number of taps
+    Function which estimats the MMSE equalizer to be used to invert the ISI in the signal and recover the original data,
+     using either an FFE or/and a DFE with controllable number of taps
     :param prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox. In the case of PRBSxQ
                       patterns, use the bits_per_symbol to generate the pattern
     :param signal: The signal we want to use to estimate the channel
@@ -69,8 +68,8 @@ def equalization_prbs(prbs_type, signal, constellation,
     if poly_coeff[0] == -1:
         return [0], [0], 0, 0, 0
     prbs_seq, _ = prbs_generator(poly_coeff, init_seed, 2 * prbs_len)
-    prbsq      = bin2symbol(prbs_seq, len(levels), bit_order_inv, False, False, pn_inv_precoding)
-    prbs_coded = coding(prbsq, constellation, gray_coded, pn_inv_postcoding)
+    prbsq       = bin2symbol(prbs_seq, len(levels), bit_order_inv, False, False, pn_inv_precoding)
+    prbs_coded  = coding(prbsq, constellation, gray_coded, pn_inv_postcoding)
     # ==================================================================================================================
     # Locking on the pattern beginning and then shifting to account for post-cursors
     # ==================================================================================================================

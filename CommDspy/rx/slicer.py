@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def slicer(slicer_in_mat, levels=None):
     """
     :param slicer_in_mat:capture or data at the slicer input

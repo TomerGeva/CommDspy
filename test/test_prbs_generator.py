@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from CommDspy import get_polynomial
-from CommDspy import prbs_gen
+from CommDspy.tx import prbs_gen
 from test.auxiliary import read_1line_csv
 
 

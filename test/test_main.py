@@ -30,12 +30,12 @@ def test_init():
 #     channel_ref_upsample = cdsp.digital_oversample(channel_ref, osr=16, order=16)
 
 def test_dig_delay_fir_coeffs():
-    assert np.allclose(cdsp.dig_delay_fir_coeffs(1, 0), [1, 0])
-    assert np.allclose(cdsp.dig_delay_fir_coeffs(1, 1), [0, 1])
-    assert np.allclose(cdsp.dig_delay_fir_coeffs(2, 0), [0, 1, 0])
-    assert np.allclose(cdsp.dig_delay_fir_coeffs(2, 1), [0, 0, 1])
-    assert np.allclose(cdsp.dig_delay_fir_coeffs(3, 0), [0, 1, 0, 0])
-    assert np.allclose(cdsp.dig_delay_fir_coeffs(3, 0, forward=False), [0, 0, 1, 0])
+    assert np.allclose(cdsp.dig_delay_lagrange_coeffs(1, 0), [1, 0])
+    assert np.allclose(cdsp.dig_delay_lagrange_coeffs(1, 1), [0, 1])
+    assert np.allclose(cdsp.dig_delay_lagrange_coeffs(2, 0), [0, 1, 0])
+    assert np.allclose(cdsp.dig_delay_lagrange_coeffs(2, 1), [0, 0, 1])
+    assert np.allclose(cdsp.dig_delay_lagrange_coeffs(3, 0), [0, 1, 0, 0])
+    assert np.allclose(cdsp.dig_delay_lagrange_coeffs(3, 0, forward=False), [0, 0, 1, 0])
 
 def test_equalization():
     for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
@@ -107,7 +107,7 @@ def test_lock_pattern_to_signal_1():
         # ----------------------------------------------------------------------------------------------------------
         poly_coeff = cdsp.get_polynomial(prbs_type)
         init_seed  = np.array([1] * prbs_type.value)
-        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length)
+        prbs_seq, _ = cdsp.tx.prbs_gen(poly_coeff, init_seed, pattern_length)
         # ----------------------------------------------------------------------------------------------------------
         # Injecting errors to signal
         # ----------------------------------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ def test_lock_pattern_to_signal_2():
         # ----------------------------------------------------------------------------------------------------------
         poly_coeff = cdsp.get_polynomial(prbs_type)
         init_seed  = np.array([1] * prbs_type.value)
-        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length)
+        prbs_seq, _ = cdsp.tx.prbs_gen(poly_coeff, init_seed, pattern_length)
         # ----------------------------------------------------------------------------------------------------------
         # Injecting aerror to signal
         # ----------------------------------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ def test_lock_pattern_to_signal_3():
         # ----------------------------------------------------------------------------------------------------------
         poly_coeff = cdsp.get_polynomial(prbs_type)
         init_seed  = np.array([1] * prbs_type.value)
-        prbs_seq, _ = cdsp.prbs_gen(poly_coeff, init_seed, pattern_length)
+        prbs_seq, _ = cdsp.tx.prbs_gen(poly_coeff, init_seed, pattern_length)
         # ----------------------------------------------------------------------------------------------------------
         # Injecting error to signal
         # ----------------------------------------------------------------------------------------------------------
@@ -275,10 +275,10 @@ def test_decoding_1():
     coded_2bit_pam4_gray = np.array([-3, -1, 3, 1, -3, -3, -1, -1, 3, 3, 1, 1, -3, -3, -3, -1, -1, -1, 3, 3, 3, 1, 1, 1])
     coded_2bit_pam4_inv = -1 * coded_2bit_pam4
     coded_2bit_pam4_gray_inv = -1 * coded_2bit_pam4_gray
-    assert np.all(pattern_2bit == cdsp.decoding(coded_2bit_pam4, ConstellationEnum.PAM4, CodingEnum.UNCODED, False)), 'PAM4 UNCODED '
-    assert np.all(pattern_2bit == cdsp.decoding(coded_2bit_pam4_gray, ConstellationEnum.PAM4, CodingEnum.GRAY, False)), 'PAM4 GRAY '
-    assert np.all(pattern_2bit == cdsp.decoding(coded_2bit_pam4_inv, ConstellationEnum.PAM4, CodingEnum.UNCODED, True)), 'PAM4 UNCODED inverted '
-    assert np.all(pattern_2bit == cdsp.decoding(coded_2bit_pam4_gray_inv, ConstellationEnum.PAM4, CodingEnum.GRAY, True)), 'PAM4 GRAY inverted '
+    assert np.all(pattern_2bit == cdsp.rx.decoding(coded_2bit_pam4, ConstellationEnum.PAM4, CodingEnum.UNCODED, False)), 'PAM4 UNCODED '
+    assert np.all(pattern_2bit == cdsp.rx.decoding(coded_2bit_pam4_gray, ConstellationEnum.PAM4, CodingEnum.GRAY, False)), 'PAM4 GRAY '
+    assert np.all(pattern_2bit == cdsp.rx.decoding(coded_2bit_pam4_inv, ConstellationEnum.PAM4, CodingEnum.UNCODED, True)), 'PAM4 UNCODED inverted '
+    assert np.all(pattern_2bit == cdsp.rx.decoding(coded_2bit_pam4_gray_inv, ConstellationEnum.PAM4, CodingEnum.GRAY, True)), 'PAM4 GRAY inverted '
     # ==================================================================================================================
     # 1 bit PAM4 test
     # ==================================================================================================================
@@ -286,10 +286,10 @@ def test_decoding_1():
     coded_1bit_pam4_gray = coded_1bit_pam4
     coded_1bit_pam4_inv = -1 * coded_1bit_pam4
     coded_1bit_pam4_gray_inv = -1 * coded_1bit_pam4_gray
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_pam4, ConstellationEnum.PAM4, CodingEnum.UNCODED, False)), 'PAM4 UNCODED - 1 bit'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_pam4_gray, ConstellationEnum.PAM4, CodingEnum.GRAY, False)), 'PAM4 GRAY - 1 bit'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_pam4_inv, ConstellationEnum.PAM4, CodingEnum.UNCODED, True)), 'PAM4 UNCODED inverted - 1 bit'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_pam4_gray_inv, ConstellationEnum.PAM4, CodingEnum.GRAY, True)), 'PAM4 GRAY inverted - 1 bit'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_pam4, ConstellationEnum.PAM4, CodingEnum.UNCODED, False)), 'PAM4 UNCODED - 1 bit'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_pam4_gray, ConstellationEnum.PAM4, CodingEnum.GRAY, False)), 'PAM4 GRAY - 1 bit'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_pam4_inv, ConstellationEnum.PAM4, CodingEnum.UNCODED, True)), 'PAM4 UNCODED inverted - 1 bit'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_pam4_gray_inv, ConstellationEnum.PAM4, CodingEnum.GRAY, True)), 'PAM4 GRAY inverted - 1 bit'
     # ==================================================================================================================
     # 1 bit NRZ test
     # ==================================================================================================================
@@ -297,10 +297,10 @@ def test_decoding_1():
     coded_1bit_nrz_gray = coded_1bit_nrz
     coded_1bit_nrz_inv = -1 * coded_1bit_nrz
     coded_1bit_nrz_gray_inv = -1 * coded_1bit_nrz_gray
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_nrz, ConstellationEnum.NRZ, CodingEnum.UNCODED, False)), 'NRZ UNCODED'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_nrz_gray, ConstellationEnum.NRZ, CodingEnum.GRAY, False)), 'NRZ GRAY'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_nrz_inv, ConstellationEnum.NRZ, CodingEnum.UNCODED, True)), 'NRZ UNCODED inverted'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_nrz_gray_inv, ConstellationEnum.NRZ, CodingEnum.GRAY, True)), 'NRZ GRAY inverted'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_nrz, ConstellationEnum.NRZ, CodingEnum.UNCODED, False)), 'NRZ UNCODED'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_nrz_gray, ConstellationEnum.NRZ, CodingEnum.GRAY, False)), 'NRZ GRAY'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_nrz_inv, ConstellationEnum.NRZ, CodingEnum.UNCODED, True)), 'NRZ UNCODED inverted'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_nrz_gray_inv, ConstellationEnum.NRZ, CodingEnum.GRAY, True)), 'NRZ GRAY inverted'
     # ==================================================================================================================
     # 1 bit OOK test
     # ==================================================================================================================
@@ -308,10 +308,10 @@ def test_decoding_1():
     coded_1bit_ook_gray = coded_1bit_ook
     coded_1bit_ook_inv = -1 * coded_1bit_ook
     coded_1bit_ook_gray_inv = -1 * coded_1bit_ook
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_ook, ConstellationEnum.OOK, CodingEnum.UNCODED, False)), 'OOK UNCODED'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_ook_gray, ConstellationEnum.OOK, CodingEnum.GRAY, False)), 'OOK GRAY'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_ook_inv, ConstellationEnum.OOK, CodingEnum.UNCODED, True)), 'OOK UNCODED inverted'
-    assert np.all(pattern_1bit == cdsp.decoding(coded_1bit_ook_gray_inv, ConstellationEnum.OOK, CodingEnum.GRAY, True)), 'OOK GRAY inverted'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_ook, ConstellationEnum.OOK, CodingEnum.UNCODED, False)), 'OOK UNCODED'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_ook_gray, ConstellationEnum.OOK, CodingEnum.GRAY, False)), 'OOK GRAY'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_ook_inv, ConstellationEnum.OOK, CodingEnum.UNCODED, True)), 'OOK UNCODED inverted'
+    assert np.all(pattern_1bit == cdsp.rx.decoding(coded_1bit_ook_gray_inv, ConstellationEnum.OOK, CodingEnum.GRAY, True)), 'OOK GRAY inverted'
 
 def test_decoding_2():
     """
@@ -387,10 +387,10 @@ def test_coding_1():
     coded_2bit_pam4_gray     = np.array([-3,-1,3,1,-3,-3,-1,-1,3,3,1,1,-3,-3,-3,-1,-1,-1,3,3,3,1,1,1])
     coded_2bit_pam4_inv      = -1 * coded_2bit_pam4
     coded_2bit_pam4_gray_inv = -1 * coded_2bit_pam4_gray
-    assert np.all(coded_2bit_pam4 == cdsp.coding(pattern_2bit, ConstellationEnum.PAM4, CodingEnum.UNCODED, False)), 'PAM4 UNCODED '
-    assert np.all(coded_2bit_pam4_gray == cdsp.coding(pattern_2bit, ConstellationEnum.PAM4, CodingEnum.GRAY, False)), 'PAM4 GRAY '
-    assert np.all(coded_2bit_pam4_inv == cdsp.coding(pattern_2bit, ConstellationEnum.PAM4, CodingEnum.UNCODED, True)), 'PAM4 UNCODED inverted '
-    assert np.all(coded_2bit_pam4_gray_inv == cdsp.coding(pattern_2bit, ConstellationEnum.PAM4, CodingEnum.GRAY, True)), 'PAM4 GRAY inverted '
+    assert np.all(coded_2bit_pam4 == cdsp.tx.coding(pattern_2bit, ConstellationEnum.PAM4, CodingEnum.UNCODED, False)), 'PAM4 UNCODED '
+    assert np.all(coded_2bit_pam4_gray == cdsp.tx.coding(pattern_2bit, ConstellationEnum.PAM4, CodingEnum.GRAY, False)), 'PAM4 GRAY '
+    assert np.all(coded_2bit_pam4_inv == cdsp.tx.coding(pattern_2bit, ConstellationEnum.PAM4, CodingEnum.UNCODED, True)), 'PAM4 UNCODED inverted '
+    assert np.all(coded_2bit_pam4_gray_inv == cdsp.tx.coding(pattern_2bit, ConstellationEnum.PAM4, CodingEnum.GRAY, True)), 'PAM4 GRAY inverted '
     # ==================================================================================================================
     # 1 bit PAM4 test
     # ==================================================================================================================
@@ -398,10 +398,10 @@ def test_coding_1():
     coded_1bit_pam4_gray     = coded_1bit_pam4
     coded_1bit_pam4_inv      = -1 * coded_1bit_pam4
     coded_1bit_pam4_gray_inv = -1 * coded_1bit_pam4_gray
-    assert np.all(coded_1bit_pam4 == cdsp.coding(pattern_1bit, ConstellationEnum.PAM4, CodingEnum.UNCODED, False)), 'PAM4 UNCODED - 1 bit'
-    assert np.all(coded_1bit_pam4_gray == cdsp.coding(pattern_1bit, ConstellationEnum.PAM4, CodingEnum.GRAY, False)), 'PAM4 GRAY - 1 bit'
-    assert np.all(coded_1bit_pam4_inv == cdsp.coding(pattern_1bit, ConstellationEnum.PAM4, CodingEnum.UNCODED, True)), 'PAM4 UNCODED inverted - 1 bit'
-    assert np.all(coded_1bit_pam4_gray_inv == cdsp.coding(pattern_1bit, ConstellationEnum.PAM4, CodingEnum.GRAY, True)), 'PAM4 GRAY inverted - 1 bit'
+    assert np.all(coded_1bit_pam4 == cdsp.tx.coding(pattern_1bit, ConstellationEnum.PAM4, CodingEnum.UNCODED, False)), 'PAM4 UNCODED - 1 bit'
+    assert np.all(coded_1bit_pam4_gray == cdsp.tx.coding(pattern_1bit, ConstellationEnum.PAM4, CodingEnum.GRAY, False)), 'PAM4 GRAY - 1 bit'
+    assert np.all(coded_1bit_pam4_inv == cdsp.tx.coding(pattern_1bit, ConstellationEnum.PAM4, CodingEnum.UNCODED, True)), 'PAM4 UNCODED inverted - 1 bit'
+    assert np.all(coded_1bit_pam4_gray_inv == cdsp.tx.coding(pattern_1bit, ConstellationEnum.PAM4, CodingEnum.GRAY, True)), 'PAM4 GRAY inverted - 1 bit'
     # ==================================================================================================================
     # 1 bit NRZ test
     # ==================================================================================================================
@@ -409,10 +409,10 @@ def test_coding_1():
     coded_1bit_nrz_gray = coded_1bit_nrz
     coded_1bit_nrz_inv  = -1 * coded_1bit_nrz
     coded_1bit_nrz_gray_inv = -1 * coded_1bit_nrz_gray
-    assert np.all(coded_1bit_nrz == cdsp.coding(pattern_1bit, ConstellationEnum.NRZ, CodingEnum.UNCODED, False)), 'NRZ UNCODED'
-    assert np.all(coded_1bit_nrz_gray == cdsp.coding(pattern_1bit, ConstellationEnum.NRZ, CodingEnum.GRAY, False)), 'NRZ GRAY'
-    assert np.all(coded_1bit_nrz_inv == cdsp.coding(pattern_1bit, ConstellationEnum.NRZ, CodingEnum.UNCODED, True)), 'NRZ UNCODED inverted'
-    assert np.all(coded_1bit_nrz_gray_inv == cdsp.coding(pattern_1bit, ConstellationEnum.NRZ, CodingEnum.GRAY, True)), 'NRZ GRAY inverted'
+    assert np.all(coded_1bit_nrz == cdsp.tx.coding(pattern_1bit, ConstellationEnum.NRZ, CodingEnum.UNCODED, False)), 'NRZ UNCODED'
+    assert np.all(coded_1bit_nrz_gray == cdsp.tx.coding(pattern_1bit, ConstellationEnum.NRZ, CodingEnum.GRAY, False)), 'NRZ GRAY'
+    assert np.all(coded_1bit_nrz_inv == cdsp.tx.coding(pattern_1bit, ConstellationEnum.NRZ, CodingEnum.UNCODED, True)), 'NRZ UNCODED inverted'
+    assert np.all(coded_1bit_nrz_gray_inv == cdsp.tx.coding(pattern_1bit, ConstellationEnum.NRZ, CodingEnum.GRAY, True)), 'NRZ GRAY inverted'
     # ==================================================================================================================
     # 1 bit OOK test
     # ==================================================================================================================
@@ -420,10 +420,10 @@ def test_coding_1():
     coded_1bit_ook_gray     = coded_1bit_ook
     coded_1bit_ook_inv      = -1 * coded_1bit_ook
     coded_1bit_ook_gray_inv = -1 * coded_1bit_ook
-    assert np.all(coded_1bit_ook == cdsp.coding(pattern_1bit, ConstellationEnum.OOK, CodingEnum.UNCODED, False)), 'OOK UNCODED'
-    assert np.all(coded_1bit_ook_gray == cdsp.coding(pattern_1bit, ConstellationEnum.OOK, CodingEnum.GRAY, False)), 'OOK GRAY'
-    assert np.all(coded_1bit_ook_inv == cdsp.coding(pattern_1bit, ConstellationEnum.OOK, CodingEnum.UNCODED, True)), 'OOK UNCODED inverted'
-    assert np.all(coded_1bit_ook_gray_inv == cdsp.coding(pattern_1bit, ConstellationEnum.OOK, CodingEnum.GRAY, True)), 'OOK GRAY inverted'
+    assert np.all(coded_1bit_ook == cdsp.tx.coding(pattern_1bit, ConstellationEnum.OOK, CodingEnum.UNCODED, False)), 'OOK UNCODED'
+    assert np.all(coded_1bit_ook_gray == cdsp.tx.coding(pattern_1bit, ConstellationEnum.OOK, CodingEnum.GRAY, False)), 'OOK GRAY'
+    assert np.all(coded_1bit_ook_inv == cdsp.tx.coding(pattern_1bit, ConstellationEnum.OOK, CodingEnum.UNCODED, True)), 'OOK UNCODED inverted'
+    assert np.all(coded_1bit_ook_gray_inv == cdsp.tx.coding(pattern_1bit, ConstellationEnum.OOK, CodingEnum.GRAY, True)), 'OOK GRAY inverted'
 
 def test_coding_2():
     """

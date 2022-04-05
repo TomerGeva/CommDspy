@@ -24,7 +24,7 @@ def bin2symbol_test():
     # ==================================================================================================================
     # Calling DUT
     # ==================================================================================================================
-    sym_dut = cdsp.bin2symbol(bit_vec, num_of_symbols, bit_order_inv, inv_msb, inv_lsb, pn_inv)
+    sym_dut = cdsp.tx.bin2symbol(bit_vec, num_of_symbols, bit_order_inv, inv_msb, inv_lsb, pn_inv)
     # ==================================================================================================================
     # Computing reference
     # ==================================================================================================================
@@ -55,7 +55,7 @@ def symbol2bin_test():
     bit_order_inv = random.random() > 0.5
     inv_msb = random.random() > 0.5
     inv_lsb = random.random() > 0.5
-    pn_inv = random.random() > 0.5
+    pn_inv  = random.random() > 0.5
     assert_str = '|Pattern len {0:^5d}| symbol number {1:3d} ; bit order inv {2:^6s} ; msb_inv = {3:^6s} ; lsb_inv = {4:^6s} ; pn_inv = {5:^6s} Falied!!!!'.format(
         test_pattern_len,
         num_of_symbols,
@@ -67,8 +67,8 @@ def symbol2bin_test():
     # ==================================================================================================================
     # Calling DUT
     # ==================================================================================================================
-    sym_dut     = cdsp.bin2symbol(bit_vec, num_of_symbols, bit_order_inv, inv_msb, inv_lsb, pn_inv)
-    bit_vec_dut = cdsp.symbol2bin(sym_dut, num_of_symbols, bit_order_inv, inv_msb, inv_lsb, pn_inv)
+    sym_dut     = cdsp.tx.bin2symbol(bit_vec, num_of_symbols, bit_order_inv, inv_msb, inv_lsb, pn_inv)
+    bit_vec_dut = cdsp.rx.symbol2bin(sym_dut, num_of_symbols, bit_order_inv, inv_msb, inv_lsb, pn_inv)
 
     if num_of_symbols > 2:
         ref_symbol_num = int(np.log2(num_of_symbols))

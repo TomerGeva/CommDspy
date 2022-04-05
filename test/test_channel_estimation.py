@@ -38,10 +38,10 @@ def channel_estimation_prbs_test(prbs_type):
     # --------------------------------------------------------------------------------------------------------------
     if bits_per_symbol > 1:
         ref_prbs_bin_mult = np.tile(ref_prbs_bin, bits_per_symbol)
-        ref_pattern       = cdsp.bin2symbol(ref_prbs_bin_mult, 2**bits_per_symbol, False, False, False, False)
+        ref_pattern       = cdsp.tx.bin2symbol(ref_prbs_bin_mult, 2**bits_per_symbol, False, False, False, False)
     else:
         ref_pattern = ref_prbs_bin
-    ref_pattern = cdsp.coding(ref_pattern, constellation, coding)
+    ref_pattern = cdsp.tx.coding(ref_pattern, constellation, coding)
     # --------------------------------------------------------------------------------------------------------------
     # Creating repetitions of the pattern
     # --------------------------------------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ def channel_estimation_prbs_test(prbs_type):
     # ==================================================================================================================
     # Passing signal through the channel
     # ==================================================================================================================
-    channel_out = cdsp.noise.awgn_channel(ref_pattern, channel_ref, 1, None)
+    channel_out = cdsp.channel.awgn_channel(ref_pattern, channel_ref, 1, None)
     channel_out = channel_out[len(channel_ref)+1:]
     # ==================================================================================================================
     # Passing through DUT

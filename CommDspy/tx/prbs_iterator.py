@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class PrbsIterator:
     """
     This class hold the prbs iterator, whenever the next function is called, the function pops out the next bit in the

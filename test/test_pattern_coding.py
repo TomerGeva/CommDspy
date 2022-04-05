@@ -27,7 +27,7 @@ def coding_pattern_test(constellation, coding, pn_inv):
     # ==================================================================================================================
     # Getting DUT coded pattern
     # ==================================================================================================================
-    coded_dut = cdsp.coding(pattern, constellation, coding, pn_inv)
+    coded_dut = cdsp.tx.coding(pattern, constellation, coding, pn_inv)
     # ==================================================================================================================
     # Computing the coding in a different way
     # ==================================================================================================================
@@ -75,7 +75,7 @@ def decoding_pattern_test(constellation, coding, pn_inv, full_scale):
     # ==================================================================================================================
     # Getting DUT coded pattern
     # ==================================================================================================================
-    coded_pattern = cdsp.coding(pattern_ref, constellation, coding, pn_inv, full_scale)
-    decoded_dut = cdsp.decoding(coded_pattern, constellation, coding, pn_inv, full_scale)
+    coded_pattern = cdsp.tx.coding(pattern_ref, constellation, coding, pn_inv, full_scale)
+    decoded_dut = cdsp.rx.decoding(coded_pattern, constellation, coding, pn_inv, full_scale)
 
     assert np.all(pattern_ref == decoded_dut), assert_str

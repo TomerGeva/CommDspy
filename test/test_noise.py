@@ -3,9 +3,9 @@ import os
 import random
 from CommDspy.constants import ConstellationEnum, CodingEnum
 from CommDspy.channel import awgn
-from CommDspy import coding, get_levels
+from CommDspy import get_levels
+from CommDspy.tx import coding
 from test.auxiliary import read_1line_csv
-
 
 def awgn_test(prbs_type, constellation, snr_db=None):
     """
