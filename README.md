@@ -3,29 +3,34 @@ Repository for the communication signal processing package
 
 Developed by: Tomer Geva
 
-## Information of the package functions:
-### get_polynomial
+## 0. Auxilliaty functions:
+### 0.1. get_polynomial
 Function receives the PRBS type enumeration (detailed below) and returns the commonly used generating polymonial coefficients for the PRBS pattern
-### get_levels
+### 0.2. get_levels
 Function receives the constellation enumeration (detailed below) and returns the levels in the constellation. The function containg a "full_scale" flag. In case this flag is True, the levels are scaled such that random data which is coded to this constellation will have mean power of 1 (0 [dB])
-### power
+### 0.3. power
 Function receives a signal, returns the mean power of the signal
-### rms
+### 0.4. rms
 Function receives a signal, returns the RMS of the signal
-### buffer
+### 0.5. buffer
 Function receives a signal and breaks is into overlapping parts. Function is inputted with:
 * signal - Input numpy array vector to be buffered
 * length - The length of the chunks to be returned, should be a non-zero integer
 * overlap=0 - The number of overlapping symbols in the signal between each rows. Default is 0, i.e. no overlap. for values larger than 0, there will be overlap and for values smaller than 0 the following row will skip the respective number of symbols
 * delay=0 - The number of zero padding to perform over the beginning of the signal
 * clip=False - If False, padding the end of the signal with zeros such that the last row will have "length" length. If True, clips the data to match the length "length"
-
 Function returns a 2D numpy array with "length" length rows. 
-### prbs_gen
+
+## 1. Tx sub-package information
+### 1.1. prbs_gen
 Function receives polynomial coefficients and an initial seed, creates binary PRBS sequences of the requested length . The function is inputted with:
 * poly_coeff - a coefficent vector for the generating polynomial of the PRBS pattern
 * init_seed - initial seed used to generate the pattern
 * output_length - wanted pattern length
+
+### 1.2. PrbsIterator
+An iterable used to generate the next bit in the given PRBS. during initialization, a seed and the generating polynomial are given to the object. after calling iter(), next() can be used to pop the next bit in the PRBS
+
 ### bin2symbol
 Function receives a binary sequence and computes the UNCODED symbols matching the binary sequence. The function is inputted wiith:
   * bin_mat - The binary sequence wanted to be converted 
@@ -34,7 +39,22 @@ Function receives a binary sequence and computes the UNCODED symbols matching th
   * inv_msb=False - Boolean stating if we want to invert the msb
   * inv_lsb=False - Boolean stating if we want to invert the lsb
   * pn_inv=False - Boolean stating if we want to invert all bits 
-### symbol2bin
+
+### 1.3. coding
+Function used to code the pattern. Function is inputted with:
+  * pattern - Input pattern of UNCODED symbols which should be coded
+  * constellation=ConstellationEnum.PAM4 - Wanted constellation
+  * coding=CodingEnum.UNCODED - Wanted coding, either UNCODED or GRAY
+  * pn_inv=False - Boolean stating if we want to invert the levels after coding
+  * full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
+
+## 2. Rx sub-package information
+### 2.1. slicer
+Function receives data matrix from the slicer input and performs the slicing operation.
+* slicer_in_mat - Inputs to slice
+* levels=None - constellation points. The decision thresholds are at the midpoints to the constellations. If the user does not insert levels it assumes [-3,-1,1,3]
+
+### 2.2. symbol2bin
 Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence
   * symbol_mat - The binary sequence wanted to be converted 
   * num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS 2 and 4
@@ -42,24 +62,15 @@ Function receives an UNCODED symbol sequence, returns the binary representation 
   * inv_msb=False - Boolean stating if we want to invert the msb
   * inv_lsb=False - Boolean stating if we want to invert the lsb
   * pn_inv=False - Boolean stating if we want to invert all bits
-### coding
-Function used to code the pattern. Function is inputted with:
-  * pattern - Input pattern of UNCODED symbols which should be coded
-  * constellation=ConstellationEnum.PAM4 - Wanted constellation
-  * coding=CodingEnum.UNCODED - Wanted coding, either UNCODED or GRAY
-  * pn_inv=False - Boolean stating if we want to invert the levels after coding
-  * full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
-### decoding
+
+### 2.3. decoding
 Function used to decode the pattern. Function is inputted with:
 * pattern - Input pattern of coded symbols which should be decoded
 * constellation=ConstellationEnum.PAM4 - Constellation used for the coding of the pattern signal
 * coding=CodingEnum.UNCODED - Coding used in the creation of the pattern signal, either GRAY of UNCODED
 * pn_inv=False - Boolean stating if the levels were inverted after coding
-### slicer
-Function receives data matrix from the slicer input and performs the slicing operation.
-* slicer_in_mat - Inputs to slice
-* levels=None - constellation points. The decision thresholds are at the midpoints to the constellations. If the user does not insert levels it assumes [-3,-1,1,3]
-### prbs_ana
+
+### 2.4. prbs_checker
 Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
 1. builds a reference PRBS sequence
 2. synchronizes on the pattern
@@ -71,9 +82,26 @@ The function is inputted with:
 * data_in - The data we want to check the errors on
 * init_lock - indicating if the data-in is aligned with the reference PRBS (with init seed of ones)
 * loss_th=100 - number of erred bit in the data to consider loss of PRBS lock
-### prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
+
+### 2.5. prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
 Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
-### channel_estimation_prbs
+
+## 3. Channel sub-package information
+### 3.1. awgn
+Function that adds Additive White Gaussian Noise in a power to create a wanted SNR. Function is inputted with:
+* signal - input we and to add the AWGN to
+* snr - the SNR of the signal w.r.t the added noise
+
+### 3.2. awgn_channel
+Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
+* signal - the signal we want to pass through the channel
+* b - The polynomial coefficients of the channel's nominator
+* a - The polynomial coefficients of the channel's denominator. if a[0] is not 1, all a and b coefficients are normalized by a[0]
+* snr=None - The AWGN SNR to be added to the channel output, If None, does not add noise at all
+
+## 4. Signal analysis
+
+### 4.1. channel_estimation_prbs
 Function which performs channel estimation, assuming that the original pattern is a PRBS pattern using the get_polynomial generating polynomials. Function is inputted with:
 * prbs_type - Enumeration stating the type of PRBS used to generate the original data
 * signal - Channel output data we use to estimate the channel
@@ -89,7 +117,7 @@ Function which performs channel estimation, assuming that the original pattern i
 
 Function returns the channel impulse response and the sum of squared residuals between the "signal" and the estimated channel's output
 
-### equalization_prbs
+### 4.2. equalization_estimation_prbs
 Function which preform equalization over the input signal, estimation the MMSE equalizer to be used to invert the 
     ISI in the signal and recover the original data, using either an FFE or/and a DFE with controllable number of taps. Function is inputted with:
 * prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox. In the case of PRBSxQ
@@ -119,20 +147,20 @@ Function returns:
 * ls_err: Sum of squared residuals 
 * mse: normalized MSE, meaning the MSE divided by the variance of the constellation, in dB units
 
-### dig_delay_lagrange_coeffs
+### 4.3. dig_delay_lagrange_coeffs
 Function uses *Lagrange* interpolation polynomials to produce digital delay filter coefficients. Function is inputted with:
 * n - The order of the filter
 * alpha - the fractional delay wanted. alpha must be between 0 and 1
 * forward - Boolean stating the favorite location when the filter order is odd. If filter order is 1 then forward must be True for the function to work
 
-### dig_delay_sinc_coeffs
+### 4.4. dig_delay_sinc_coeffs
 Function uses *sinc* interpolation to produce digital delay filter coefficients. Function is inputted with:
 * n - The order of the filter
 * alpha - the fractional delay wanted. alpha must be between 0 and 1
 * forward - Boolean stating the favorite location when the filter order is odd. If filter order is 1 then forward must be True for the function to work
 
-## Enumeration classes
-### PrbsEnum 
+## 5. Enumeration classes
+### 5.1.PrbsEnum 
 Enumeration for the PRBS type used
   * PRBS7
   * PRBS9 
@@ -140,32 +168,18 @@ Enumeration for the PRBS type used
   * PRBS13
   * PRBS15
   * PRBS31
-### ConstellationEnum
+
+### 5.2. ConstellationEnum
 Enumeration for the constellations used
   * NRZ - Non-Return to Zero, assuming constellation of [-1, 1]
   * OOK - On Off Keying, assuming constellation of [0, 1]
   * PAM4 - Pulse Amplitude Modulation 4, assuming constellation of [-3, -1, 1, 3]
-### CodingEnum
+
+### 5.3. CodingEnum
 enumeration of the different coding types
   * UNCODED
   * GRAY
-
-## Sub-package: noise
-A sub package that holds all the functions wich involve in noise generation 
-### awgn
-Function that adds Additive White Gaussian Noise in a power to create a wanted SNR. Function is inputted with:
-* signal - input we and to add the AWGN to
-* snr - the SNR of the signal w.r.t the added noise
-### awgn_channel
-Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
-* signal - the signal we want to pass through the channel
-* b - The polynomial coefficients of the channel's nominator
-* a - The polynomial coefficients of the channel's denominator. if a[0] is not 1, all a and b coefficients are normalized by a[0]
-* snr=None - The AWGN SNR to be added to the channel output, If None, does not add noise at all
-## Objects
-* PrbsIterator - An iterable used to generate the next bit in the given PRBS. during initialization, a seed and the generating polynomial are given to the object. after calling iter(), next() can be used to pop the next bit in the PRBS
-
-
+  
 # To update the version:
  1. please run the following command from the respective directory:
         
