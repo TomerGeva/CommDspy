@@ -105,3 +105,13 @@ def buffer(signal, length, overlap=0, delay=0, clip=False):
     if clip and matrix[-1,:] not in linalg.hankel(signal, signal[::-1][:length])[:-1]:
         matrix = matrix[:-1]
     return matrix
+
+def upsample(signal, osr):
+    """
+    :param signal:input signal, should be a 1D numpy array
+    :param osr: over sampling ratio ; should be an integer value!
+    :return: fills `0` values between each signal. the number of `0` values between each two adjacent values is (OSR - 1)
+    """
+    zero_vec = np.zeros_like(signal)
+    zero_mat = np.tile(zero_vec, [osr-1, 1])
+    return np.reshape(np.vstack((signal, zero_mat)).T, -1)
