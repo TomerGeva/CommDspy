@@ -32,17 +32,12 @@ def dig_delay_lagrange_coeffs(n, alpha, forward=True):
                           //                                     j=-n//2,    (i - j)
                           --- i=-n//2                            j != i
 
-    We can use the lagrange coefficients l_i(a) as the filter taps for the digital delay
+    We can use the lagrange coefficients l_i(a) as the filter taps for the digital delay.
     """
     # ==================================================================================================================
     # Setting vector of indices
     # ==================================================================================================================
-    if n % 2 == 0:
-        ii_vec = np.arange(-(n // 2), n // 2 + 1, 1)
-    elif forward:
-        ii_vec = np.arange(-(n // 2), n // 2 + 2, 1)
-    else:
-        ii_vec = np.arange(-(n // 2) - 1, n // 2 + 1, 1)
+    ii_vec = _get_indices(n, forward)
     # ==================================================================================================================
     # Creating the nominator component vector and the denominator component matrix
     # ==================================================================================================================
@@ -72,18 +67,23 @@ def dig_delay_sinc_coeffs(n, alpha, forward=True):
     # ==================================================================================================================
     # Setting vector of indices
     # ==================================================================================================================
-    if n % 2 == 0:
-        ii_vec = np.arange(-(n // 2), n // 2 + 1, 1)
-    elif forward:
-        ii_vec = np.arange(-(n // 2), n // 2 + 2, 1)
-    else:
-        ii_vec = np.arange(-(n // 2) - 1, n // 2 + 1, 1)
+    ii_vec = _get_indices(n, forward)
     # ==================================================================================================================
     # Creating the filter parameters
     # ==================================================================================================================
     return np.sinc(ii_vec - alpha)
 
-def digital_oversample(signal_vec, osr, order=16, method='sinc'):
+def dig_delay_rcos_coeffs(n, alpha, forward=True, beta=0.5):
+    # ==================================================================================================================
+    # Setting vector of indices
+    # ==================================================================================================================
+    ii_vec = _get_indices(n, forward)
+    # ==================================================================================================================
+    # Creating the filter parameters
+    # ==================================================================================================================
+    return np.sinc(ii_vec - alpha) * np.cos(np.pi * beta * (ii_vec - alpha)) / (1 - (2 * beta * (ii_vec - alpha)) ** 2)
+
+def digital_oversample(signal_vec, osr, order, method, beta=0):
     """
     :param signal_vec: Input signal vector
     :param osr: Over Sampling Rate
@@ -100,6 +100,8 @@ def digital_oversample(signal_vec, osr, order=16, method='sinc'):
     :param method: Indication how to perform the oversampling, can be one of the following:
         - 'sinc'     --> Using sinc interpolation
         - 'lagrange' --> Using Lagrange polynomials
+        - 'rcos'     --> Using raised cosine interpolation
+    :param beta: used for the raised cosine method only as the roll-off factor
     :return: Function uses the digital delay to up-sample the input signal. Note that in the process of up-sampling we
     trim the beginning of the signal. Function returns:
     - The new up-sampled signal after trimming
@@ -121,7 +123,7 @@ def digital_oversample(signal_vec, osr, order=16, method='sinc'):
     # Creating the digital delay samples
     # ==================================================================================================================
     for ii, alpha in enumerate(alphas):
-        fir_coeffs        = _get_dd_coeffs(method, order, alpha)
+        fir_coeffs        = _get_dd_coeffs(method, order, alpha, beta=beta)
         output_mat[:, ii+1] = lfilter(fir_coeffs[::-1], 1, signal_vec)[order:]
     # ==================================================================================================================
     # Flattening and adding the last symbol
@@ -131,10 +133,21 @@ def digital_oversample(signal_vec, osr, order=16, method='sinc'):
     x2 = np.arange(0, len(temp)) / osr
     return temp, x2, x1
 
-def _get_dd_coeffs(method, n, alpha, forawrd=True):
+def _get_dd_coeffs(method, n, alpha, forward=True, beta=0):
     if method == 'sinc':
-        return dig_delay_sinc_coeffs(n, alpha, forawrd)
+        return dig_delay_sinc_coeffs(n, alpha, forward)
     elif method == 'lagrange':
-        return dig_delay_lagrange_coeffs(n, alpha, forawrd)
+        return dig_delay_lagrange_coeffs(n, alpha, forward)
+    elif method == 'rcos':
+        return dig_delay_rcos_coeffs(n, alpha, forward, beta)
     else:
         raise AttributeError('Illegal method inserted, please use another (read the documentation)')
+
+def _get_indices(n, forward):
+    if n % 2 == 0:
+        ii_vec = np.arange(-(n // 2), n // 2 + 1, 1)
+    elif forward:
+        ii_vec = np.arange(-(n // 2), n // 2 + 2, 1)
+    else:
+        ii_vec = np.arange(-(n // 2) - 1, n // 2 + 1, 1)
+    return ii_vec
