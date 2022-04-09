@@ -48,7 +48,7 @@ tx_out_rrc  = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rol
 ```
 Results:
 
-![Tx example](https://https://github.com/tomerg777/CommDspy/blob/master/pictures/tx_example.png?raw=True "Title")
+![Tx example](./pictures/tx_example.png)
 
 **Figure 1** - Simple Tx example
 
@@ -84,7 +84,7 @@ channel_upsample_rcos, _, _  = cdsp.digital_oversample(channel_sampled, osr=osr,
 ```
 Results:
 
-![channel reconstruction](https://https://github.com/tomerg777/CommDspy/blob/master/pictures/channel_reconstruction.png?raw=True "Title")
+![channel reconstruction](./pictures/channel_reconstruction.png)
 
 **Figure 2** - channel reconstruction
 
