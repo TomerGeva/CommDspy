@@ -1,13 +1,10 @@
 import numpy as np
-import random
-import csv
 import os
-from CommDspy.constants import PrbsEnum, ConstellationEnum, CodingEnum
 import CommDspy as cdsp
 import json
+import matplotlib.pyplot as plt
 
-def dig_over_sample_channel():
-    import matplotlib.pyplot as plt
+def channel_reconstruction():
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
@@ -44,6 +41,7 @@ def dig_over_sample_channel():
                 'reconstructed channel - Lagrange',
                 f'reconstructed channel - rcos (beta = {beta})',
                 'sampled channel'])
+    plt.title('Digital oversampling of an example channel')
     plt.xlim([0, 20])
     print(f'Sinc interpolation MSE          = {10*np.log10(cdsp.power(ch_segment - channel_upsample_sinc) / cdsp.power(ch_segment)):#.2f} [dB]')
     print(f'Lagrange interpolation MSE      = {10*np.log10(cdsp.power(ch_segment - channel_upsample_lag)  / cdsp.power(ch_segment)):#.2f} [dB]')
@@ -51,4 +49,4 @@ def dig_over_sample_channel():
     plt.show()
 
 if __name__ == '__main__':
-    dig_over_sample_channel()
+    channel_reconstruction()

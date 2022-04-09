@@ -2,13 +2,13 @@ import numpy as np
 from CommDspy.auxiliary import upsample
 from scipy.signal import convolve
 
-def pulse_shape(signal, osr, span, pulse='rect', beta=0.5):
+def pulse_shape(signal, osr, span, method='rect', beta=0.5):
     """
     :param signal: Input signal in OSR 1 for the pulse shaping
     :param osr: the wanted OSR after the shaping
     :param span: the span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols
                  forward
-    :param pulse: the shape of the pulse. can be either:
+    :param method: the shape of the pulse. can be either:
                 1. 'rect' - rectangular pulse
                 2. 'sinc' - sinc pulse
                 3. 'rcos' - raised cosine pulse with roll-off parameter beta
@@ -20,7 +20,7 @@ def pulse_shape(signal, osr, span, pulse='rect', beta=0.5):
     # Local parameters
     # ==================================================================================================================
     sig_ups = upsample(signal, osr)
-    pulse   = _get_pulse(pulse, osr, span, beta)
+    pulse   = _get_pulse(method, osr, span, beta)
     # ==================================================================================================================
     # Convolving
     # ==================================================================================================================
@@ -35,7 +35,7 @@ def rect_pulse(osr, span):
     # Creating the pulse
     # ==================================================================================================================
     pulse = np.zeros_like(t)
-    pulse[np.abs(t) < 0.5] = 1
+    pulse[np.all([0.5 > t, t >= -0.5], axis=0)] = 1
     return pulse
 
 def sinc_pulse(osr, span):
@@ -65,7 +65,7 @@ def rcos_pulse(osr, span, beta):
     # Creating the pulse
     # ==================================================================================================================
     pulse = np.zeros_like(t)
-    pulse[np.abs(2*beta*t) == 1] = 0
+    pulse[np.abs(2*beta*t) == 1] = np.pi/4 * np.sinc(1/(2*beta))
     pulse[np.abs(2*beta*t) != 1] = np.sinc(tneq) * np.cos(np.pi * beta * tneq) / (1 - (2 * beta * tneq) ** 2)
     return pulse
 
@@ -87,8 +87,8 @@ def rrc_pulse(osr, span, beta):
     # ==================================================================================================================
     pulse = np.zeros_like(t)
     pulse[~neq0] = 1 + beta * (4/np.pi - 1)
-    pulse[~neqb] = beta / np.sqrt(2) * ((1 + 2/np.pi)* np.sin(np.pi/(4*beta)) + (1 - 2/np.pi)* np.cos(np.pi/(4*beta)))
-    pulse[neqb & neq0] = 2 * beta / np.pi * (np.cos((1 + beta) * np.pi * t[neqb & neq0]) + (np.sin((1 - beta)*np.pi*t[neqb & neq0]) / (4*beta*t[neqb & neq0]))) / (1 - (4*beta*t[neqb & neq0])**2)
+    pulse[~neqb] = beta / np.sqrt(2) * ((1 + 2/np.pi)*np.sin(np.pi/(4*beta)) + (1 - 2/np.pi)*np.cos(np.pi/(4*beta)))
+    pulse[neqb & neq0] = 4 * beta / np.pi * (np.cos((1 + beta) * np.pi * t[neqb & neq0]) + (np.sin((1 - beta)*np.pi*t[neqb & neq0]) / (4*beta*t[neqb & neq0]))) / (1 - (4*beta*t[neqb & neq0])**2)
     return pulse
 
 def _time_vec(osr, span):
@@ -114,7 +114,7 @@ def _get_pulse(method, osr, span, beta):
     elif method == 'rcos':
         return rcos_pulse(osr, span, beta)
     elif method == 'rrc':
-        rrc_pulse(osr, span, beta)
+        return rrc_pulse(osr, span, beta)
     else:
         raise ValueError('Method is not available, please try another')
 

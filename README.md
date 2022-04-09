@@ -3,6 +3,91 @@ Repository for the communication signal processing package
 
 Developed by: Tomer Geva
 
+## Example uses:
+### Generating OSR1 and OSR `n` signal
+```python
+import CommDspy as cdsp
+import numpy as np
+
+# ==================================================================================================================
+# Local variables
+# ==================================================================================================================
+prbs_type       = cdsp.constants.PrbsEnum.PRBS9
+bits_per_symbol = 2
+bit_order_inv   = False
+inv_msb         = False
+inv_lsb         = False
+pn_inv          = False
+constellation   = cdsp.constants.ConstellationEnum.PAM4
+full_scale      = True
+coding          = cdsp.constants.CodingEnum.UNCODED
+rolloff         = 0.5
+poly_coeff      = cdsp.get_polynomial(prbs_type)
+init_seed       = np.array([1] * prbs_type.value)
+prbs_len        = 25  # can be any number
+# ==================================================================================================================
+# Creating reference pattern
+# ==================================================================================================================
+# --------------------------------------------------------------------------------------------------------------
+# Getting PRBS binary pattern
+# --------------------------------------------------------------------------------------------------------------
+prbs_seq, seed_dut = cdsp.tx.prbs_gen(poly_coeff, init_seed, prbs_len)
+# --------------------------------------------------------------------------------------------------------------
+# Duplicating if needed and coding
+# --------------------------------------------------------------------------------------------------------------
+prbs_bin_mult = np.tile(prbs_seq, bits_per_symbol)
+pattern       = cdsp.tx.bin2symbol(prbs_bin_mult, 2 ** bits_per_symbol, bit_order_inv, inv_msb, inv_lsb, pn_inv)
+pattern       = cdsp.tx.coding(pattern, constellation, coding, full_scale=full_scale)
+# ==================================================================================================================
+# Pulse shaping
+# ==================================================================================================================
+tx_out_rect = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rect')
+tx_out_sinc = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='sinc')
+tx_out_rcos = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
+tx_out_rrc  = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
+```
+Results:
+
+![Tx example](./pictures/tx_example.png)
+**Figure 1** - Simple Tx example
+
+## Digital oversampling
+```python
+import numpy as np
+import os
+import CommDspy as cdsp
+import json
+
+# ==================================================================================================================
+# Local variables
+# ==================================================================================================================
+order = 16
+beta  = 0.5
+# ==================================================================================================================
+# Loading data
+# ==================================================================================================================
+f = open(os.path.join('..','test_data', 'example_channel_full.json'))
+data = json.load(f)
+f.close()
+channel             = np.array(data['channel'])
+channel_ui          = data['channel_ui']
+channel_sampled     = data['channel_sampled']
+osr                 = data['osr']
+ch_segment          = channel[order // 2 * osr: -1*(((order // 2)-1) * osr - 1)]
+# ==================================================================================================================
+# Digital up-sampling DUT
+# ==================================================================================================================
+channel_upsample_lag, x2, x1 = cdsp.digital_oversample(channel_sampled, osr=osr, order=order, method='lagrange')
+channel_upsample_sinc, _, _  = cdsp.digital_oversample(channel_sampled, osr=osr, order=order, method='sinc')
+channel_upsample_rcos, _, _  = cdsp.digital_oversample(channel_sampled, osr=osr, order=order, method='rcos', beta=beta)
+```
+Results:
+
+![channel reconstruction](./pictures/channel_reconstruction.png)
+
+**Figure 2** - channel reconstruction
+
+# Functions' Description
 ## 0. Auxilliaty functions:
 ### 0.1. get_polynomial
 Function receives the PRBS type enumeration (detailed below) and returns the commonly used generating polymonial coefficients for the PRBS pattern
@@ -31,22 +116,41 @@ Function receives polynomial coefficients and an initial seed, creates binary PR
 ### 1.2. PrbsIterator
 An iterable used to generate the next bit in the given PRBS. during initialization, a seed and the generating polynomial are given to the object. after calling iter(), next() can be used to pop the next bit in the PRBS
 
-### bin2symbol
+### 1.3. bin2symbol
 Function receives a binary sequence and computes the UNCODED symbols matching the binary sequence. The function is inputted wiith:
-  * bin_mat - The binary sequence wanted to be converted 
-  * num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS POWERS OF 2 (2, 4, 8, ...)
-  * bit_order_inv=False - Booleans stating if we want to invert the bit order (By default, MSB is the rightmost bit and the LSB is the leftmost bits)
-  * inv_msb=False - Boolean stating if we want to invert the msb
-  * inv_lsb=False - Boolean stating if we want to invert the lsb
-  * pn_inv=False - Boolean stating if we want to invert all bits 
+* bin_mat - The binary sequence wanted to be converted 
+* num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS POWERS OF 2 (2, 4, 8, ...)
+* bit_order_inv=False - Booleans stating if we want to invert the bit order (By default, MSB is the rightmost bit and the LSB is the leftmost bits)
+* inv_msb=False - Boolean stating if we want to invert the msb
+* inv_lsb=False - Boolean stating if we want to invert the lsb
+* pn_inv=False - Boolean stating if we want to invert all bits 
 
-### 1.3. coding
+### 1.4. coding
 Function used to code the pattern. Function is inputted with:
-  * pattern - Input pattern of UNCODED symbols which should be coded
-  * constellation=ConstellationEnum.PAM4 - Wanted constellation
-  * coding=CodingEnum.UNCODED - Wanted coding, either UNCODED or GRAY
-  * pn_inv=False - Boolean stating if we want to invert the levels after coding
-  * full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
+* pattern - Input pattern of UNCODED symbols which should be coded
+* constellation=ConstellationEnum.PAM4 - Wanted constellation
+* coding=CodingEnum.UNCODED - Wanted coding, either UNCODED or GRAY
+* pn_inv=False - Boolean stating if we want to invert the levels after coding
+* full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
+
+### 1.5. pulse_shape
+Function useed to perform pulse shaping to the inputted discrete signal. Function is inputted with:
+* signal - Input signal in OSR 1 for the pulse shaping
+* osr - The wanted Over Sampling Rate after the shaping
+* span - The span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols forward
+* method - The shape of the pulse. can be either:
+  * 'rect' - rectangular pulse
+  * 'sinc' - sinc pulse
+  * 'rcos' - raised cosine pulse with roll-off parameter beta
+  * 'rrc' - root raised cosine pulse with rolloff parameter beta
+
+### Various pulse generators
+The package supports all the pulses written in 1.5. above. The function names are:
+* rrc_pulse
+* rcos_pulse
+* sinc_pulse
+* rect_pulse
+Read the respective description for further information
 
 ## 2. Rx sub-package information
 ### 2.1. slicer
@@ -188,3 +292,4 @@ enumeration of the different coding types
  2. please run the following command:
 
         pip install dist/labsignalprocess-<VERSION>-py3-none-any.whl 
+ 

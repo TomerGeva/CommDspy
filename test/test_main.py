@@ -18,17 +18,6 @@ def test_init():
     random.seed(seed)
     np.random.seed(seed)
 
-# def test_dig_over_sample():
-#     num_precursors  = random.randint(8, 24)
-#     num_postcursors = random.randint(8, 32)
-#     # ==================================================================================================================
-#     # Creating reference channel
-#     # ==================================================================================================================
-#     precursors = np.around(np.random.random(num_precursors), decimals=6) - 0.5
-#     postcursors = np.around(np.random.random(num_postcursors), decimals=6) - 0.5
-#     channel_ref = np.concatenate((precursors, [1], postcursors))
-#     channel_ref_upsample = cdsp.digital_oversample(channel_ref, osr=16, order=16)
-
 def test_dig_delay_fir_coeffs():
     assert np.allclose(cdsp.dig_delay_lagrange_coeffs(1, 0), [1, 0])
     assert np.allclose(cdsp.dig_delay_lagrange_coeffs(1, 1), [0, 1])
