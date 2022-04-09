@@ -87,6 +87,11 @@ Results:
 ![channel reconstruction](./pictures/channel_reconstruction.png)
 
 **Figure 2** - channel reconstruction
+```Python
+# Sinc interpolation MSE          = -17.68 [dB]
+# Lagrange interpolation MSE      = -23.59 [dB]
+# Raised Cosine interpolation MSE = -29.84 [dB]
+```
 
 # Functions' Description
 ## 0. Auxilliaty functions:
