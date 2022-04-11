@@ -52,6 +52,19 @@ Results:
 
 **Figure 1** - Simple Tx example
 
+The pulse shaped signal can be plotted as an eye diagram as follows:
+```python
+eye_d, amp_vec = cdsp.eye_diagram(tx_out_rcos, 32, 128, fs_value=3, quantization=2048, logscale=True)
+```
+The results can be seen using `matplotlib.pyplot` functions such as `contourf`:
+![Eye_pulse_rcos_rolloff_0p5](./pictures/eye_pulse_shape_rcos_rolloff_0p5.png)
+
+**Figure 3** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.5
+
+![Eye_pulse_rcos_rolloff_0p5](./pictures/eye_pulse_shape_rcos_rolloff_0p9.png)
+
+**Figure 4** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.9
+
 ## Digital oversampling
 ```python
 import numpy as np
@@ -268,6 +281,33 @@ Function uses *sinc* interpolation to produce digital delay filter coefficients.
 * n - The order of the filter
 * alpha - the fractional delay wanted. alpha must be between 0 and 1
 * forward - Boolean stating the favorite location when the filter order is odd. If filter order is 1 then forward must be True for the function to work
+
+### 4.5. dig_delay_rcos_coeffs
+Function uses *raised cosine* interpolation to produce digital delay filter coefficients. Function is inputted with:
+* n - The order of the filter
+* alpha - the fractional delay wanted. alpha must be between 0 and 1
+* forward - Boolean stating the favorite location when the filter order is odd. If filter order is 1 then forward must be True for the function to work
+* beta - rolloff factor for the raised cosine
+
+### 4.5. digital_oversample
+Function performs digital oversampling by applyting digital delat filters and fusing the results into 1 flattened array. Function is inputted with:
+* signal_vec - Input signal for oversampling
+* osr - Over sampling rate wanted, should be an integer
+* order - Order of the filter to be computed
+* method - the method of interpolation, can be:
+  * 'lagrange'
+  * 'sinc'
+  * 'rcos'
+* beta=0 - rolloff factor in case the method chosen is 'rcos'
+
+### 4.6. eye_diagram
+Function computed the eye diagram of a signal. Function is inputted with:
+* signal - Input signal to plot the eye diagram
+* osr_in - Over Sampling Rate of the signal
+* osr_diag - Over Sampling used to plot the eye, if larger than `osr_in` then performing sinc interpolation 
+* fs_value=1 - the limits of the eye diagram
+* quantization=256 - resolution of the amplitudes in the eye diagram is computed by: `2*fs_value / qualtization`
+* logscale=False - If True, returns the eye diagram with logscale values
 
 ## 5. Enumeration classes
 ### 5.1.PrbsEnum 

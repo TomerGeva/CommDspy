@@ -6,7 +6,7 @@ def tx_example():
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    prbs_type       = cdsp.constants.PrbsEnum.PRBS9
+    prbs_type       = cdsp.constants.PrbsEnum.PRBS13
     bits_per_symbol = 2
     bit_order_inv   = False
     inv_msb         = False
@@ -18,7 +18,7 @@ def tx_example():
     rolloff         = 0.5
     poly_coeff      = cdsp.get_polynomial(prbs_type)
     init_seed       = np.array([1] * prbs_type.value)
-    prbs_len        = 25  # can be any number
+    prbs_len        = 8191  # can be any number
     # ==================================================================================================================
     # Creating reference pattern
     # ==================================================================================================================
@@ -37,7 +37,7 @@ def tx_example():
     # ==================================================================================================================
     tx_out_rect = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rect')
     tx_out_sinc = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='sinc')
-    tx_out_rcos = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
+    tx_out_rcos = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=0.8)
     tx_out_rrc  = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
     plt.figure()
     plt.plot(np.arange(0, len(tx_out_rect))/32, tx_out_rect, '-')
@@ -53,6 +53,15 @@ def tx_example():
                 'Original symbols'])
     plt.title('Example of simple Tx prbs + pulse shaping')
     plt.xlabel(' Time [UI]')
+    plt.ylabel('Amplitude')
+    # ==================================================================================================================
+    # Eye diagram
+    # ==================================================================================================================
+    plt.figure()
+    eye_d, amp_vec = cdsp.eye_diagram(tx_out_rcos, 32, 128, fs_value=3, quantization=2048, logscale=True)
+    time_ui = np.linspace(0, 2, 256)
+    plt.contourf(time_ui, amp_vec, eye_d, levels=1000, cmap='gray')
+    plt.xlabel('Time [UI]')
     plt.ylabel('Amplitude')
     plt.show()
 

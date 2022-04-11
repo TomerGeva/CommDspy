@@ -128,7 +128,8 @@ def digital_oversample(signal_vec, osr, order, method, beta=0):
     # ==================================================================================================================
     # Flattening and adding the last symbol
     # ==================================================================================================================
-    temp = np.hstack((np.reshape(output_mat, -1), signal_vec[-1*trim_post]))
+    # temp = np.hstack((np.reshape(output_mat, -1), signal_vec[-1*trim_post]))
+    temp = np.reshape(output_mat, -1)
     x1 = np.arange(0, len(signal_vec) - trim_pre - trim_post + 1)
     x2 = np.arange(0, len(temp)) / osr
     return temp, x2, x1
