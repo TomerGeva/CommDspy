@@ -66,6 +66,7 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False):
     # Eye diagram
     # ==================================================================================================================
     if pulse_eye:
+        tx_out_rcos = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
         plt.figure()
         eye_d, amp_vec = cdsp.eye_diagram(tx_out_rcos, 32, 128, fs_value=3, quantization=2048, logscale=True)
         time_ui = np.linspace(0, 2, 256)
@@ -78,10 +79,10 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False):
     # ==================================================================================================================
     if awgn_eye:
         rolloff = 0.9
-        snr     = 30
+        snr     = 10
         pattern = tx_example()
         ch_out = cdsp.channel.awgn(pattern, osr=32, span=8, method='rcos', beta=rolloff, snr=snr)
-        eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=2048, logscale=True)
+        eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=2048, logscale=False)
         time_ui = np.linspace(0, 2, 256)
         plt.contourf(time_ui, amp_vec, eye_d, levels=100, cmap='gray')
         plt.title(f'Eye Diagram, AWGN noise + pulse with SNR of {snr} [dB]')
@@ -91,4 +92,4 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False):
 
 if __name__ == '__main__':
     # tx_example()
-    channel_example(awgn_eye=True)
+    channel_example(pulse_eye=True, awgn_eye=True)

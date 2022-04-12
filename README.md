@@ -61,11 +61,11 @@ eye_d, amp_vec = cdsp.eye_diagram(tx_out_rcos, 32, 128, fs_value=3, quantization
 The results can be seen using `matplotlib.pyplot` functions such as `contourf`:
 ![Eye_pulse_rcos_rolloff_0p5](./pictures/eye_pulse_shape_rcos_rolloff_0p5.png)
 
-**Figure 2** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.5
+**Figure 2** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.5, logscale plot
 
 ![Eye_pulse_rcos_rolloff_0p5](./pictures/eye_pulse_shape_rcos_rolloff_0p9.png)
 
-**Figure 3** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.9
+**Figure 3** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.9, logscale plot
 
 ## Passing a signal through channels
 The package can be used to pass a signal through different channels
@@ -76,6 +76,8 @@ rolloff = 0.9
 snr     = 30
 pattern = tx_example()
 ch_out  = cdsp.channel.awgn(pattern, osr=32, span=8, method='rcos', beta=rolloff, snr=snr)
+eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=2048, logscale=False)
+time_ui = np.linspace(0, 2, 256)
 ```
 The result can be shown in the form of an eye diagram:
 
