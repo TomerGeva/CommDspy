@@ -69,7 +69,7 @@ The results can be seen using `matplotlib.pyplot` functions such as `contourf`:
 
 ## Passing a signal through channels
 The package can be used to pass a signal through different channels
-#### AWGN
+### AWGN
 Adding white gaussian noise on top of the pulse shaping, this is done by:
 ```python
 rolloff = 0.9
@@ -89,7 +89,7 @@ The result can be shown in the form of an eye diagram:
 
 **Figure 4** AWGN eye diagran, rolloff 0.9 and SNR 10 [dB]
 
-#### ISI + AWGN channel
+### ISI + AWGN channel
 The ISI is given via filter parameters `a` and `b` where `b` are FIR parameters and `a` are IIR parameters.
 ```python
 rolloff = 0.9
