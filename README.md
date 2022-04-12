@@ -8,43 +8,45 @@ Developed by: Tomer Geva
 ```python
 import CommDspy as cdsp
 import numpy as np
-
-# ==================================================================================================================
-# Local variables
-# ==================================================================================================================
-prbs_type       = cdsp.constants.PrbsEnum.PRBS9
-bits_per_symbol = 2
-bit_order_inv   = False
-inv_msb         = False
-inv_lsb         = False
-pn_inv          = False
-constellation   = cdsp.constants.ConstellationEnum.PAM4
-full_scale      = True
-coding          = cdsp.constants.CodingEnum.UNCODED
-rolloff         = 0.5
-poly_coeff      = cdsp.get_polynomial(prbs_type)
-init_seed       = np.array([1] * prbs_type.value)
-prbs_len        = 25  # can be any number
-# ==================================================================================================================
-# Creating reference pattern
-# ==================================================================================================================
-# --------------------------------------------------------------------------------------------------------------
-# Getting PRBS binary pattern
-# --------------------------------------------------------------------------------------------------------------
-prbs_seq, seed_dut = cdsp.tx.prbs_gen(poly_coeff, init_seed, prbs_len)
-# --------------------------------------------------------------------------------------------------------------
-# Duplicating if needed and coding
-# --------------------------------------------------------------------------------------------------------------
-prbs_bin_mult = np.tile(prbs_seq, bits_per_symbol)
-pattern       = cdsp.tx.bin2symbol(prbs_bin_mult, 2 ** bits_per_symbol, bit_order_inv, inv_msb, inv_lsb, pn_inv)
-pattern       = cdsp.tx.coding(pattern, constellation, coding, full_scale=full_scale)
+def tx_example():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    prbs_type       = cdsp.constants.PrbsEnum.PRBS13
+    bits_per_symbol = 2
+    bit_order_inv   = False
+    inv_msb         = False
+    inv_lsb         = False
+    pn_inv          = False
+    constellation   = cdsp.constants.ConstellationEnum.PAM4
+    full_scale      = True
+    coding          = cdsp.constants.CodingEnum.UNCODED
+    poly_coeff      = cdsp.get_polynomial(prbs_type)
+    init_seed       = np.array([1] * prbs_type.value)
+    prbs_len        = 25  # can be any number
+    # ==================================================================================================================
+    # Creating reference pattern
+    # ==================================================================================================================
+    # --------------------------------------------------------------------------------------------------------------
+    # Getting PRBS binary pattern
+    # --------------------------------------------------------------------------------------------------------------
+    prbs_seq, seed_dut = cdsp.tx.prbs_gen(poly_coeff, init_seed, prbs_len)
+    # --------------------------------------------------------------------------------------------------------------
+    # Duplicating if needed and coding
+    # --------------------------------------------------------------------------------------------------------------
+    prbs_bin_mult = np.tile(prbs_seq, bits_per_symbol)
+    pattern       = cdsp.tx.bin2symbol(prbs_bin_mult, 2 ** bits_per_symbol, bit_order_inv, inv_msb, inv_lsb, pn_inv)
+    pattern       = cdsp.tx.coding(pattern, constellation, coding, full_scale=full_scale)
+    
+pattern = tx_example()
 # ==================================================================================================================
 # Pulse shaping
 # ==================================================================================================================
-tx_out_rect = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rect')
-tx_out_sinc = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='sinc')
-tx_out_rcos = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
-tx_out_rrc  = cdsp.tx.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
+rolloff     = 0.5
+tx_out_rect = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rect')
+tx_out_sinc = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='sinc')
+tx_out_rcos = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
+tx_out_rrc  = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
 ```
 Results:
 
@@ -59,11 +61,31 @@ eye_d, amp_vec = cdsp.eye_diagram(tx_out_rcos, 32, 128, fs_value=3, quantization
 The results can be seen using `matplotlib.pyplot` functions such as `contourf`:
 ![Eye_pulse_rcos_rolloff_0p5](./pictures/eye_pulse_shape_rcos_rolloff_0p5.png)
 
-**Figure 3** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.5
+**Figure 2** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.5
 
 ![Eye_pulse_rcos_rolloff_0p5](./pictures/eye_pulse_shape_rcos_rolloff_0p9.png)
 
-**Figure 4** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.9
+**Figure 3** Eye diagram of PRBS13 after raised cosine pulse shaping with rolloff of 0.9
+
+## Passing a signal through channels
+The package can be used to pass a signal through different channels
+#### AWGN
+Adding white gaussian noise on top of the pulse shaping, this is done by:
+```python
+rolloff = 0.9
+snr     = 30
+pattern = tx_example()
+ch_out  = cdsp.channel.awgn(pattern, osr=32, span=8, method='rcos', beta=rolloff, snr=snr)
+```
+The result can be shown in the form of an eye diagram:
+
+![awgn_snr30](./pictures/eye_rcos_awgn_snr30.png)
+
+**Figure 3** AWGN eye diagran, rolloff 0.9 and SNR 30 [dB]
+
+![awgn_snr10](./pictures/eye_rcos_awgn_snr10.png)
+
+**Figure 3** AWGN eye diagran, rolloff 0.9 and SNR 10 [dB]
 
 ## Digital oversampling
 ```python
@@ -99,7 +121,7 @@ Results:
 
 ![channel reconstruction](./pictures/channel_reconstruction.png)
 
-**Figure 2** - channel reconstruction
+**Figure 4** - channel reconstruction
 ```Python
 # Sinc interpolation MSE          = -17.68 [dB]
 # Lagrange interpolation MSE      = -23.59 [dB]
@@ -152,17 +174,6 @@ Function used to code the pattern. Function is inputted with:
 * pn_inv=False - Boolean stating if we want to invert the levels after coding
 * full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
 
-### 1.5. pulse_shape
-Function useed to perform pulse shaping to the inputted discrete signal. Function is inputted with:
-* signal - Input signal in OSR 1 for the pulse shaping
-* osr - The wanted Over Sampling Rate after the shaping
-* span - The span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols forward
-* method - The shape of the pulse. can be either:
-  * 'rect' - rectangular pulse
-  * 'sinc' - sinc pulse
-  * 'rcos' - raised cosine pulse with roll-off parameter beta
-  * 'rrc' - root raised cosine pulse with rolloff parameter beta
-
 ### Various pulse generators
 The package supports all the pulses written in 1.5. above. The function names are:
 * rrc_pulse
@@ -210,12 +221,25 @@ The function is inputted with:
 Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
 
 ## 3. Channel sub-package information
-### 3.1. awgn
+### 3.1. pulse_shape
+Function useed to perform pulse shaping to the inputted discrete signal. Function is inputted with:
+* signal - Input signal in OSR 1 for the pulse shaping
+* osr - The wanted Over Sampling Rate after the shaping
+* span - The span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols forward
+* method - The shape of the pulse. can be either:
+  * 'rect' - rectangular pulse
+  * 'sinc' - sinc pulse
+  * 'rcos' - raised cosine pulse with roll-off parameter beta
+  * 'rrc' - root raised cosine pulse with rolloff parameter beta
+
+This function simulated a perfect channel, i.e. ch[n] = delta[n] therefore at the end of the channel we only have the pulse shaping.
+
+### 3.2. awgn
 Function that adds Additive White Gaussian Noise in a power to create a wanted SNR. Function is inputted with:
 * signal - input we and to add the AWGN to
 * snr - the SNR of the signal w.r.t the added noise
 
-### 3.2. awgn_channel
+### 3.3. awgn_channel
 Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
 * signal - the signal we want to pass through the channel
 * b - The polynomial coefficients of the channel's nominator

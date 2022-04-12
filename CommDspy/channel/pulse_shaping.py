@@ -14,7 +14,9 @@ def pulse_shape(signal, osr, span, method='rect', beta=0.5):
                 3. 'rcos' - raised cosine pulse with roll-off parameter beta
                 4. 'rrc' - root raised cosine pulse with rolloff parameter beta
     :param beta: roll-off parameter
-    :return: the signal after the pulse shaping
+    :return: the signal after the pulse shaping. This function simulated an ideal channel of ch[n] = delta[n] without
+    noise. This is not a practical use-case but more of a feature to gain insight. For practical channels use the
+    channel sub-package
     """
     # ==================================================================================================================
     # Local parameters
