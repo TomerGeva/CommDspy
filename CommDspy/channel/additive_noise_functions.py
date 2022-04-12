@@ -45,7 +45,7 @@ def awgn(signal, snr, osr=1, span=1, method='rect', beta=0.5):
 
     return ch_out_pulse
 
-def awgn_channel(signal, b, a, osr=1, span=1, method='rect', zi=None, snr=None):
+def awgn_channel(signal, b, a, osr=1, span=1, method='rect', beta=0.5, zi=None, snr=None):
     """
     :param signal: The input signal you want to pass through the channel
     :param b: Nominator polynomial values (FIR).
@@ -61,6 +61,7 @@ def awgn_channel(signal, b, a, osr=1, span=1, method='rect', zi=None, snr=None):
                 2. 'sinc' - sinc pulse
                 3. 'rcos' - raised cosine pulse with roll-off parameter beta
                 4. 'rrc' - root raised cosine pulse with rolloff parameter beta
+    :param beta: roll-off factor for the raised cosine or RRC pulses
     :param snr: SNR of the AWGN signal if the SNR is None, does not add noise. Assuming the **snr is given in dB**
     :return: The signal after passing through the channel and added the AWGN. We assume that the input signal is clean.
              Assuming initial conditions for the channel are zero
@@ -75,13 +76,13 @@ def awgn_channel(signal, b, a, osr=1, span=1, method='rect', zi=None, snr=None):
     # ==================================================================================================================
     ch_out = lfilter(b, a, signal, zi=zi)
     # ==================================================================================================================
+    # Pulse shaping
+    # ==================================================================================================================
+    ch_out_pulse = pulse_shape(ch_out, osr=osr, span=span, method=method, beta=beta)
+    # ==================================================================================================================
     # Adding noise if needed
     # ==================================================================================================================
     if snr is not None:
-        ch_out += awgn(ch_out, snr)
-    # ==================================================================================================================
-    # Pulse shaping
-    # ==================================================================================================================
-    ch_out_pulse = pulse_shape(ch_out, osr=osr, span=span, method=method)
+        ch_out_pulse += awgn(ch_out_pulse, snr)
 
     return ch_out_pulse

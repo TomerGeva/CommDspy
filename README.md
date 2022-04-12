@@ -87,7 +87,28 @@ The result can be shown in the form of an eye diagram:
 
 ![awgn_snr10](./pictures/eye_rcos_awgn_snr10.png)
 
-**Figure 3** AWGN eye diagran, rolloff 0.9 and SNR 10 [dB]
+**Figure 4** AWGN eye diagran, rolloff 0.9 and SNR 10 [dB]
+
+#### ISI + AWGN channel
+The ISI is given via filter parameters `a` and `b` where `b` are FIR parameters and `a` are IIR parameters.
+```python
+rolloff = 0.9
+snr = 10
+b = [0.7]
+a = [1, -0.2]
+pattern = tx_example()
+ch_out = cdsp.channel.awgn_channel(pattern, b, a, osr=32, span=8, method='rcos', beta=rolloff, snr=snr)
+eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
+```
+The result can be shown in the form of an eye diagram:
+
+![isi_awgn_snr30](./pictures/eye_rcos_awgn_isi_snr30.png)
+
+**Figure 3** ISI & AWGN eye diagran, rolloff 0.9 and SNR 30 [dB]
+
+![isi_awgn_snr10](./pictures/eye_rcos_awgn_isi_snr10.png)
+
+**Figure 4** ISI & AWGN eye diagran, rolloff 0.9 and SNR 10 [dB]
 
 ## Digital oversampling
 ```python
