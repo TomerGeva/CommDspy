@@ -144,7 +144,7 @@ Results:
 
 ![channel reconstruction](./pictures/channel_reconstruction.png)
 
-**Figure 4** - channel reconstruction
+**Figure 5** - channel reconstruction
 ```Python
 # Sinc interpolation MSE          = -17.68 [dB]
 # Lagrange interpolation MSE      = -23.59 [dB]
@@ -356,7 +356,7 @@ Function computed the eye diagram of a signal. Function is inputted with:
 * quantization=256 - resolution of the amplitudes in the eye diagram is computed by: `2*fs_value / qualtization`
 * logscale=False - If True, returns the eye diagram with logscale values
 
-## 5. Enumeration classes
+## 5. Mics
 ### 5.1.PrbsEnum 
 Enumeration for the PRBS type used
   * PRBS7
@@ -377,6 +377,8 @@ enumeration of the different coding types
   * UNCODED
   * GRAY
   
+### EYE_COLORMAP
+A maplotlib colormap object to plot the eye diagrams
 # To update the version:
  1. please run the following command from the respective directory:
         
