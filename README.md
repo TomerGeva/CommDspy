@@ -254,7 +254,7 @@ We can see that there is heavy ISI that can not be easily overcome by a CTLE alo
 
 **Figure 10** Eye diagram, FFE output with SNR of 30 [dB]
 
-![ffe_out30](./pictures/eye_ffe_out_rx_example_snr10.png)
+![ffe_out30](./pictures/eye_ffe_out_rx_example_snr0.png)
 
 **Figure 11** Eye diagram, FFE output with SNR of 10 [dB]
 

@@ -26,7 +26,6 @@ def least_squares(a_mat, b, regularization='None', reg_lambda=0):
     else:
         raise ValueError('Regularization type not supported')
 
-
 def ols(a_mat, b):
     """
     :param a_mat:

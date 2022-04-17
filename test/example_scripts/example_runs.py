@@ -118,7 +118,7 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
     constellation = cdsp.constants.ConstellationEnum.PAM4
     full_scale    = True
     rolloff = 0.9
-    snr     = 30
+    snr     = 10
     osr     = 32
     pattern = tx_example()
     # ==================================================================================================================
@@ -209,4 +209,4 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
 if __name__ == '__main__':
     # tx_example()
     # channel_example(awgn_ch_eye=False)
-    rx_example(ch_out_eye=True, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=False)
+    rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=True)
