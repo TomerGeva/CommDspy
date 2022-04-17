@@ -197,14 +197,6 @@ Function used to code the pattern. Function is inputted with:
 * pn_inv=False - Boolean stating if we want to invert the levels after coding
 * full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
 
-### Various pulse generators
-The package supports all the pulses written in 1.5. above. The function names are:
-* rrc_pulse
-* rcos_pulse
-* sinc_pulse
-* rect_pulse
-Read the respective description for further information
-
 ## 2. Rx sub-package information
 ### 2.1. slicer
 Function receives data matrix from the slicer input and performs the slicing operation.
@@ -243,7 +235,32 @@ The function is inputted with:
 ### 2.5. prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
 Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
 
+### 2.6. ctle
+Function passes an input signal through a CTLE defined via the poles, zeros and DC gain. Function is inputted with:
+* signal - input signal to pass through the CTLE
+* zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
+* poles - list of frequencies where there are poles in [Hz]. If the given poles are positive, multiply by -1 to enforce stability
+* dc_gain - gain in [dB] for the DC frequencies 
+* fs - Symbol frequency, 1/Ts
+* osr - Over Sampling Rate the input signal 'sig'
+* zi - Initial condition for the CTLE, Default is None, where we start with zeros
+
+### 2.7. get_ctle_filter
+Function computed the IIR coefficients for the digital equivalent for the CTLE defined via the zeros, poles and DC gain. Function is inputted with
+* zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
+* poles - list of frequencies where there are poles in [Hz]. If the given poles are positive, multiply by -1 to enforce stability
+* dc_gain - gain in [dB] for the DC frequencies 
+* fs - Symbol frequency, 1/Ts
+* osr - Over Sampling Rate the input signal 'sig'
+
 ## 3. Channel sub-package information
+### 3.0. Various pulse generators
+The package supports all the pulses written in 3.1. The function names are:
+* rrc_pulse
+* rcos_pulse
+* sinc_pulse
+* rect_pulse
+Read the respective description for further information
 ### 3.1. pulse_shape
 Function useed to perform pulse shaping to the inputted discrete signal. Function is inputted with:
 * signal - Input signal in OSR 1 for the pulse shaping
@@ -377,7 +394,7 @@ enumeration of the different coding types
   * UNCODED
   * GRAY
   
-### EYE_COLORMAP
+### 5.4. EYE_COLORMAP
 A maplotlib colormap object to plot the eye diagrams
 # To update the version:
  1. please run the following command from the respective directory:

@@ -1,6 +1,8 @@
 import CommDspy as cdsp
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import json
 
 def tx_example():
     # ==================================================================================================================
@@ -107,6 +109,54 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
         plt.ylabel('Amplitude')
         plt.show()
 
+def rx_example(ch_out_eye=False, ctle_out_eye=False):
+    # ==================================================================================================================
+    # Tx + Channel setting
+    # ==================================================================================================================
+    rolloff = 0.9
+    snr     = 30
+    osr     = 32
+    pattern = tx_example()
+    # ==================================================================================================================
+    # CTLE settings
+    # ==================================================================================================================
+    zeros = [1e9, 11e9]
+    poles = [15e9, 20e9, 25e9]
+    fs    = 53.125e9
+    # ==================================================================================================================
+    # Loading data
+    # ==================================================================================================================
+    f = open(os.path.join('..', 'test_data', 'example_channel_full.json'))
+    data = json.load(f)
+    f.close()
+    channel_sampled = data['channel_sampled']
+    # ==================================================================================================================
+    # Passing through channel
+    # ==================================================================================================================
+    ch_out = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+    if ch_out_eye:
+        eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
+        time_ui = np.linspace(0, 2, 256)
+        plt.contourf(time_ui, amp_vec, eye_d, levels=100, cmap=cdsp.EYE_COLORMAP)
+        plt.title(f'Eye Diagram, loaded channel + pulse with SNR of {snr} [dB]')
+        plt.xlabel('Time [UI]')
+        plt.ylabel('Amplitude')
+        plt.show()
+    # ==================================================================================================================
+    # Passing through CTLE
+    # ==================================================================================================================
+    ctle_out = cdsp.rx.ctle(ch_out, zeros, poles, -20, fs=fs, osr=osr)
+    if ctle_out_eye:
+        eye_d, amp_vec = cdsp.eye_diagram(ctle_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
+        time_ui = np.linspace(0, 2, 256)
+        plt.contourf(time_ui, amp_vec, eye_d, levels=100, cmap=cdsp.EYE_COLORMAP)
+        plt.title(f'Eye Diagram,  loaded channel + pulse with SNR of {snr} [dB] ; after CTLE ')
+        plt.xlabel('Time [UI]')
+        plt.ylabel('Amplitude')
+        plt.show()
+
+
 if __name__ == '__main__':
     # tx_example()
-    channel_example(awgn_ch_eye=False)
+    # channel_example(awgn_ch_eye=False)
+    rx_example(ch_out_eye=False, ctle_out_eye=True)
