@@ -162,7 +162,7 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
         plt.semilogx(w_dis[w_dis < fs], 20 * np.log10(abs(h_dis[w_dis < fs])))
         plt.xlabel('Frequency')
         plt.ylabel('Amplitude response [dB]')
-        # plt.ylim([-5, 20])
+        plt.title('Example CTLE transfer function')
         plt.grid()
         plt.show()
     ctle_out = cdsp.rx.ctle(ch_out, zeros, poles, dc_gain, fs=fs, osr=osr)
