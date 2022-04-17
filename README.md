@@ -484,7 +484,7 @@ Function computed the eye diagram of a signal. Function is inputted with:
 * quantization=256 - resolution of the amplitudes in the eye diagram is computed by: `2*fs_value / qualtization`
 * logscale=False - If True, returns the eye diagram with logscale values
 
-## 5. Mics
+## 5. Misc
 ### 5.1.PrbsEnum 
 Enumeration for the PRBS type used
   * PRBS7
