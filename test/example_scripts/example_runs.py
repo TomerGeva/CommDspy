@@ -110,10 +110,13 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
         plt.ylabel('Amplitude')
         plt.show()
 
-def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False):
+def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=False):
     # ==================================================================================================================
     # Tx + Channel setting
     # ==================================================================================================================
+    prbs_type     = cdsp.constants.PrbsEnum.PRBS13
+    constellation = cdsp.constants.ConstellationEnum.PAM4
+    full_scale    = True
     rolloff = 0.9
     snr     = 30
     osr     = 32
@@ -123,8 +126,14 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False):
     # ==================================================================================================================
     zeros   = [5e8, 11e9]
     poles   = [1e9, 20e9, 25e9]
-    dc_gain = -4
-    fs    = 53.125e9
+    dc_gain = -4  # [dB]
+    fs      = 53.125e9
+    # ==================================================================================================================
+    # Rx FFE settings
+    # ==================================================================================================================
+    ffe_precursors  = 4
+    ffe_postcursors = 23
+    ffe_len         = ffe_postcursors + ffe_precursors + 1
     # ==================================================================================================================
     # Loading data
     # ==================================================================================================================
@@ -165,9 +174,39 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False):
         plt.xlabel('Time [UI]')
         plt.ylabel('Amplitude')
         plt.show()
-
+    # ==================================================================================================================
+    # Estimating optimal Rx FFE and passing data through
+    # ==================================================================================================================
+    ctle_out_mat = cdsp.buffer(ctle_out, osr, 0)
+    rx_ffe       = np.zeros(28)
+    err          = float('inf')
+    for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
+        rx_ffe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
+                                                        prbs_full_scale=full_scale,
+                                                        ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
+                                                        normalize=False,
+                                                        bit_order_inv=False,
+                                                        pn_inv_precoding=False,
+                                                        gray_coded=False,
+                                                        pn_inv_postcoding=False)
+        if rx_ffe_cand[-1] < err:
+            err    = rx_ffe_cand[-1]
+            rx_ffe = rx_ffe_cand[0]
+    # --------------------------------------------------------------------------------------------------------------
+    # Passing through the Rx FFE
+    # --------------------------------------------------------------------------------------------------------------
+    rx_ffe_ups = cdsp.upsample(rx_ffe, osr)
+    rx_ffe_out = signal.lfilter(rx_ffe_ups, 1, ctle_out)[ffe_len*osr:]
+    if rx_ffe_eye:
+        eye_d, amp_vec = cdsp.eye_diagram(rx_ffe_out, osr, 4*osr, fs_value=3, quantization=1024, logscale=False)
+        time_ui = np.linspace(0, 2, 256)
+        plt.contourf(time_ui, amp_vec, eye_d, levels=100, cmap=cdsp.EYE_COLORMAP)
+        plt.title(f'Eye Diagram,  loaded channel + pulse with SNR of {snr} [dB] ; after Rx FFE ')
+        plt.xlabel('Time [UI]')
+        plt.ylabel('Amplitude')
+        plt.show()
 
 if __name__ == '__main__':
     # tx_example()
     # channel_example(awgn_ch_eye=False)
-    rx_example(ch_out_eye=False, show_ctle=True, ctle_out_eye=True)
+    rx_example(ch_out_eye=True, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=False)

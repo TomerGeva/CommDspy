@@ -69,7 +69,7 @@ def equalization_estimation_prbs(prbs_type, signal, constellation,
         return [0], [0], 0, 0, 0
     prbs_seq, _ = prbs_generator(poly_coeff, init_seed, 2 * prbs_len)
     prbsq       = bin2symbol(prbs_seq, len(levels), bit_order_inv, False, False, pn_inv_precoding)
-    prbs_coded  = coding(prbsq, constellation, gray_coded, pn_inv_postcoding)
+    prbs_coded  = coding(prbsq, constellation, gray_coded, pn_inv_postcoding, prbs_full_scale)
     # ==================================================================================================================
     # Locking on the pattern beginning and then shifting to account for post-cursors
     # ==================================================================================================================
@@ -80,13 +80,19 @@ def equalization_estimation_prbs(prbs_type, signal, constellation,
     # Averaging to help remove noise from captured signal
     # ==================================================================================================================
     reps        = int(np.floor(len(signal) / prbs_len))
-    signal_mean = np.mean(np.reshape(signal[:(prbs_len * reps)], [-1, prbs_len]), axis=0)
+    if reps == 0:  # edge case when the signal is less than a full cycle
+        signal_mean = signal
+        mat_row_num = len(signal)
+        prbs_coded_shift = prbs_coded_shift[:mat_row_num]
+    else:
+        signal_mean = np.mean(np.reshape(signal[:(prbs_len * reps)], [-1, prbs_len]), axis=0)
+        mat_row_num = prbs_len
     signal_mean = np.concatenate((signal_mean, signal_mean[:postcursor_num + ffe_precursor + 1]))
     # ==================================================================================================================
     # Building the FFE part of the matrix in the Ax=b system
     # ==================================================================================================================
     full_hankel    = linalg.hankel(signal_mean, signal_mean[::-1][:postcursor_num + ffe_precursor + 1])
-    partial_hankel = full_hankel[:prbs_len, :]
+    partial_hankel = full_hankel[:mat_row_num, :]
     # ==================================================================================================================
     # Building the DFE part of the matrix in the Ax=b system and creating the matrix A for the least squares Ax=b
     # ==================================================================================================================
