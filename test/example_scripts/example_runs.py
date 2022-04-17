@@ -1,5 +1,6 @@
 import CommDspy as cdsp
 import numpy as np
+from scipy import signal
 import matplotlib.pyplot as plt
 import os
 import json
@@ -109,7 +110,7 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
         plt.ylabel('Amplitude')
         plt.show()
 
-def rx_example(ch_out_eye=False, ctle_out_eye=False):
+def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False):
     # ==================================================================================================================
     # Tx + Channel setting
     # ==================================================================================================================
@@ -120,8 +121,9 @@ def rx_example(ch_out_eye=False, ctle_out_eye=False):
     # ==================================================================================================================
     # CTLE settings
     # ==================================================================================================================
-    zeros = [1e9, 11e9]
-    poles = [15e9, 20e9, 25e9]
+    zeros   = [5e8, 11e9]
+    poles   = [1e9, 20e9, 25e9]
+    dc_gain = -4
     fs    = 53.125e9
     # ==================================================================================================================
     # Loading data
@@ -145,7 +147,16 @@ def rx_example(ch_out_eye=False, ctle_out_eye=False):
     # ==================================================================================================================
     # Passing through CTLE
     # ==================================================================================================================
-    ctle_out = cdsp.rx.ctle(ch_out, zeros, poles, -20, fs=fs, osr=osr)
+    if show_ctle:
+        numerator_dis, denomenator_dis = cdsp.rx.get_ctle_filter(zeros, poles, dc_gain, fs=fs, osr=osr)
+        w_dis, h_dis = signal.freqz(numerator_dis, denomenator_dis, worN=np.logspace(7, 11, 1000), fs=fs*osr * 2 * np.pi)
+        plt.semilogx(w_dis[w_dis < fs], 20 * np.log10(abs(h_dis[w_dis < fs])))
+        plt.xlabel('Frequency')
+        plt.ylabel('Amplitude response [dB]')
+        # plt.ylim([-5, 20])
+        plt.grid()
+        plt.show()
+    ctle_out = cdsp.rx.ctle(ch_out, zeros, poles, dc_gain, fs=fs, osr=osr)
     if ctle_out_eye:
         eye_d, amp_vec = cdsp.eye_diagram(ctle_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
@@ -159,4 +170,4 @@ def rx_example(ch_out_eye=False, ctle_out_eye=False):
 if __name__ == '__main__':
     # tx_example()
     # channel_example(awgn_ch_eye=False)
-    rx_example(ch_out_eye=False, ctle_out_eye=True)
+    rx_example(ch_out_eye=False, show_ctle=True, ctle_out_eye=True)
