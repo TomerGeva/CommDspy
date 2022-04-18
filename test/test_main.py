@@ -425,4 +425,5 @@ def test_coding_2():
 
 
 if __name__ == '__main__':
+    test_lock_pattern_to_signal_1()
     pass

@@ -118,7 +118,7 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
     constellation = cdsp.constants.ConstellationEnum.PAM4
     full_scale    = True
     rolloff = 0.9
-    snr     = 10
+    snr     = 0
     osr     = 32
     pattern = tx_example()
     # ==================================================================================================================
@@ -208,10 +208,46 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
         plt.ylabel('Amplitude')
         plt.show()
 
-    rx_ffe_out_mat = cdsp.buffer(rx_ffe_out, os, 0)
+    rx_ffe_out_mat = cdsp.buffer(rx_ffe_out, osr, 0)
     return rx_ffe_out_mat[:, phase]
+
+def rx_genie_checker():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    prbs_type       = cdsp.constants.PrbsEnum.PRBS13
+    constellation   = cdsp.constants.ConstellationEnum.PAM4
+    coding          = cdsp.constants.CodingEnum.UNCODED
+    full_scale      = True
+    rx_ffe_out      = rx_example()
+    bits_per_symbol = 2
+    bit_order_inv   = False
+    inv_msb         = False
+    inv_lsb         = False
+    pn_inv          = False
+    # ==================================================================================================================
+    # Slicing Rx FFE out to constellation points
+    # ==================================================================================================================
+    slicer_out = cdsp.rx.slicer(rx_ffe_out, levels=cdsp.get_levels(constellation, full_scale))
+    # ==================================================================================================================
+    # Decoding
+    # ==================================================================================================================
+    decoded_dut = cdsp.rx.decoding(slicer_out, constellation, coding, pn_inv, full_scale)
+    # ==================================================================================================================
+    # Converting to binary
+    # ==================================================================================================================
+    bit_vec_dut = cdsp.rx.symbol2bin(decoded_dut, 2 ** bits_per_symbol, bit_order_inv, inv_msb, inv_lsb, pn_inv)
+    # ==================================================================================================================
+    # Checking for errors
+    # ==================================================================================================================
+    lost_lock, correct_bit_count, error_bit = cdsp.rx.prbs_checker(prbs_type, bit_vec_dut, init_lock=False)
+    print(f'Lost lock: {lost_lock}')
+    print(f'Correct bit count: {correct_bit_count}')
+    print(f'Erred bits: {sum(error_bit)}')
+
 
 if __name__ == '__main__':
     # tx_example()
     # channel_example(awgn_ch_eye=False)
-    rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=True)
+    # rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=True)
+    rx_genie_checker()

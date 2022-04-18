@@ -267,9 +267,57 @@ And we can see that the ISI was negated by the CTLE and FFE.
 
 ## Geinie error checker
 The package allows locking a PRBS data on the true PRBS and use that to check for errors. Example of such usage will be as follows:
+1. passing the Rx FFE result through a slicer
+2. decoding the symbols
+3. converting the symbols bacl to binary
+4. checking for errors
 ```python
-
+# ==================================================================================================================
+# Local variables
+# ==================================================================================================================
+prbs_type       = cdsp.constants.PrbsEnum.PRBS13
+constellation   = cdsp.constants.ConstellationEnum.PAM4
+coding          = cdsp.constants.CodingEnum.UNCODED
+full_scale      = True
+rx_ffe_out      = rx_example()
+bits_per_symbol = 2
+bit_order_inv   = False
+inv_msb         = False
+inv_lsb         = False
+pn_inv          = False
+# ==================================================================================================================
+# Slicing Rx FFE out to constellation points
+# ==================================================================================================================
+slicer_out = cdsp.rx.slicer(rx_ffe_out, levels=cdsp.get_levels(constellation, full_scale))
+# ==================================================================================================================
+# Decoding
+# ==================================================================================================================
+decoded_dut = cdsp.rx.decoding(slicer_out, constellation, coding, pn_inv, full_scale)
+# ==================================================================================================================
+# Converting to binary
+# ==================================================================================================================
+bit_vec_dut = cdsp.rx.symbol2bin(decoded_dut, 2 ** bits_per_symbol, bit_order_inv, inv_msb, inv_lsb, pn_inv)
+# ==================================================================================================================
+# Checking for errors
+# ==================================================================================================================
+lost_lock, correct_bit_count, error_bit = cdsp.rx.prbs_checker(prbs_type, bit_vec_dut, init_lock=False)
+print(f'Lost lock: {lost_lock}')
+print(f'Correct bit count: {correct_bit_count}')
+print(f'Erred bits: {sum(error_bit)}')
 ```
+And for the example above with very low noise we getzero errors since the eye is wide open, ever for SNR of 10 dB.
+```python
+# Lost lock: False
+# Correct bit count: 16294
+# Erred bits: 0
+```
+When Running the code for SNR of 0 [dB] we get:
+```python
+# Lost lock: False
+# Correct bit count: 16272
+# Erred bits: 22
+```
+And due to the high noise, the eye closed enough to generate 22 errored bits from the entire pattern we passed through the channel 
 
 # Functions' Description
 ## 0. Auxilliaty functions:
