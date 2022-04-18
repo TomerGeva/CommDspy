@@ -164,67 +164,72 @@ The package supports simple concepts of digital processing receiver models. Exam
 import CommDspy as cdsp
 import numpy as np
 from scipy import signal
-import matplotlib.pyplot as plt
 import os
 import json
-# ==================================================================================================================
-# Tx + Channel setting
-# ==================================================================================================================
-prbs_type     = cdsp.constants.PrbsEnum.PRBS13
-constellation = cdsp.constants.ConstellationEnum.PAM4
-full_scale    = True
-rolloff = 0.9
-snr     = 10
-osr     = 32
-pattern = tx_example()
-# ==================================================================================================================
-# Loading data
-# ==================================================================================================================
-f = open(os.path.join('..', 'test_data', 'example_channel_full.json'))
-data = json.load(f)
-f.close()
-channel_sampled = data['channel_sampled']
-# ==================================================================================================================
-# Passing through channel
-# ==================================================================================================================
-ch_out = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
-# ==================================================================================================================
-# CTLE settings
-# ==================================================================================================================
-zeros   = [5e8, 11e9]
-poles   = [1e9, 20e9, 25e9]
-dc_gain = -4  # [dB]
-fs      = 53.125e9  # symbol frequency, in our case 53.125 [GHz]
-ctle_out = cdsp.rx.ctle(ch_out, zeros, poles, dc_gain, fs=fs, osr=osr)
-# ==================================================================================================================
-# Rx FFE settings
-# ==================================================================================================================
-ffe_precursors  = 4
-ffe_postcursors = 23
-ffe_len         = ffe_postcursors + ffe_precursors + 1
-# ==================================================================================================================
-# Estimating optimal Rx FFE and passing data through
-# ==================================================================================================================
-ctle_out_mat = cdsp.buffer(ctle_out, osr, 0)
-rx_ffe       = np.zeros(28)
-err          = float('inf')
-for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
-    rx_ffe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
-                                                    prbs_full_scale=full_scale,
-                                                    ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
-                                                    normalize=False,
-                                                    bit_order_inv=False,
-                                                    pn_inv_precoding=False,
-                                                    gray_coded=False,
-                                                    pn_inv_postcoding=False)
-    if rx_ffe_cand[-1] < err:
-        err    = rx_ffe_cand[-1]
-        rx_ffe = rx_ffe_cand[0]
-# --------------------------------------------------------------------------------------------------------------
-# Passing through the Rx FFE
-# --------------------------------------------------------------------------------------------------------------
-rx_ffe_ups = cdsp.upsample(rx_ffe, osr)
-rx_ffe_out = signal.lfilter(rx_ffe_ups, 1, ctle_out)[ffe_len*osr:]
+def rx_example():
+    # ==================================================================================================================
+    # Tx + Channel setting
+    # ==================================================================================================================
+    prbs_type     = cdsp.constants.PrbsEnum.PRBS13
+    constellation = cdsp.constants.ConstellationEnum.PAM4
+    full_scale    = True
+    rolloff = 0.9
+    snr     = 10
+    osr     = 32
+    pattern = tx_example()
+    # ==================================================================================================================
+    # Loading data
+    # ==================================================================================================================
+    f = open(os.path.join('..', 'test_data', 'example_channel_full.json'))
+    data = json.load(f)
+    f.close()
+    channel_sampled = data['channel_sampled']
+    # ==================================================================================================================
+    # Passing through channel
+    # ==================================================================================================================
+    ch_out = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+    # ==================================================================================================================
+    # CTLE settings
+    # ==================================================================================================================
+    zeros   = [5e8, 11e9]
+    poles   = [1e9, 20e9, 25e9]
+    dc_gain = -4  # [dB]
+    fs      = 53.125e9  # symbol frequency, in our case 53.125 [GHz]
+    ctle_out = cdsp.rx.ctle(ch_out, zeros, poles, dc_gain, fs=fs, osr=osr)
+    # ==================================================================================================================
+    # Rx FFE settings
+    # ==================================================================================================================
+    ffe_precursors  = 4
+    ffe_postcursors = 23
+    ffe_len         = ffe_postcursors + ffe_precursors + 1
+    # ==================================================================================================================
+    # Estimating optimal Rx FFE and passing data through
+    # ==================================================================================================================
+    ctle_out_mat = cdsp.buffer(ctle_out, osr, 0)
+    rx_ffe       = np.zeros(28)
+    err          = float('inf')
+    phase        = -1
+    for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
+        rx_ffe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
+                                                        prbs_full_scale=full_scale,
+                                                        ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
+                                                        normalize=False,
+                                                        bit_order_inv=False,
+                                                        pn_inv_precoding=False,
+                                                        gray_coded=False,
+                                                        pn_inv_postcoding=False)
+        if rx_ffe_cand[-1] < err:
+            err    = rx_ffe_cand[-1]
+            rx_ffe = rx_ffe_cand[0]
+            phase  = ii
+    # --------------------------------------------------------------------------------------------------------------
+    # Passing through the Rx FFE
+    # --------------------------------------------------------------------------------------------------------------
+    rx_ffe_ups = cdsp.upsample(rx_ffe, osr)
+    rx_ffe_out = signal.lfilter(rx_ffe_ups, 1, ctle_out)[ffe_len*osr:]
+    
+    rx_ffe_out_mat = cdsp.buffer(rx_ffe_out, os, 0)
+    return rx_ffe_out_mat[:, phase]
 ```
 The signal after passing the channel:
 
@@ -260,6 +265,11 @@ We can see that there is heavy ISI that can not be easily overcome by a CTLE alo
 
 And we can see that the ISI was negated by the CTLE and FFE.
 
+## Geinie error checker
+The package allows locking a PRBS data on the true PRBS and use that to check for errors. Example of such usage will be as follows:
+```python
+
+```
 
 # Functions' Description
 ## 0. Auxilliaty functions:

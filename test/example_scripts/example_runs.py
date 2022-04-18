@@ -180,6 +180,7 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
     ctle_out_mat = cdsp.buffer(ctle_out, osr, 0)
     rx_ffe       = np.zeros(28)
     err          = float('inf')
+    phase        = -1
     for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
         rx_ffe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
                                                         prbs_full_scale=full_scale,
@@ -192,6 +193,7 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
         if rx_ffe_cand[-1] < err:
             err    = rx_ffe_cand[-1]
             rx_ffe = rx_ffe_cand[0]
+            phase  = ii
     # --------------------------------------------------------------------------------------------------------------
     # Passing through the Rx FFE
     # --------------------------------------------------------------------------------------------------------------
@@ -205,6 +207,9 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
         plt.xlabel('Time [UI]')
         plt.ylabel('Amplitude')
         plt.show()
+
+    rx_ffe_out_mat = cdsp.buffer(rx_ffe_out, os, 0)
+    return rx_ffe_out_mat[:, phase]
 
 if __name__ == '__main__':
     # tx_example()
