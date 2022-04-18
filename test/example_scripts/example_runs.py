@@ -118,7 +118,7 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
     constellation = cdsp.constants.ConstellationEnum.PAM4
     full_scale    = True
     rolloff = 0.9
-    snr     = 0
+    snr     = 10
     osr     = 32
     pattern = tx_example()
     # ==================================================================================================================
