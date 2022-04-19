@@ -565,12 +565,3 @@ enumeration of the different coding types
   
 ### 5.4. EYE_COLORMAP
 A maplotlib colormap object to plot the eye diagrams
-# To update the version:
- 1. please run the following command from the respective directory:
-        
-        python3 setup.py bdist_wheel
-
- 2. please run the following command:
-
-        pip install dist/labsignalprocess-<VERSION>-py3-none-any.whl 
- 
