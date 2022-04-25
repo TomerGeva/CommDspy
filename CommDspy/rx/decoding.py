@@ -1,6 +1,6 @@
 import numpy as np
 from CommDspy.constants import CodingEnum, ConstellationEnum
-from CommDspy.auxiliary import get_levels
+from CommDspy.auxiliary import get_levels, get_gray_level_vec
 
 def decoding(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UNCODED, pn_inv=False, full_scale=False):
     """
@@ -44,3 +44,28 @@ def decoding(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UN
     idx_vec = np.reshape(idx_mat, (-1, 1))
     symbol_idx_vec = levels[idx_vec]
     return np.reshape(symbol_idx_vec, pattern.shape)
+
+def decoding_gray(pattern, constellation=ConstellationEnum.PAM4):
+    """
+    :param pattern: Numpy array of gray coded symbols.
+    :param constellation: Enumeration stating the constellation. Should be taken from:
+                          CommDspy.constants.ConstellationEnum
+    :return: Function performs decoding from gray to uncoded
+    """
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    level_num = len(get_levels(constellation))
+    bits_per_symbol = int(np.ceil(np.log2(level_num)))
+    # ==================================================================================================================
+    # Gray coding
+    # ==================================================================================================================
+    if bits_per_symbol > 1:
+        levels = get_gray_level_vec(level_num)
+    else:
+        levels = np.array([0, 1])
+    # ==================================================================================================================
+    # Converting symbols to indices, i.e. performing decoding
+    # ==================================================================================================================
+    symbol_idx_vec = levels[pattern]
+    return symbol_idx_vec

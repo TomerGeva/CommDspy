@@ -363,6 +363,14 @@ def test_prbs_gen_4():
         required_length = random.randint(1, prbs_type.value)
         test.prbs_gen_test(prbs_type, required_length)
 
+def test_coding_gray():
+    for constellation in constellations:
+        test.coding_gray_test(constellation)
+
+def test_decoding_gray():
+    for constellation in constellations:
+        test.decoding_gray_test(constellation)
+
 def test_coding_1():
     """
     :return: Testing the coding function
@@ -425,5 +433,4 @@ def test_coding_2():
 
 
 if __name__ == '__main__':
-    test_lock_pattern_to_signal_1()
     pass

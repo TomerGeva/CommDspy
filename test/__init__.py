@@ -1,7 +1,7 @@
 from test.auxiliary import read_1line_csv
 from test.test_prbs_generator import prbs_gen_test
 from test.test_bin_to_symbol import bin2symbol_test, symbol2bin_test
-from test.test_pattern_coding import coding_pattern_test, decoding_pattern_test
+from test.test_pattern_coding import coding_pattern_test, decoding_pattern_test, coding_gray_test, decoding_gray_test
 from test.test_pattern_lock import lock_pattern_to_signal_binary_test, lock_pattern_to_signal_test
 from test.test_prbs_analysis import prbs_analysis_test
 from test.test_noise import awgn_test

@@ -1,6 +1,6 @@
 import numpy as np
 from CommDspy.constants import CodingEnum, ConstellationEnum
-from CommDspy.auxiliary import get_levels
+from CommDspy.auxiliary import get_levels, get_gray_level_vec
 
 
 def coding(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UNCODED, pn_inv=False, full_scale=False):
@@ -37,3 +37,27 @@ def coding(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UNCO
         levels = -1 * levels
 
     return levels[pattern]
+
+def coding_gray(pattern, constellation=ConstellationEnum.PAM4):
+    """
+        :param pattern: Uncoded pattern, should be a numpy array of non-negative integers stating the index in the
+         constellation point. Examples:
+                                1. 1-bit patterns will be '0' and '1'
+                                2. 2-bit patterns will be '0', '1', '2' and '3'
+        :param constellation: Enumeration stating the constellation. Should be taken from:
+                              CommDspy.constants.ConstellationEnum
+        :return: Gray coded pattern
+    """
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    level_num       = len(get_levels(constellation))
+    bits_per_symbol = int(np.ceil(np.log2(level_num)))
+    # ==================================================================================================================
+    # Gray coding
+    # ==================================================================================================================
+    if bits_per_symbol > 1:
+        levels = get_gray_level_vec(level_num)
+        return levels[pattern]
+    else:
+        return pattern

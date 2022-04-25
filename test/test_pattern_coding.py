@@ -50,6 +50,35 @@ def coding_pattern_test(constellation, coding, pn_inv):
 
     assert np.all(coded_ref == coded_dut), assert_str
 
+def coding_gray_test(constellation):
+    """
+    :param constellation: Enumeration stating the constellation. Should be taken from:
+                          CommDspy.constants.ConstellationEnum
+    :return:
+    """
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    levels = cdsp.get_levels(constellation)
+    assert levels.any() is not None, 'Constellation ' + constellation.name + ' type not supported'
+    bits = int(np.log2(len(levels)))
+    pattern = np.random.randint(0, 2 ** bits, 100)
+    assert_str = '|{0:^6s}| bits = {1:1d} Falied!!!!'.format( constellation.name, bits)
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_gray(pattern, constellation)
+    # ==================================================================================================================
+    # Computing the coding in a different way
+    # ==================================================================================================================
+    coded_ref = pattern
+    if bits == 2:
+        coded_temp = pattern.copy()
+        coded_temp[pattern == 3] = 2
+        coded_temp[pattern == 2] = 3
+        coded_ref = coded_temp
+    assert np.all(coded_ref == coded_dut), assert_str
+
 def decoding_pattern_test(constellation, coding, pn_inv, full_scale):
     """
     :param constellation: Enumeration stating the constellation. Should be taken from:
@@ -79,3 +108,24 @@ def decoding_pattern_test(constellation, coding, pn_inv, full_scale):
     decoded_dut = cdsp.rx.decoding(coded_pattern, constellation, coding, pn_inv, full_scale)
 
     assert np.all(pattern_ref == decoded_dut), assert_str
+
+def decoding_gray_test(constellation):
+    """
+        :param constellation: Enumeration stating the constellation. Should be taken from:
+                              CommDspy.constants.ConstellationEnum
+        :return:
+        """
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    levels = cdsp.get_levels(constellation)
+    assert levels.any() is not None, 'Constellation ' + constellation.name + ' type not supported'
+    bits    = int(np.log2(len(levels)))
+    pattern = np.random.randint(0, 2 ** bits, 100)
+    assert_str = '|{0:^6s}| bits = {1:1d} Falied!!!!'.format(constellation.name, bits)
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut   = cdsp.tx.coding_gray(pattern, constellation)
+    decoded_dut = cdsp.rx.decoding_gray(coded_dut, constellation)
+    assert np.all(pattern == decoded_dut), assert_str

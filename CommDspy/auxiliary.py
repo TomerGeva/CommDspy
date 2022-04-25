@@ -47,6 +47,18 @@ def get_levels(constellation, full_scale=False):
     else:
         return levels
 
+def get_gray_level_vec(level_num):
+    """
+    :param level_num: number of levels
+    :return: the gray coded level numbering
+    """
+    bits_per_symbol = int(np.ceil(np.log2(level_num)))
+    lvls = np.array([0, 1])[:, None]
+    for ii in range(1, bits_per_symbol):
+        lvls = np.vstack((lvls, lvls[::-1]))
+        lvls = np.hstack((np.repeat(np.array([0, 1])[:, None], 2 ** ii, axis=0), lvls))
+    return lvls.dot([1 << ii for ii in np.arange(lvls.shape[1] - 1, -1, -1)])[:level_num]
+
 def power(signal):
     """
     :param signal:
