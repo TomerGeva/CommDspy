@@ -42,4 +42,4 @@ def decoding_differential(pattern, constellation=ConstellationEnum.PAM4):
                    --------------------------------
         """
     lvl_num = len(get_levels(constellation))
-    return (lfilter([1, -1], 1, pattern) % lvl_num).astype(int)
+    return (lfilter([1, -1], [1], pattern.astype(float)) % lvl_num).astype(int)

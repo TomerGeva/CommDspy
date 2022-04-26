@@ -353,6 +353,14 @@ def test_prbs_gen_4():
         required_length = random.randint(1, prbs_type.value)
         test.prbs_gen_test(prbs_type, required_length)
 
+def test_coding_diff():
+    for constellation in constellations:
+        test.coding_differential_test(constellation)
+
+def test_decoding_diff():
+    for constellation in constellations:
+        test.decoding_differential_test(constellation)
+
 def test_coding_gray():
     for constellation in constellations:
         test.coding_gray_test(constellation)
@@ -414,5 +422,5 @@ def test_coding_gray_plus_mapping():
 
 
 if __name__ == '__main__':
-    test_equalization()
+    test_coding_diff()
     pass
