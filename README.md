@@ -440,13 +440,6 @@ Function computed the IIR coefficients for the digital equivalent for the CTLE d
 * fs - Symbol frequency, 1/Ts
 * osr - Over Sampling Rate the input signal 'sig'
 
-### 2.9. decoding - OBSOLETE and will be removed soon, this function is decomposed into decoding and demapping
-Function used to decode the pattern. Function is inputted with:
-* pattern - Input pattern of coded symbols which should be decoded
-* constellation=ConstellationEnum.PAM4 - Constellation used for the coding of the pattern signal
-* coding=CodingEnum.UNCODED - Coding used in the creation of the pattern signal, either GRAY of UNCODED
-* pn_inv=False - Boolean stating if the levels were inverted after coding
-
 ## 3. Channel sub-package information
 ### 3.0. Various pulse generators
 The package supports all the pulses written in 3.1. The function names are:
