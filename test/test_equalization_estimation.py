@@ -19,16 +19,16 @@ def equalization_prbs_test(prbs_type):
     num_poles       = random.randint(1, 8)
     constellation = cdsp.constants.ConstellationEnum.PAM4 if bits_per_symbol > 1 else (
         cdsp.constants.ConstellationEnum.NRZ if random.random() > 0.5 else cdsp.constants.ConstellationEnum.OOK)
-    coding = cdsp.constants.CodingEnum.UNCODED  # if random.random() > 0.5 else cdsp.constants.CodingEnum.GRAY
+    gray_coding = False  # random.random() > 0.5
     poly_coeff = cdsp.get_polynomial(prbs_type)
     init_seed = np.array([1] * prbs_type.value)
     prbs_len = 2 ** len(init_seed) - 1
     assert poly_coeff.any() is not None, prbs_type.name + ' type not supported'
     ref_filename = os.path.join(os.getcwd(), 'test_data', prbs_type.name + '_seed_ones.csv')
-    assert_str = '|{0:^6s}| Constellation = {1:^6s} | Coding = {2:^6s} | {3:^3d} poles  ; {4:^3d} DFE taps '.format(
+    assert_str = '|{0:^6s}| Constellation = {1:^6s} | Gray Coding = {2:^6s} | {3:^3d} poles  ; {4:^3d} DFE taps '.format(
         prbs_type.name,
         constellation.name,
-        coding.name,
+        str(gray_coding),
         num_poles,
         0
     )
@@ -47,7 +47,7 @@ def equalization_prbs_test(prbs_type):
         ref_pattern = cdsp.tx.bin2symbol(ref_prbs_bin_mult, 2 ** bits_per_symbol, False, False, False, False)
     else:
         ref_pattern = ref_prbs_bin
-    ref_pattern = cdsp.tx.coding(ref_pattern, constellation, coding)
+    ref_pattern = cdsp.tx.mapping(ref_pattern, constellation) if not gray_coding else cdsp.tx.mapping(cdsp.tx.coding_gray(ref_pattern, constellation), constellation)
     # --------------------------------------------------------------------------------------------------------------
     # Creating repetitions of the pattern
     # --------------------------------------------------------------------------------------------------------------

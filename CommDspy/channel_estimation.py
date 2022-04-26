@@ -3,7 +3,8 @@ from scipy import linalg
 from CommDspy.constants import CodingEnum
 from CommDspy.tx.prbs_generator import prbs_generator
 from CommDspy.tx.bin2symbol import bin2symbol
-from CommDspy.tx.coding import  coding
+from CommDspy.tx.mapping import mapping
+from CommDspy.tx.coding import coding_gray
 from CommDspy.auxiliary import get_polynomial, get_levels
 from CommDspy.rx.lock_pattern import lock_pattern_to_signal
 from CommDspy.misc.least_squares import least_squares
@@ -14,7 +15,7 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
                             normalize=False,
                             bit_order_inv=False,
                             pn_inv_precoding=False,
-                            code=CodingEnum.UNCODED,
+                            gray_coding=False,
                             pn_inv_postcoding=False):
     """
     :param prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox.
@@ -34,7 +35,7 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
     :param bit_order_inv: Boolean indicating if the bit order in the signal generation is flipped.
     :param pn_inv_precoding: Boolean indicating if the P and N were flipped in the signal capture process before the
                              coding.
-    :param code: Enumeration of the coding type used in the signal, taken from CommDspy.constants.CodingEnum
+    :param gray_coding: Boolean stating if the PRBS should be gray coded or not
     :param pn_inv_postcoding: Boolean indicating if the P and N were flipped in the signal capture process after the
                               coding.
     :return:
@@ -57,7 +58,7 @@ def channel_estimation_prbs(prbs_type, signal, constellation,
         return True, 0, [0]
     prbs_seq, _ = prbs_generator(poly_coeff, init_seed, 2 * prbs_len)
     prbsq       = bin2symbol(prbs_seq, len(levels), bit_order_inv, False, False, pn_inv_precoding)
-    prbs_coded  = coding(prbsq, constellation, code, pn_inv_postcoding, prbs_full_scale)
+    prbs_coded  = mapping(prbsq, constellation, prbs_full_scale) if not gray_coding else mapping(coding_gray(prbsq, constellation), constellation, prbs_full_scale)
     # ==================================================================================================================
     # Locking on the pattern beginning
     # ==================================================================================================================

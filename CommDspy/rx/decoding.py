@@ -1,49 +1,8 @@
 import numpy as np
 from CommDspy.constants import CodingEnum, ConstellationEnum
 from CommDspy.auxiliary import get_levels, get_gray_level_vec
+from scipy.signal import lfilter
 
-def decoding(pattern, constellation=ConstellationEnum.PAM4, coding=CodingEnum.UNCODED, pn_inv=False, full_scale=False):
-    """
-    :param pattern: Numpy array of coded symbols.
-                * If PAM4 assuming that the constellation is [-3x,-x,x,3x]
-                * If NRZ assuming that the constellation is [-x,x]
-                * If OOK assuming that the constellation is [0, x]
-    :param constellation: Enumeration stating the constellation. Should be taken from:
-                          CommDspy.constants.ConstellationEnum
-    :param coding: Enumeration stating the wanted coding, only effective if constellation has more than 2 constellation
-                   points. Should be taken from CommDspy.constants.CodingEnum
-    :param pn_inv: If True the P-N were inverted in the creation of the symbol stream
-    :param full_scale: Boolean stating if the levels were scaled such that the mean power of the levels will be 1 (0 dB)
-    :return: Function performs decoding and then converts the symbols to binary. Note that the function supports OOK,
-             NRZ and PAM4.
-    """
-    # ==================================================================================================================
-    # Local variables
-    # ==================================================================================================================
-    coded_levels    = get_levels(constellation, full_scale)
-    bits_per_symbol = int(np.log2(len(coded_levels)))
-    # ==================================================================================================================
-    # Setting base levels
-    # ==================================================================================================================
-    if bits_per_symbol == 2:
-        if coding == CodingEnum.GRAY:
-            levels = np.array([0, 1, 3, 2])
-        else:
-            levels = np.array([0, 1, 2, 3])
-    else:
-        levels = np.array([0, 1])
-    # ==================================================================================================================
-    # PN-inv
-    # ==================================================================================================================
-    if pn_inv:
-        pattern *= -1
-    # ==================================================================================================================
-    # Converting symbols to indices, i.e. performing decoding
-    # ==================================================================================================================
-    idx_mat = np.round((pattern - np.min(coded_levels)) / np.diff(coded_levels)[0]).astype(int)
-    idx_vec = np.reshape(idx_mat, (-1, 1))
-    symbol_idx_vec = levels[idx_vec]
-    return np.reshape(symbol_idx_vec, pattern.shape)
 
 def decoding_gray(pattern, constellation=ConstellationEnum.PAM4):
     """
@@ -69,3 +28,18 @@ def decoding_gray(pattern, constellation=ConstellationEnum.PAM4):
     # ==================================================================================================================
     symbol_idx_vec = levels[pattern]
     return symbol_idx_vec
+
+def decoding_differential(pattern, constellation=ConstellationEnum.PAM4):
+    """
+        :param pattern: symbols we would like to perform differential encoding
+        :param constellation: the constellation we are working with
+        :return: Function performs differential encoding to the input signal. The flow is as follows:
+
+                            |-------------|        m
+             y_n----------->|      D      |------> +---------> x_n
+                   |        |-------------|   -    ^
+                   |                              +|
+                   --------------------------------
+        """
+    lvl_num = len(get_levels(constellation))
+    return (lfilter([1, -1], 1, pattern) % lvl_num).astype(int)

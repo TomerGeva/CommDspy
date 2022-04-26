@@ -339,6 +339,7 @@ Function receives a signal and breaks is into overlapping parts. Function is inp
 Function returns a 2D numpy array with "length" length rows. 
 ### 0.6. upsample
 Function performs upsampling, i.e. inserting zeros between samples. Function receives the signal and the upsampling rate, returns the upsampled signal
+
 ## 1. Tx sub-package information
 ### 1.1. prbs_gen
 Function receives polynomial coefficients and an initial seed, creates binary PRBS sequences of the requested length . The function is inputted with:
@@ -363,21 +364,18 @@ Function used to convert UNCODED symbols into GRAY coded symbols. Function is in
 * pattern - array of non-negative integers representing the UNCODED symbols
 * constellation=ConstellationEnum.PAM4 - chosen constellation. According to the symbol number in the constellation the GRAY coding will be done
 
-### 1.5. mapping
+### 1.5. coding_differential
+Function performs differential encoding. The function receives the symbols and returns the appropriate differential encoded symbols:
+* pattern - array of non-negative integers representing symbols
+* constellation=ConstellationEnum.PAM4 - chosen constellation. According to the number of symbols in the constellation the differential encoding will be done w.r.t. the modulo operation.
+
+### 1.6. mapping
 Function used to map the symbols to their matching constellation levels . This is usually done as the last step prior to pulse shaping and transmission. Function is inputted with:
 * signal - Ihe signal to be mapped, should be UNCODED symbols array
 * constellation - The constellation we want to map to signal to
 * full_scale - Indicating if we want to use default levels such that the mean power of the signal will be 1 (0 [dB]) 
 * levels=None -  Optional, if not None uses the levels given instead of the default levels
 * pn_inv=False -  Indicating if we want to invert the signal after the mapping
-
-### 1.5. coding - OBSOLETE and will be removed soon, this function is decomposed into coding and mapping
-Function used to code the pattern. Function is inputted with:
-* pattern - Input pattern of UNCODED symbols which should be coded
-* constellation=ConstellationEnum.PAM4 - Wanted constellation
-* coding=CodingEnum.UNCODED - Wanted coding, either UNCODED or GRAY
-* pn_inv=False - Boolean stating if we want to invert the levels after coding
-* full_scale=False - Boolean stating if we want to set the levels such that the mean power will be 1 (0 [dB])
 
 ## 2. Rx sub-package information
 ### 2.1. slicer
