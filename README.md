@@ -358,7 +358,20 @@ Function receives a binary sequence and computes the UNCODED symbols matching th
 * inv_lsb=False - Boolean stating if we want to invert the lsb
 * pn_inv=False - Boolean stating if we want to invert all bits 
 
-### 1.4. coding
+### 1.4. coding_gray
+Function used to convert UNCODED symbols into GRAY coded symbols. Function is inputted with:
+* pattern - array of non-negative integers representing the UNCODED symbols
+* constellation=ConstellationEnum.PAM4 - chosen constellation. According to the symbol number in the constellation the GRAY coding will be done
+
+### 1.5. mapping
+Function used to map the symbols to their matching constellation levels . This is usually done as the last step prior to pulse shaping and transmission. Function is inputted with:
+* signal - Ihe signal to be mapped, should be UNCODED symbols array
+* constellation - The constellation we want to map to signal to
+* full_scale - Indicating if we want to use default levels such that the mean power of the signal will be 1 (0 [dB]) 
+* levels=None -  Optional, if not None uses the levels given instead of the default levels
+* pn_inv=False -  Indicating if we want to invert the signal after the mapping
+
+### 1.5. coding - OBSOLETE and will be removed soon, this function is decomposed into coding and mapping
 Function used to code the pattern. Function is inputted with:
 * pattern - Input pattern of UNCODED symbols which should be coded
 * constellation=ConstellationEnum.PAM4 - Wanted constellation
@@ -372,21 +385,28 @@ Function receives data matrix from the slicer input and performs the slicing ope
 * slicer_in_mat - Inputs to slice
 * levels=None - constellation points. The decision thresholds are at the midpoints to the constellations. If the user does not insert levels it assumes [-3,-1,1,3]
 
-### 2.2. symbol2bin
-Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence
-  * symbol_mat - The binary sequence wanted to be converted 
-  * num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS 2 and 4
-  * bit_order_inv=False - Booleans stating if we want to invert the bit order (By default, MSB is the rightmost bit and the LSB is the leftmost bits)
-  * inv_msb=False - Boolean stating if we want to invert the msb
-  * inv_lsb=False - Boolean stating if we want to invert the lsb
-  * pn_inv=False - Boolean stating if we want to invert all bits
+### 2.2. demapping
+Function performs de-mapping, i.e. converts the levels of the constellation to their respective integer value levels. Function is inputted with:
+* :param - Numpy array of constellation symbols.
+  * If PAM4 assuming that the constellation is [-3x,-x,x,3x]
+  * If NRZ assuming that the constellation is [-x,x]
+  * If OOK assuming that the constellation is [0, x]
+* constellation - The constellation we want to map to signal to
+* pn_inv: indicating if we want to invert the signal prior to de-mapping
 
-### 2.3. decoding
-Function used to decode the pattern. Function is inputted with:
-* pattern - Input pattern of coded symbols which should be decoded
-* constellation=ConstellationEnum.PAM4 - Constellation used for the coding of the pattern signal
-* coding=CodingEnum.UNCODED - Coding used in the creation of the pattern signal, either GRAY of UNCODED
-* pn_inv=False - Boolean stating if the levels were inverted after coding
+### 2.2. decoding_gray
+Function receives GRAY coded symbols and performs decoding to UNCODED symbols. Function is inputted with:
+* pattern - array of non-negative integers representing the GRAY coded symbols
+* constellation=ConstellationEnum.PAM4 - chosen constellation. According to the symbol number in the constellation the GRAY decoding will be done
+
+### 2.3. symbol2bin
+Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence
+* symbol_mat - The binary sequence wanted to be converted 
+* num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS 2 and 4
+* bit_order_inv=False - Booleans stating if we want to invert the bit order (By default, MSB is the rightmost bit and the LSB is the leftmost bits)
+* inv_msb=False - Boolean stating if we want to invert the msb
+* inv_lsb=False - Boolean stating if we want to invert the lsb
+* pn_inv=False - Boolean stating if we want to invert all bits
 
 ### 2.4. prbs_checker
 Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
@@ -421,6 +441,13 @@ Function computed the IIR coefficients for the digital equivalent for the CTLE d
 * dc_gain - gain in [dB] for the DC frequencies 
 * fs - Symbol frequency, 1/Ts
 * osr - Over Sampling Rate the input signal 'sig'
+
+### 2.8. decoding - OBSOLETE and will be removed soon, this function is decomposed into decoding and demapping
+Function used to decode the pattern. Function is inputted with:
+* pattern - Input pattern of coded symbols which should be decoded
+* constellation=ConstellationEnum.PAM4 - Constellation used for the coding of the pattern signal
+* coding=CodingEnum.UNCODED - Coding used in the creation of the pattern signal, either GRAY of UNCODED
+* pn_inv=False - Boolean stating if the levels were inverted after coding
 
 ## 3. Channel sub-package information
 ### 3.0. Various pulse generators

@@ -42,8 +42,8 @@ def coding_gray(pattern, constellation=ConstellationEnum.PAM4):
     """
         :param pattern: Uncoded pattern, should be a numpy array of non-negative integers stating the index in the
          constellation point. Examples:
-                                1. 1-bit patterns will be '0' and '1'
-                                2. 2-bit patterns will be '0', '1', '2' and '3'
+                1. 1-bit patterns will be '0' and '1'
+                2. 2-bit patterns will be '0', '1', '2' and '3'
         :param constellation: Enumeration stating the constellation. Should be taken from:
                               CommDspy.constants.ConstellationEnum
         :return: Gray coded pattern
