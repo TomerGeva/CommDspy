@@ -60,7 +60,7 @@ def equalization_prbs_test(prbs_type):
     while True:
         roots = np.around(np.random.random(num_poles), decimals=3) - 0.5
         channel_ref = np.poly(roots)
-        if np.max(channel_ref) == channel_ref[0]:
+        if np.max(np.abs(channel_ref)) == channel_ref[0]:
             break
     # ==================================================================================================================
     # Passing data through the channel

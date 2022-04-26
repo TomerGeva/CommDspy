@@ -531,6 +531,22 @@ Function returns:
 * ls_err: Sum of squared residuals 
 * mse: normalized MSE, meaning the MSE divided by the variance of the constellation, in dB units
 
+### 4.3. equalization_estimation
+Function computes the linear equalizer with optimal results in the MSE sence with some regulations. The function is inputted with:
+* reference_signal - reference signal used for the equalization
+* signal - input signal we want to pass through the equalizer
+  1. signal and reference_signal MUST have the same length
+  2. signal and reference_signal MUST be synchronized
+* ffe_postcursor - Number of postcursors in the FFE estimation
+* ffe_precursor - Number of precursors in the FFE estimation
+* dfe_taps - Number of postcursors in the DFE estimation
+* normalize - Boolean stating if the user wants to normalize the Rx FFE such that the peak will have value of 1
+* regularization - String indicating the regularization in the computation of the equalizer. Can be either:
+  * 'None' - Ordinary Least Squares (OLS) solving without regularization
+  * 'ridge' - Applying ridge regression, L2 regularization
+  * 'lasso' - Applying lasso regression, L1 regularization* reg_lambda: 
+* If regularization is not 'None', and reg_lambda != 0, applies the wanted regularization with a regularization factor of reg_lambda
+
 ### 4.3. dig_delay_lagrange_coeffs
 Function uses *Lagrange* interpolation polynomials to produce digital delay filter coefficients. Function is inputted with:
 * n - The order of the filter
@@ -585,11 +601,6 @@ Enumeration for the constellations used
   * NRZ - Non-Return to Zero, assuming constellation of [-1, 1]
   * OOK - On Off Keying, assuming constellation of [0, 1]
   * PAM4 - Pulse Amplitude Modulation 4, assuming constellation of [-3, -1, 1, 3]
-
-### 5.3. CodingEnum
-enumeration of the different coding types
-  * UNCODED
-  * GRAY
   
 ### 5.4. EYE_COLORMAP
 A maplotlib colormap object to plot the eye diagrams
