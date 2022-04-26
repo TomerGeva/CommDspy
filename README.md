@@ -394,12 +394,12 @@ Function performs de-mapping, i.e. converts the levels of the constellation to t
 * constellation - The constellation we want to map to signal to
 * pn_inv: indicating if we want to invert the signal prior to de-mapping
 
-### 2.2. decoding_gray
+### 2.3. decoding_gray
 Function receives GRAY coded symbols and performs decoding to UNCODED symbols. Function is inputted with:
 * pattern - array of non-negative integers representing the GRAY coded symbols
 * constellation=ConstellationEnum.PAM4 - chosen constellation. According to the symbol number in the constellation the GRAY decoding will be done
 
-### 2.3. symbol2bin
+### 2.4. symbol2bin
 Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence
 * symbol_mat - The binary sequence wanted to be converted 
 * num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS 2 and 4
@@ -408,7 +408,7 @@ Function receives an UNCODED symbol sequence, returns the binary representation 
 * inv_lsb=False - Boolean stating if we want to invert the lsb
 * pn_inv=False - Boolean stating if we want to invert all bits
 
-### 2.4. prbs_checker
+### 2.5. prbs_checker
 Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
 1. builds a reference PRBS sequence
 2. synchronizes on the pattern
@@ -421,10 +421,10 @@ The function is inputted with:
 * init_lock - indicating if the data-in is aligned with the reference PRBS (with init seed of ones)
 * loss_th=100 - number of erred bit in the data to consider loss of PRBS lock
 
-### 2.5. prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
+### 2.6. prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
 Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
 
-### 2.6. ctle
+### 2.7. ctle
 Function passes an input signal through a CTLE defined via the poles, zeros and DC gain. Function is inputted with:
 * signal - input signal to pass through the CTLE
 * zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
@@ -434,7 +434,7 @@ Function passes an input signal through a CTLE defined via the poles, zeros and 
 * osr - Over Sampling Rate the input signal 'sig'
 * zi - Initial condition for the CTLE, Default is None, where we start with zeros
 
-### 2.7. get_ctle_filter
+### 2.8. get_ctle_filter
 Function computed the IIR coefficients for the digital equivalent for the CTLE defined via the zeros, poles and DC gain. Function is inputted with
 * zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
 * poles - list of frequencies where there are poles in [Hz]. If the given poles are positive, multiply by -1 to enforce stability
@@ -442,7 +442,7 @@ Function computed the IIR coefficients for the digital equivalent for the CTLE d
 * fs - Symbol frequency, 1/Ts
 * osr - Over Sampling Rate the input signal 'sig'
 
-### 2.8. decoding - OBSOLETE and will be removed soon, this function is decomposed into decoding and demapping
+### 2.9. decoding - OBSOLETE and will be removed soon, this function is decomposed into decoding and demapping
 Function used to decode the pattern. Function is inputted with:
 * pattern - Input pattern of coded symbols which should be decoded
 * constellation=ConstellationEnum.PAM4 - Constellation used for the coding of the pattern signal
