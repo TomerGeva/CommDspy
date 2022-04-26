@@ -57,8 +57,11 @@ def equalization_prbs_test(prbs_type):
     # ==================================================================================================================
     # Creating reference channel
     # ==================================================================================================================
-    roots = np.around(np.random.random(num_poles), decimals=3) - 0.5
-    channel_ref = np.poly(roots)
+    while True:
+        roots = np.around(np.random.random(num_poles), decimals=3) - 0.5
+        channel_ref = np.poly(roots)
+        if np.max(channel_ref) == channel_ref[0]:
+            break
     # ==================================================================================================================
     # Passing data through the channel
     # ==================================================================================================================
@@ -75,10 +78,10 @@ def equalization_prbs_test(prbs_type):
                                                 normalize=False,
                                                 bit_order_inv=False,
                                                 pn_inv_precoding=False,
-                                                gray_coded=True,
-                                                pn_inv_postcoding=pn_inv_postcoding)
+                                                gray_coded=False,
+                                                pn_inv_postmapping=pn_inv_postcoding)
     # ==================================================================================================================
     # Comparing results
     # ==================================================================================================================
-    np.allclose(channel_ref, equ_dut[0])
+    assert np.all(np.abs(channel_ref - equ_dut[0]) < 5e-3), assert_str
 

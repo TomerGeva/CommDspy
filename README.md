@@ -503,25 +503,26 @@ Function returns the channel impulse response and the sum of squared residuals b
 ### 4.2. equalization_estimation_prbs
 Function which preform equalization over the input signal, estimation the MMSE equalizer to be used to invert the 
     ISI in the signal and recover the original data, using either an FFE or/and a DFE with controllable number of taps. Function is inputted with:
-* prbs_type: Type of PRBS used. This variable should be an enumeration from the toolbox. In the case of PRBSxQ
+* prbs_type- Type of PRBS used. This variable should be an enumeration from the toolbox. In the case of PRBSxQ
                       patterns, use the bits_per_symbol to generate the pattern 
-* signal: The signal we want to use to estimate the channel 
-* constellation: Enumeration stating the constellation. Should be taken from CommDspy.constants.ConstellationEnum 
-* prbs_full_scale: Boolean stating if we want the levels to be scaled such that the mean power of the levels  at the transmitter will be 1 (0 [dB]), i.e. that the PRBS pattern will be coded to power of 0 [dB]
-* ffe_postcursor: Number of postcursors in the FFE estimation 
-* ffe_precursor: Number of precursors in the FFE estimation 
-* dfe_taps: Number of postcursors in the DFE estimation 
-* normalize: Boolean stating if the user wants to normalize the Rx FFE such that the peak will have value of 1
-* regularization: String indicating the regularization in the computation of the equalizer. Can be either:
-  * 'None' - Ordinary Least Squares (OLS) solving without regularization
-  * 'ridge' - Applying ridge regression, L2 regularization
-  * 'lasso' - Applying lasso regression, L1 regularization
+* signal - The signal we want to use to estimate the channel 
+* constellation - Enumeration stating the constellation. Should be taken from CommDspy.constants.ConstellationEnum 
+* ffe_postcursor: Number of postcursors in the FFE estimation                                                                                   
+* ffe_precursor: Number of precursors in the FFE estimation                                                                                     
+* dfe_taps: Number of postcursors in the DFE estimation                                                                                         
+* normalize: Boolean stating if the user wants to normalize the Rx FFE such that the peak will have value of 1                                  
+* regularization: String indicating the regularization in the computation of the equalizer. Can be either:                                      
+  * 'None' - Ordinary Least Squares (OLS) solving without regularization                                                                        
+  * 'ridge' - Applying ridge regression, L2 regularization                                                                                      
+  * 'lasso' - Applying lasso regression, L1 regularization                                                                                      
 * reg_lambda: If regularization is not 'None', and reg_lambda != 0, applies the wanted regularization with a regularization factor of reg_lambda
-* The Following flags are only relevant for constellation with multiple bits per symbol:
-  * bit_order_inv: Boolean indicating if the bit order in the signal generation is flipped. 
-  * pn_inv_precoding: Boolean indicating if the P and N were flipped in the signal capture process before the coding. 
-  * gray_coded: Boolean indicating if the signal is GRAY coded, if False, UNCODED 
-  * pn_inv_postcoding: Boolean indicating if the P and N were flipped in the signal capture process after the coding.
+
+The Following flags are only relevant for constellation with multiple bits per symbol:
+* prbs_full_scale: Boolean stating if we want the levels to be scaled such that the mean power of the levels  at the reference pattern will be 1 (0 [dB]), i.e. that the PRBS pattern will be coded to power of 0 [dB]
+* bit_order_inv: Boolean indicating if the bit order in the signal generation is flipped. 
+* pn_inv_precoding: Boolean indicating if the P and N were flipped in the signal capture process before the coding. 
+* gray_coded: Boolean indicating if the signal is GRAY coded, if False, UNCODED 
+* pn_inv_postcoding: Boolean indicating if the P and N were flipped in the signal capture process after the mapping.
 
 Function returns:
 * ffe: The equalization FFE, normalized such that the cursor will have a value of 1 

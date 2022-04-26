@@ -49,7 +49,7 @@ def symbol2bin_test():
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    test_pattern_len = random.randint(1, 100)
+    test_pattern_len = random.randint(2, 100)
     bit_vec      = np.random.randint(0, 2, test_pattern_len)
     num_of_symbols   = 2 ** random.randint(1, int(np.floor(np.log2(test_pattern_len))))
     bit_order_inv = random.random() > 0.5

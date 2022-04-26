@@ -2,20 +2,20 @@ import numpy as np
 from scipy import linalg
 from CommDspy.tx.prbs_generator import prbs_generator
 from CommDspy.tx.bin2symbol import bin2symbol
-from CommDspy.tx.coding import coding
+from CommDspy.tx.coding import coding_gray
+from CommDspy.tx.mapping import mapping
 from CommDspy.auxiliary import get_polynomial, get_levels
 from CommDspy.rx.lock_pattern import lock_pattern_to_signal
 from CommDspy.misc.least_squares import least_squares
 
 def equalization_estimation_prbs(prbs_type, signal, constellation,
-                                 prbs_full_scale=False,
-                                 ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
-                                 normalize=False,
+                                 ffe_postcursor=23, ffe_precursor=4, dfe_taps=0, normalize=False,
                                  regularization='None', reg_lambda=0,
+                                 prbs_full_scale=False,
                                  bit_order_inv=False,
                                  pn_inv_precoding=False,
                                  gray_coded=True,
-                                 pn_inv_postcoding=False):
+                                 pn_inv_postmapping=False):
     """
     Function which estimats the MMSE equalizer to be used to invert the ISI in the signal and recover the original data,
      using either an FFE or/and a DFE with controllable number of taps
@@ -24,9 +24,6 @@ def equalization_estimation_prbs(prbs_type, signal, constellation,
     :param signal: The signal we want to use to estimate the channel
     :param constellation: Enumeration stating the constellation. Should be taken from:
                           CommDspy.constants.ConstellationEnum
-    :param prbs_full_scale: Boolean stating if we want the levels to be scaled such that the mean power of the levels
-                            at the transmitter will be 1 (0 [dB]), i.e. that the PRBS pattern will be coded to power of
-                            0 [dB]
     :param ffe_postcursor: Number of postcursors in the FFE estimation
     :param ffe_precursor: Number of precursors in the FFE estimation
     :param dfe_taps: Number of postcursors in the DFE estimation
@@ -37,14 +34,17 @@ def equalization_estimation_prbs(prbs_type, signal, constellation,
             - 'lasso' - Applying lasso regression, L1 regularization
     :param reg_lambda: If regularization is not 'None', and reg_lambda != 0, applies the wanted regularization with a
                        regularization factor of reg_lambda
+    :param prbs_full_scale: Boolean stating if we want the levels to be scaled such that the mean power of the levels
+                            at the transmitter will be 1 (0 [dB]), i.e. that the PRBS pattern will be coded to power of
+                            0 [dB]
     %
-    The Following flags are only relevant for constellation with multiple bits per symbol:
+    The Following flags are used to construct the PRBS data used as reference:
     :param bit_order_inv: Boolean indicating if the bit order in the signal generation is flipped.
     :param pn_inv_precoding: Boolean indicating if the P and N were flipped in the signal capture process before the
                              coding.
     :param gray_coded: Boolean indicating if the signal is GRAY coded, if False, UNCODED
-    :param pn_inv_postcoding: Boolean indicating if the P and N were flipped in the signal capture process after the
-                              coding.
+    :param pn_inv_postmapping: Boolean indicating if the P and N were flipped in the signal capture process after the
+                              mapping.
     :return:
         ffe: The equalization FFE, normalized such that the cursor will have a value of 1
         dfe: The equalization DFE
@@ -69,7 +69,7 @@ def equalization_estimation_prbs(prbs_type, signal, constellation,
         return [0], [0], 0, 0, 0
     prbs_seq, _ = prbs_generator(poly_coeff, init_seed, 2 * prbs_len)
     prbsq       = bin2symbol(prbs_seq, len(levels), bit_order_inv, False, False, pn_inv_precoding)
-    prbs_coded  = coding(prbsq, constellation, gray_coded, pn_inv_postcoding, prbs_full_scale)
+    prbs_coded  = mapping(prbsq, constellation, prbs_full_scale, pn_inv=pn_inv_postmapping) if not gray_coded else mapping(coding_gray(prbsq, constellation), constellation, prbs_full_scale, pn_inv=pn_inv_postmapping)
     # ==================================================================================================================
     # Locking on the pattern beginning and then shifting to account for post-cursors
     # ==================================================================================================================
