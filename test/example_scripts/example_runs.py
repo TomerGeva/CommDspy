@@ -17,7 +17,7 @@ def tx_example():
     pn_inv          = False
     constellation   = cdsp.constants.ConstellationEnum.PAM4
     full_scale      = True
-    coding          = cdsp.constants.CodingEnum.UNCODED
+    gray_coding     = False
     rolloff         = 0.5
     poly_coeff      = cdsp.get_polynomial(prbs_type)
     init_seed       = np.array([1] * prbs_type.value)
@@ -34,7 +34,7 @@ def tx_example():
     # --------------------------------------------------------------------------------------------------------------
     prbs_bin_mult = np.tile(prbs_seq, bits_per_symbol)
     pattern       = cdsp.tx.bin2symbol(prbs_bin_mult, 2 ** bits_per_symbol, bit_order_inv, inv_msb, inv_lsb, pn_inv)
-    pattern       = cdsp.tx.coding(pattern, constellation, coding, full_scale=full_scale)
+    pattern       = cdsp.tx.mapping(pattern, constellation, full_scale) if not gray_coding else cdsp.tx.mapping(cdsp.tx.coding_gray(pattern, constellation), constellation, full_scale)
 
     return pattern
 
@@ -217,7 +217,7 @@ def rx_genie_checker():
     # ==================================================================================================================
     prbs_type       = cdsp.constants.PrbsEnum.PRBS13
     constellation   = cdsp.constants.ConstellationEnum.PAM4
-    coding          = cdsp.constants.CodingEnum.UNCODED
+    gray_coding     = False
     full_scale      = True
     rx_ffe_out      = rx_example()
     bits_per_symbol = 2
@@ -232,7 +232,7 @@ def rx_genie_checker():
     # ==================================================================================================================
     # Decoding
     # ==================================================================================================================
-    decoded_dut = cdsp.rx.decoding(slicer_out, constellation, coding, pn_inv, full_scale)
+    decoded_dut = cdsp.rx.demapping(slicer_out, constellation) if not gray_coding else cdsp.rx.decoding_gray(cdsp.rx.demapping(slicer_out, constellation), constellation)
     # ==================================================================================================================
     # Converting to binary
     # ==================================================================================================================
