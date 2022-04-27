@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import linalg
-from CommDspy.constants import CodingEnum
 from CommDspy.tx.prbs_generator import prbs_generator
 from CommDspy.tx.bin2symbol import bin2symbol
 from CommDspy.tx.mapping import mapping

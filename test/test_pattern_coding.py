@@ -100,3 +100,33 @@ def decoding_differential_test(constellation):
     coded_dut = cdsp.tx.coding_differential(pattern, constellation)
     decoded_dut = cdsp.rx.decoding_differential(coded_dut, constellation)
     assert np.all(pattern == decoded_dut), assert_str
+
+def coding_manchester_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2 , 100)
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_manchester(pattern)
+    # ==================================================================================================================
+    # Computing the coding in a different way
+    # ==================================================================================================================
+    coded_ref = np.zeros(200)
+    for ii, symbol in enumerate(pattern):
+        coded_ref[2*ii]     = symbol
+        coded_ref[2*ii + 1] = 1 - symbol
+    assert np.all(coded_ref == coded_dut), 'Manchester encoding failed!'
+
+def decoding_manchester_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, 100)
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_manchester(pattern)
+    decoded_dut = cdsp.rx.decoding_manchester(coded_dut)
+    assert np.all(pattern == decoded_dut), 'Manchester decoding failed!'

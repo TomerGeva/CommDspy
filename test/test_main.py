@@ -3,13 +3,12 @@ import random
 import csv
 import os
 import test
-from CommDspy.constants import PrbsEnum, ConstellationEnum, CodingEnum
+from CommDspy.constants import PrbsEnum, ConstellationEnum
 import CommDspy as cdsp
 import json
 
 prbs_types      = [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13, PrbsEnum.PRBS15]
 constellations  = [ConstellationEnum.OOK, ConstellationEnum.NRZ, ConstellationEnum.PAM4]
-codings         = [CodingEnum.UNCODED, CodingEnum.GRAY]
 
 def test_init():
     random.seed(None)
@@ -353,6 +352,12 @@ def test_prbs_gen_4():
         required_length = random.randint(1, prbs_type.value)
         test.prbs_gen_test(prbs_type, required_length)
 
+def test_coding_manchester():
+    test.coding_manchester_test()
+
+def test_decoding_manchester():
+    test.decoding_manchester_test()
+
 def test_coding_diff():
     for constellation in constellations:
         test.coding_differential_test(constellation)
@@ -422,5 +427,4 @@ def test_coding_gray_plus_mapping():
 
 
 if __name__ == '__main__':
-    test_coding_diff()
     pass

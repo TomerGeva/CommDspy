@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import random
-from CommDspy.constants import ConstellationEnum, CodingEnum
+from CommDspy.constants import ConstellationEnum
 from CommDspy.channel import awgn
 from CommDspy import get_levels
 from CommDspy.tx import mapping

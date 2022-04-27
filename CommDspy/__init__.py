@@ -1,7 +1,7 @@
 from CommDspy import channel
 from CommDspy import tx
 from CommDspy import rx
-from CommDspy.constants import PrbsEnum, ConstellationEnum, CodingEnum, EYE_COLORMAP
+from CommDspy.constants import PrbsEnum, ConstellationEnum, EYE_COLORMAP
 from CommDspy.auxiliary import get_polynomial, get_levels, power, rms, buffer, upsample, get_gray_level_vec
 from CommDspy.channel_estimation import channel_estimation_prbs
 from CommDspy.equalization_estimation import equalization_estimation_prbs, equalization_estimation
