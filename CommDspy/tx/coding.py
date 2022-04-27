@@ -42,3 +42,33 @@ def coding_differential(pattern, constellation=ConstellationEnum.PAM4):
     """
     lvl_num = len(get_levels(constellation))
     return (lfilter([1], [1, -1], pattern.astype(float)) % lvl_num).astype(int)
+
+def coding_manchester(pattern):
+    """
+    :param pattern: pattern to perform manchester encoding on, should be a numpy array
+    :return: pattern after manchester encoding, note that the length of the pattern will be double due to the nature of
+    the encoding process. Example for manchester encoding:
+    pattern = [1,    0,    1,    0,    0,    1,    1,    1,    0,    0,    1]
+    encoded = [1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1 ,0]
+    NOTE, this encoding scheme assumes binary data input
+    """
+    # ==================================================================================================================
+    # Checking data validity
+    # ==================================================================================================================
+    data_in = np.unique(pattern)
+    if len(data_in) > 2 or (0 not in data_in and 1 not in data_in):
+        raise ValueError('Data in is not binary, please consider other encoding methods')
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern_shape          = pattern.shape
+    new_pattern_shape      = list(pattern_shape)
+    new_pattern_shape[-1] *= 2
+    # ==================================================================================================================
+    # Encoding
+    # ==================================================================================================================
+    coding_dict   = {0:[0, 1], 1:[1, 0]}
+    coded_pattern = []
+    for symbol in np.reshape(pattern, -1): coded_pattern += coding_dict[symbol]
+
+    return np.reshape(np.array(coded_pattern), new_pattern_shape)
