@@ -16,10 +16,6 @@ class ConstellationEnum(Enum):
     PAM4 = 2
 
 
-class CodingEnum(Enum):
-    UNCODED = 0
-    GRAY    = 1
-
 EYE_COLORMAP = LinearSegmentedColormap("",{
     'red':   [(  0.0,     0.0,    0.0),
               ( 1/30,  50/255, 50/255),

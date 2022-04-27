@@ -52,7 +52,7 @@ def decoding_manchester(pattern):
     pattern = [1,    0,    1,    0,    0,    1,    1,    1,    0,    0,    1]
     encoded = [1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1 ,0]
     NOTE, this decoding scheme assumes binary data input
-    ERRORS:
+    ERROR DETECTION:
     Manchester encoding implements the data in the transitions, therefore we will look at the differences between
     pairs of bits. Where there are no differences there MUST be a slicing mistake. This can not be used for error
     correction since we do not know which of the two symbols was inverted, but we can mark this place as a guessed bit
