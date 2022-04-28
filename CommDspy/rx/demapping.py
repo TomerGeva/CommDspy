@@ -5,6 +5,7 @@ def demapping(signal, constellation, pn_inv=False):
     """
     :param signal: Numpy array of constellation symbols.
                 * If PAM4 assuming that the constellation is [-3x,-x,x,3x]
+                * If PAM3 assuming that the constellation is [-x, 0, x]
                 * If NRZ assuming that the constellation is [-x,x]
                 * If OOK assuming that the constellation is [0, x]
     :param constellation: The constellation we want to map to signal to

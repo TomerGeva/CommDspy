@@ -80,3 +80,34 @@ def decoding_manchester(pattern):
     decoded_pattern = (transitions + 1) / 2
 
     return np.reshape(np.array(decoded_pattern), new_pattern_shape)
+
+def decoding_bipolar(pattern, error_deterction):
+    """
+    :param pattern: pattern to perform manchester decoding on, should be a numpy array
+    :param error_deterction: flag indicating if we want the decoding to perform error detection.
+        * If False, simply maps the zeros to 0 and the +-1 to 1
+        * If True, checks to see if there are adjacent marks with similar signs, indicating there was a mistake
+          somewhere in this region. the error detection will be as follows:
+          ** If there are two consecutive '1' values or more, they will be replaced with '0.5' values
+          ** If there are teo consecutive '-1' values or more, they will be replaced with '-0.5' values
+        NOTE that the errors are not constrained to the location of the '0.5' and '-0.5' values, but can be in the neighboring '0' values as well
+    :return:
+    """
+    if not error_deterction:
+        return np.abs(pattern)
+    else:
+        # ----------------------------------------------------------------------------------------------------------
+        # Detecting the mark locations in the pattern
+        # ----------------------------------------------------------------------------------------------------------
+        pattern_flat    = np.reshape(pattern, -1)
+        decoded_pattern = np.abs(pattern).astype(float)
+        idx_vec         = np.arange(0, len(decoded_pattern))
+        mark_location   = idx_vec[pattern_flat != 0]
+        mark_change     = np.concatenate((np.array([1]), np.diff(pattern_flat[mark_location])))
+        running_sign    = 1
+        for ii, mark in enumerate(mark_change):
+            if mark == 0:
+                decoded_pattern[mark_location[ii]] = decoded_pattern[mark_location[ii-1]] = 0.5 * np.sign(running_sign)
+            else:
+                running_sign = np.sign(mark)
+        return decoded_pattern

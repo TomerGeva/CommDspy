@@ -13,7 +13,8 @@ class PrbsEnum(Enum):
 class ConstellationEnum(Enum):
     NRZ  = 0
     OOK  = 1
-    PAM4 = 2
+    PAM3 = 2
+    PAM4 = 3
 
 
 EYE_COLORMAP = LinearSegmentedColormap("",{

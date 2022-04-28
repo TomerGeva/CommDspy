@@ -71,3 +71,14 @@ def coding_manchester(pattern):
     coded_pattern = np.reshape(coding_list[pattern], -1)
 
     return np.reshape(np.array(coded_pattern), new_pattern_shape)
+
+def coding_bipolar(pattern):
+    """
+   :param pattern: pattern to perform manchester encoding on, should be a numpy array
+   :return: pattern after bipolar encoding, alternating +- 1 for the "marks" (1) where "spaces" (0) remain 0. Example:
+   pattern = [1, 0,  1, 0, 0, 1,  1, 1, 0, 0, 1]
+   encoded = [1, 0, -1, 0, 0, 1, -1, 1, 0, 0, -1]
+   NOTE, this encoding scheme assumes binary data input
+   """
+    sign_vec = coding_differential(pattern, ConstellationEnum.OOK)
+    return pattern * (-1) ** sign_vec
