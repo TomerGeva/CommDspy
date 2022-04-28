@@ -40,8 +40,9 @@ def coding_differential(pattern, constellation=ConstellationEnum.PAM4):
                      |--|      D      |<------
                         |-------------|
     """
+    shape   = pattern.shape
     lvl_num = len(get_levels(constellation))
-    return (lfilter([1], [1, -1], pattern.astype(float)) % lvl_num).astype(int)
+    return np.reshape(lfilter([1], [1, -1], np.reshape(pattern, -1).astype(float)) % lvl_num, shape).astype(int)
 
 def coding_manchester(pattern):
     """

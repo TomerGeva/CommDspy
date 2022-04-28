@@ -131,3 +131,37 @@ def decoding_manchester_test():
     coded_dut = cdsp.tx.coding_manchester(pattern)
     decoded_dut = cdsp.rx.decoding_manchester(coded_dut)
     assert np.all(pattern == decoded_dut), 'Manchester decoding failed!'
+
+def coding_bipolar_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, [100, 3])
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_bipolar(pattern)
+    # ==================================================================================================================
+    # Computing the coding in a different way
+    # ==================================================================================================================
+    coded_ref = np.reshape(pattern, -1)
+    running_sign = -1
+    for ii, symbol in enumerate(coded_ref):
+        if symbol == 1:
+            coded_ref[ii] *= running_sign
+            running_sign *= -1
+    coded_ref = np.reshape(coded_ref, [100, 3])
+
+    assert np.all(coded_ref == coded_dut), 'Bi-polar encoding failed!'
+
+def decoding_bipolar_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, 100)
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_bipolar(pattern)
+    decoded_dut = cdsp.rx.decoding_bipolar(coded_dut, error_deterction=True)
+    assert np.allclose(pattern, decoded_dut), 'Manchester decoding failed!'
