@@ -67,8 +67,7 @@ def coding_manchester(pattern):
     # ==================================================================================================================
     # Encoding
     # ==================================================================================================================
-    coding_dict   = {0:[0, 1], 1:[1, 0]}
-    coded_pattern = []
-    for symbol in np.reshape(pattern, -1): coded_pattern += coding_dict[symbol]
+    coding_list  = np.array([[0, 1], [1, 0]])
+    coded_pattern = np.reshape(coding_list[pattern], -1)
 
     return np.reshape(np.array(coded_pattern), new_pattern_shape)

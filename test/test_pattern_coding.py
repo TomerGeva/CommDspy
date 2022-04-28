@@ -105,7 +105,7 @@ def coding_manchester_test():
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    pattern = np.random.randint(0, 2 , 100)
+    pattern = np.random.randint(0, 2 , [100, 3])
     # ==================================================================================================================
     # Getting DUT coded pattern
     # ==================================================================================================================
@@ -113,10 +113,11 @@ def coding_manchester_test():
     # ==================================================================================================================
     # Computing the coding in a different way
     # ==================================================================================================================
-    coded_ref = np.zeros(200)
-    for ii, symbol in enumerate(pattern):
+    coded_ref = np.zeros(600)
+    for ii, symbol in enumerate(np.reshape(pattern, -1)):
         coded_ref[2*ii]     = symbol
         coded_ref[2*ii + 1] = 1 - symbol
+    coded_ref = np.reshape(coded_ref, [100, 6])
     assert np.all(coded_ref == coded_dut), 'Manchester encoding failed!'
 
 def decoding_manchester_test():
