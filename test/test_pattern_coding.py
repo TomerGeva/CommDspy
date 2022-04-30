@@ -144,12 +144,14 @@ def coding_bipolar_test():
     # ==================================================================================================================
     # Computing the coding in a different way
     # ==================================================================================================================
-    coded_ref = np.reshape(pattern, -1)
+    coded_ref = np.zeros_like(np.reshape(pattern, -1))
     running_sign = -1
-    for ii, symbol in enumerate(coded_ref):
+    for ii, symbol in enumerate(np.reshape(pattern, -1)):
         if symbol == 1:
-            coded_ref[ii] *= running_sign
+            coded_ref[ii] = 1 + running_sign
             running_sign *= -1
+        else:
+            coded_ref[ii] = 1
     coded_ref = np.reshape(coded_ref, [100, 3])
 
     assert np.all(coded_ref == coded_dut), 'Bi-polar encoding failed!'
@@ -163,5 +165,9 @@ def decoding_bipolar_test():
     # Getting DUT coded pattern
     # ==================================================================================================================
     coded_dut = cdsp.tx.coding_bipolar(pattern)
+    decoded_dut = cdsp.rx.decoding_bipolar(coded_dut, error_deterction=False)
+    assert np.allclose(pattern, decoded_dut), 'Bipolar decoding failed!'
     decoded_dut = cdsp.rx.decoding_bipolar(coded_dut, error_deterction=True)
-    assert np.allclose(pattern, decoded_dut), 'Manchester decoding failed!'
+    assert np.allclose(pattern, decoded_dut), 'Bipolar decoding failed!'
+
+

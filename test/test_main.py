@@ -433,4 +433,5 @@ def test_coding_gray_plus_mapping():
 
 
 if __name__ == '__main__':
+    test_decoding_bipolar()
     pass

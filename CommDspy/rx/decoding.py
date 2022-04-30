@@ -94,13 +94,13 @@ def decoding_bipolar(pattern, error_deterction):
     :return:
     """
     if not error_deterction:
-        return np.abs(pattern)
+        return np.abs(pattern - 1)
     else:
         # ----------------------------------------------------------------------------------------------------------
         # Detecting the mark locations in the pattern
         # ----------------------------------------------------------------------------------------------------------
-        pattern_flat    = np.reshape(pattern, -1)
-        decoded_pattern = np.abs(pattern).astype(float)
+        pattern_flat    = np.reshape(pattern - 1, -1)
+        decoded_pattern = np.abs(pattern - 1).astype(float)
         idx_vec         = np.arange(0, len(decoded_pattern))
         mark_location   = idx_vec[pattern_flat != 0]
         mark_change     = np.concatenate((np.array([1]), np.diff(pattern_flat[mark_location])))

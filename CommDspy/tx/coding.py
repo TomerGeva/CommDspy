@@ -76,10 +76,14 @@ def coding_manchester(pattern):
 def coding_bipolar(pattern):
     """
    :param pattern: pattern to perform manchester encoding on, should be a numpy array
-   :return: pattern after bipolar encoding, alternating +- 1 for the "marks" (1) where "spaces" (0) remain 0. Example:
+   :return: pattern after bipolar encoding, alternating +- 1 for the "marks" (1) where "spaces" (0) remain 0. Since this
+   code has three levels, the encoded vector will result in numbers between 0 and 2, where:
+    * 0 bits will be encoded to 1 values (mapped to 0 by the cdsp.tx.mapping function)
+    * 1 bits will be encoded to 0,2 values (mapped to +- 'x' by the cdsp.tx.mapping function)
+   Example:
    pattern = [1, 0,  1, 0, 0, 1,  1, 1, 0, 0, 1]
    encoded = [1, 0, -1, 0, 0, 1, -1, 1, 0, 0, -1]
    NOTE, this encoding scheme assumes binary data input
    """
     sign_vec = coding_differential(pattern, ConstellationEnum.OOK)
-    return pattern * (-1) ** sign_vec
+    return 1 + pattern * (-1) ** sign_vec

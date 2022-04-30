@@ -37,11 +37,12 @@ def get_levels(constellation, full_scale=False):
         levels = np.array([-1, 1])
     elif constellation == ConstellationEnum.OOK:
         levels = np.array([0, 1])
+    elif constellation == ConstellationEnum.PAM3:
+        levels = np.array([-1, 0, 1])
     elif constellation == ConstellationEnum.PAM4:
         levels = np.array([-3, -1, 1, 3])
     else:
-        print("Constellation type not supported :)")
-        return None
+        raise ValueError('Constellation type not supported')
     if full_scale:
         return levels / np.sqrt(np.mean(levels ** 2))
     else:
