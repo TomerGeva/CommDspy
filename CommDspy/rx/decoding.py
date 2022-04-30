@@ -64,7 +64,7 @@ def decoding_manchester(pattern):
     # Checking data validity
     # ==================================================================================================================
     data_in = np.unique(pattern)
-    if len(data_in) > 2 or (0 not in data_in and 1 not in data_in):
+    if len(data_in) > 2 or (len(data_in) == 1 and (0 not in data_in and 1 not in data_in)):
         raise ValueError('Data in is not binary, please consider other decoding methods')
     # ==================================================================================================================
     # Local variables
@@ -111,3 +111,14 @@ def decoding_bipolar(pattern, error_deterction):
             else:
                 running_sign = np.sign(mark)
         return decoded_pattern
+
+def decoding_mlt3(pattern):
+    pattern_flat = np.reshape(pattern, -1)
+    # ==================================================================================================================
+    # Decoding
+    # ==================================================================================================================
+    if pattern[0] == 1:
+        transitions = np.concatenate((np.array([1]), np.abs(np.diff(pattern_flat))))
+    else:
+        transitions = np.concatenate((np.array([0]), np.abs(np.diff(pattern_flat))))
+    return np.reshape(transitions, pattern.shape)

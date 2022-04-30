@@ -170,4 +170,37 @@ def decoding_bipolar_test():
     decoded_dut = cdsp.rx.decoding_bipolar(coded_dut, error_deterction=True)
     assert np.allclose(pattern, decoded_dut), 'Bipolar decoding failed!'
 
+def coding_mlt3_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, [100, 3])
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_mlt3(pattern)
+    # ==================================================================================================================
+    # Computing the coding in a different way
+    # ==================================================================================================================
+    coded_ref = np.zeros_like(np.reshape(pattern, -1))
+    values = np.array([0,1,2,1])
+    running_idx = 0
+    for ii, symbol in enumerate(np.reshape(pattern, -1)):
+        if symbol == 1:
+            running_idx = (running_idx + 1) % 4
+        coded_ref[ii] = values[running_idx]
+    coded_ref = np.reshape(coded_ref, [100, 3])
+    assert np.all(coded_ref == coded_dut), 'MLT-3 encoding failed!'
+
+def decoding_mlt3_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, 100)
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_mlt3(pattern)
+    decoded_dut = cdsp.rx.decoding_mlt3(coded_dut)
+    assert np.allclose(pattern, decoded_dut), 'MLT-3 decoding failed!'
 

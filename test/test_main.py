@@ -352,6 +352,12 @@ def test_prbs_gen_4():
         required_length = random.randint(1, prbs_type.value)
         test.prbs_gen_test(prbs_type, required_length)
 
+def test_coding_mlt3():
+    test.coding_mlt3_test()
+
+def test_decoding_mlt3():
+    test.decoding_mlt3_test()
+
 def test_coding_bipolar():
     test.coding_bipolar_test()
 
@@ -433,5 +439,5 @@ def test_coding_gray_plus_mapping():
 
 
 if __name__ == '__main__':
-    test_decoding_bipolar()
+    test_decoding_mlt3()
     pass

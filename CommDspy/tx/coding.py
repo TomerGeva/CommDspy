@@ -75,15 +75,38 @@ def coding_manchester(pattern):
 
 def coding_bipolar(pattern):
     """
-   :param pattern: pattern to perform manchester encoding on, should be a numpy array
+   :param pattern: pattern to perform bipolar encoding on, should be a numpy array
    :return: pattern after bipolar encoding, alternating +- 1 for the "marks" (1) where "spaces" (0) remain 0. Since this
    code has three levels, the encoded vector will result in numbers between 0 and 2, where:
     * 0 bits will be encoded to 1 values (mapped to 0 by the cdsp.tx.mapping function)
     * 1 bits will be encoded to 0,2 values (mapped to +- 'x' by the cdsp.tx.mapping function)
    Example:
-   pattern = [1, 0,  1, 0, 0, 1,  1, 1, 0, 0, 1]
-   encoded = [1, 0, -1, 0, 0, 1, -1, 1, 0, 0, -1]
+   pattern = [1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1]
+   encoded = [0, 1, 2, 1, 1, 0, 2, 0, 1, 1, 2]
    NOTE, this encoding scheme assumes binary data input
    """
     sign_vec = coding_differential(pattern, ConstellationEnum.OOK)
     return 1 + pattern * (-1) ** sign_vec
+
+def coding_mlt3(pattern):
+    """
+    :param pattern: pattern to perform MLT-3 encoding on, should be a numpy array
+    :return: pattern after MLT-3 encoding, alternating -1,0,1,0 for the '1' where '0' do not change the level. Since this
+    code has three levels, the encoded vector will result in numbers between 0 and 2, where:
+    * 1 bits will change the levels from 0,1,2,1 cycle
+    * 0 bits will remain in the same level
+    Aassuming initial level of '1' in case the data starts with zeros
+    Example:
+    pattern = [1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1]
+    encoded = [1, 1, 2, 2, 2, 1, 0, 1, 1, 1, 2]
+    NOTE, this encoding scheme assumes binary data input
+    """
+    # ==================================================================================================================
+    # Converting to 4 levels using differential encoding
+    # ==================================================================================================================
+    mlt3_enc = coding_differential(pattern, constellation=ConstellationEnum.PAM4)
+    # ==================================================================================================================
+    # Changing level '3' to '1' forming the cycle of 0,1,2,1
+    # ==================================================================================================================
+    mlt3_enc[mlt3_enc == 3] = 1
+    return mlt3_enc
