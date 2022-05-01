@@ -110,3 +110,36 @@ def coding_mlt3(pattern):
     # ==================================================================================================================
     mlt3_enc[mlt3_enc == 3] = 1
     return mlt3_enc
+
+def coding_differential_manchester(pattern):
+    """
+    :param pattern: pattern to perform manchester encoding on, should be a numpy array
+    :return: pattern after differential manchester encoding, note that the length of the pattern will be double due to
+    the nature of the encoding process. Example for differential manchester encoding:
+    pattern = [1,    0,    1,    0,    0,    1,    1,    1,    0,    0,    1]
+    encoded = [1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0 ,0]
+    NOTE, this encoding scheme assumes binary data input
+    """
+    # ==================================================================================================================
+    # Checking data validity
+    # ==================================================================================================================
+    data_in = np.unique(pattern)
+    if len(data_in) > 2 or (0 not in data_in and 1 not in data_in):
+        raise ValueError('Data in is not binary, please consider other encoding methods')
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern_shape = pattern.shape
+    new_pattern_shape = list(pattern_shape)
+    new_pattern_shape[-1] *= 2
+    # ==================================================================================================================
+    # Encoding
+    # ==================================================================================================================
+    coding_list   = np.array([[[0, 0], [0, 1]],
+                              [[1, 1], [1, 0]]])
+    pattern_flat  = 1 - np.reshape(pattern, -1)
+    idx_shift     = np.cumsum(np.concatenate([np.array([0]),pattern_flat[:-1]])) # if pattern_flat[0] == 0 else np.cumsum(pattern_flat)
+    idx_vec       = (np.arange(0, len(pattern_flat)) + idx_shift) % 2
+    ceded_pattern = coding_list[idx_vec, pattern_flat]
+
+    return np.reshape(ceded_pattern, new_pattern_shape)

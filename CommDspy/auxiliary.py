@@ -128,3 +128,11 @@ def upsample(signal, rate):
     zero_vec = np.zeros_like(signal)
     zero_mat = np.tile(zero_vec, [rate-1, 1])
     return np.reshape(np.vstack((signal, zero_mat)).T, -1)
+
+def zoh(signal, hold_idx):
+    """
+    :param signal: input to preform zero order hold on
+    :param hold_idx: number of indexes to hold
+    :return: signal after zero order hold
+    """
+    return np.reshape(np.tile(signal[:, None], [1, hold_idx]), -1)

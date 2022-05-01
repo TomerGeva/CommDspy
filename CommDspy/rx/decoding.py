@@ -122,3 +122,23 @@ def decoding_mlt3(pattern):
     else:
         transitions = np.concatenate((np.array([0]), np.abs(np.diff(pattern_flat))))
     return np.reshape(transitions, pattern.shape)
+
+def decoding_differential_manchester(pattern):
+    # ==================================================================================================================
+    # Checking data validity
+    # ==================================================================================================================
+    data_in = np.unique(pattern)
+    if len(data_in) > 2 or (len(data_in) == 1 and (0 not in data_in and 1 not in data_in)):
+        raise ValueError('Data in is not binary, please consider other decoding methods')
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern_shape         = pattern.shape
+    new_pattern_shape     = list(pattern_shape)
+    new_pattern_shape[-1] = int(new_pattern_shape[-1] / 2)
+    # ==================================================================================================================
+    # Decoding
+    # ==================================================================================================================
+    pattern_flat = np.reshape(pattern, [-1, 2])
+    transitions  = 1 -  np.abs(np.diff(pattern_flat, axis=1))  # should be -1, 1 or 0 for mistakes
+    return np.reshape(transitions, new_pattern_shape).astype(int)

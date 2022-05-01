@@ -204,3 +204,42 @@ def decoding_mlt3_test():
     decoded_dut = cdsp.rx.decoding_mlt3(coded_dut)
     assert np.allclose(pattern, decoded_dut), 'MLT-3 decoding failed!'
 
+def coding_differential_manchester_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, [100, 3])
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_differential_manchester(pattern)
+    # ==================================================================================================================
+    # Computing the coding in a different way
+    # ==================================================================================================================
+    coded_ref = np.zeros(600)
+    running_idx = 0
+    coding_list = np.array([[0, 0], [0, 1], [1, 1], [1, 0]])
+    for ii, symbol in enumerate(np.reshape(pattern, -1)):
+        if symbol == 1:
+            coded_ref[2 * ii]     = coding_list[2 * running_idx][0]
+            coded_ref[2 * ii + 1] = coding_list[2 * running_idx][1]
+        else:
+            coded_ref[2 * ii]     = coding_list[2 * running_idx + 1][0]
+            coded_ref[2 * ii + 1] = coding_list[2 * running_idx + 1][1]
+            running_idx += 1
+        running_idx = (running_idx + 1) % 2
+    coded_ref = np.reshape(coded_ref, [100, 6]).astype(int)
+    assert np.all(coded_ref == coded_dut), 'Differential Manchester encoding failed!'
+
+def decoding_differential_manchester_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, 100)
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_differential_manchester(pattern)
+    decoded_dut = cdsp.rx.decoding_differential_manchester(coded_dut)
+    assert np.allclose(pattern, decoded_dut), 'Differential Manchester decoding failed!'
+
