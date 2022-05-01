@@ -369,7 +369,19 @@ Function performs differential encoding. The function receives the symbols and r
 * pattern - array of non-negative integers representing symbols
 * constellation=ConstellationEnum.PAM4 - chosen constellation. According to the number of symbols in the constellation the differential encoding will be done w.r.t. the modulo operation.
 
-### 1.6. mapping
+### 1.6. coding_manchester
+Function performs manchester encoding. Function is inputted with a binary pattern and outputs the pattern in manchester encoding. Note that the output is twice the length of the input. This requires doubling the bandwidth or slower data transfer rates due to the coding rate being 0.5
+
+### 1.7. coding_bipolar
+Function perform bipolar encoding. Function is inputted with a binary pattern and outputs the pattern in bipolar encoding. This bipolar encoding resuces the SNR due to the addition of another level but allows slight error detection
+
+### 1.8. coding_mlt3
+Function perform Multi-Level-Transmit 3 encoding. Function is inputted with a binary pattern and outputs the pattern in MLT-3 encoding. This encoding scheme reduces the SNR due to the introduction of a 3rd level but reduced the minimal cycle to 4 UI from 2 UI thus reduction the nyquist frequency as well. 
+
+### 1.9. coding_differential_manchester
+Function performs differential manchester encoding. Function is inputted with a binary pattern and outputs the pattern in differential manchester encoding. Note that the output is twice the length of the input. This requires doubling the bandwidth or slower data transfer rates due to the coding rate being 0.5
+
+### 1.10. mapping
 Function used to map the symbols to their matching constellation levels . This is usually done as the last step prior to pulse shaping and transmission. Function is inputted with:
 * signal - Ihe signal to be mapped, should be UNCODED symbols array
 * constellation - The constellation we want to map to signal to
@@ -397,7 +409,24 @@ Function receives GRAY coded symbols and performs decoding to UNCODED symbols. F
 * pattern - array of non-negative integers representing the GRAY coded symbols
 * constellation=ConstellationEnum.PAM4 - chosen constellation. According to the symbol number in the constellation the GRAY decoding will be done
 
-### 2.4. symbol2bin
+### 2.4. decoding_differential
+Function performs differential decoding. The function receives the coded symbols and returns the appropriate decoded symbols:
+* pattern - array of non-negative integers representing coded symbols
+* constellation=ConstellationEnum.PAM4 - chosen constellation. According to the number of symbols in the constellation the differential decoding will be done w.r.t. the modulo operation.
+
+### 2.5. decoding_manchester
+Function perform manchester decoding. Function is inputted a binary sequence and returns the decoded bits. Note that te returned signal will have half the length of the input signal
+
+### 2.6. decoding_bipolar
+Function performs bipolar decoding. Function is inputted with the coded levels, i.e. 0, 1, 2 and returns the decoded binary symbols in the pattern either with or without error correction
+
+### 2.7. decoding_mlt3
+Function perform MLT-3 decoding. function receives the different levels, i.e. 0,1,2 ane returns the underlying binary symbols of the signal.
+
+### 2.8. decoding_differential_manchester
+Function perform differential manchester decoding. Function is inputted a binary sequence and returns the decoded bits. Note that te returned signal will have half the length of the input signal
+
+### 2.9. symbol2bin
 Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence
 * symbol_mat - The binary sequence wanted to be converted 
 * num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS 2 and 4
@@ -406,7 +435,7 @@ Function receives an UNCODED symbol sequence, returns the binary representation 
 * inv_lsb=False - Boolean stating if we want to invert the lsb
 * pn_inv=False - Boolean stating if we want to invert all bits
 
-### 2.5. prbs_checker
+### 2.10. prbs_checker
 Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
 1. builds a reference PRBS sequence
 2. synchronizes on the pattern
@@ -419,10 +448,10 @@ The function is inputted with:
 * init_lock - indicating if the data-in is aligned with the reference PRBS (with init seed of ones)
 * loss_th=100 - number of erred bit in the data to consider loss of PRBS lock
 
-### 2.6. prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
+### 2.11. prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
 Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
 
-### 2.7. ctle
+### 2.12. ctle
 Function passes an input signal through a CTLE defined via the poles, zeros and DC gain. Function is inputted with:
 * signal - input signal to pass through the CTLE
 * zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
@@ -432,7 +461,7 @@ Function passes an input signal through a CTLE defined via the poles, zeros and 
 * osr - Over Sampling Rate the input signal 'sig'
 * zi - Initial condition for the CTLE, Default is None, where we start with zeros
 
-### 2.8. get_ctle_filter
+### 2.13. get_ctle_filter
 Function computed the IIR coefficients for the digital equivalent for the CTLE defined via the zeros, poles and DC gain. Function is inputted with
 * zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
 * poles - list of frequencies where there are poles in [Hz]. If the given poles are positive, multiply by -1 to enforce stability
