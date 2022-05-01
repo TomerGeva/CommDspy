@@ -445,5 +445,4 @@ def test_coding_gray_plus_mapping():
 
 
 if __name__ == '__main__':
-    test_coding_diffferential_manchester()
     pass
