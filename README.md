@@ -448,7 +448,7 @@ The function is inputted with:
 * init_lock - indicating if the data-in is aligned with the reference PRBS (with init seed of ones)
 * loss_th=100 - number of erred bit in the data to consider loss of PRBS lock
 
-### 2.11. prbs_ana_econ - THIS FUNCTION IS STILL SUBJECT TO TESTING
+### 2.11. prbs_ana_econ
 Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
 
 ### 2.12. ctle
