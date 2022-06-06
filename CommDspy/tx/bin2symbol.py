@@ -21,12 +21,13 @@ def bin2symbol(bin_mat, num_of_symbols, bit_order_inv=False, inv_msb=False, inv_
     # Local variables
     # ==================================================================================================================
     bin_vec         = np.reshape(bin_mat, -1)
-    bits_per_symbol = int(np.ceil(np.log2(num_of_symbols)))
+    bits_per_symbol = np.log2(num_of_symbols)
     trim            = len(bin_vec) % bits_per_symbol
     # ==================================================================================================================
     # Taking into consideration the bits_per_symbol
     # ==================================================================================================================
-    if num_of_symbols > 2:
+    if num_of_symbols > 2 and np.isclose(bits_per_symbol, int(bits_per_symbol)):  # "complete" power of 2 constellation
+        bits_per_symbol = int(bits_per_symbol)
         trimmed_bin = bin_vec[:-1*trim].copy() if trim > 0 else bin_vec.copy()
         trimmed_bin = np.reshape(trimmed_bin, [-1, bits_per_symbol])
         # ----------------------------------------------------------------------------------------------------------
@@ -41,6 +42,8 @@ def bin2symbol(bin_mat, num_of_symbols, bit_order_inv=False, inv_msb=False, inv_
         if pn_inv:
             trimmed_bin = 1 - trimmed_bin
         pattern = trimmed_bin.dot(2 ** np.arange(bits_per_symbol))
-    else:
+    elif num_of_symbols == 2:
         pattern = (1-bin_vec).copy() if pn_inv else bin_vec.copy()
+    else:  # "partial" non-power of 2
+        raise ValueError('num_of_symbols is not a power of 2')
     return pattern.astype(int)

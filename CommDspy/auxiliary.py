@@ -65,14 +65,14 @@ def power(signal):
     :param signal:
     :return: Computes the mean power of the signal
     """
-    return np.mean(signal ** 2)
+    return np.mean(signal * np.conj(signal))
 
 def rms(signal):
     """
     :param signal:
     :return: Computes the RMS of the signal
     """
-    return np.sqrt(np.mean(signal ** 2))
+    return np.sqrt(power(signal))
 
 def buffer(signal, length, overlap=0, delay=0, clip=False):
     """
