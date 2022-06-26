@@ -134,6 +134,7 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
     ffe_precursors  = 4
     ffe_postcursors = 23
     ffe_len         = ffe_postcursors + ffe_precursors + 1
+    dfe_taps        = 0
     # ==================================================================================================================
     # Loading data
     # ==================================================================================================================
@@ -184,12 +185,14 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
     for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
         rx_ffe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
                                                         prbs_full_scale=full_scale,
-                                                        ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
+                                                        ffe_postcursor=ffe_postcursors,
+                                                        ffe_precursor=ffe_precursors,
+                                                        dfe_taps=dfe_taps,
                                                         normalize=False,
                                                         bit_order_inv=False,
                                                         pn_inv_precoding=False,
                                                         gray_coded=False,
-                                                        pn_inv_postcoding=False)
+                                                        pn_inv_postmapping=False)
         if rx_ffe_cand[-1] < err:
             err    = rx_ffe_cand[-1]
             rx_ffe = rx_ffe_cand[0]

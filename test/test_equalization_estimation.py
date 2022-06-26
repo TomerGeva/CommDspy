@@ -1,8 +1,10 @@
 import numpy as np
+from scipy import signal
 import os
 import CommDspy as cdsp
 import random
 from test.auxiliary import read_1line_csv
+from CommDspy.rx.ffe_dfe_model import ffe_dfe
 
 
 def equalization_prbs_test(prbs_type):
@@ -84,4 +86,13 @@ def equalization_prbs_test(prbs_type):
     # Comparing results
     # ==================================================================================================================
     assert np.all(np.abs(channel_ref - equ_dut[0]) < 5e-3), assert_str
+    # ==================================================================================================================
+    # Testing the ffe_dfe function
+    # ==================================================================================================================
+    dfe_taps = np.array([0])
+    levels = np.array([-1, 1])
+    ffe_taps = equ_dut[0]
+    slicer_in_dut = ffe_dfe(channel_out, ffe_taps, dfe_taps, levels=levels)
+    slicer_in_ref = signal.lfilter(ffe_taps, 1, channel_out)[len(ffe_taps)-1:]
+    assert np.allclose(slicer_in_ref, slicer_in_dut), assert_str
 
