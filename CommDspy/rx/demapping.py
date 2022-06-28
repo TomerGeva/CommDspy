@@ -1,7 +1,7 @@
 import numpy as np
 from CommDspy.auxiliary import get_levels
 
-def demapping(signal, constellation, pn_inv=False):
+def demapping(signal, constellation, full_scale=False, pn_inv=False):
     """
     :param signal: Numpy array of constellation symbols.
                 * If PAM4 assuming that the constellation is [-3x,-x,x,3x]
@@ -9,13 +9,16 @@ def demapping(signal, constellation, pn_inv=False):
                 * If NRZ assuming that the constellation is [-x,x]
                 * If OOK assuming that the constellation is [0, x]
     :param constellation: The constellation we want to map to signal to
+    :param full_scale: Boolean stating if we want the levels to be scaled such that the mean power of the levels will be
+                       1 (0 dB). The de-mapping is dependant on this and for a correct de-mapping we should enter a
+                       similar value as entered in the generation of the data
     :param pn_inv: indicating if we want to invert the signal prior to de-mapping
     :return: Function returns the signals after mapping to the constellation levels
     """
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    coded_levels    = get_levels(constellation)
+    coded_levels    = get_levels(constellation, full_scale=full_scale)
     demapped_levels = np.arange(len(coded_levels))
     # ==================================================================================================================
     # PN-inv

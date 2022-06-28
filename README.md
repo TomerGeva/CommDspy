@@ -30,13 +30,13 @@ def tx_example():
     # --------------------------------------------------------------------------------------------------------------
     # Getting PRBS binary pattern
     # --------------------------------------------------------------------------------------------------------------
-    prbs_seq, seed_dut = cdsp.tx.prbs_gen(poly_coeff, init_seed, prbs_len)
+    prbs_seq, seed_dut = cdsp.tx.prbs_gen(poly_coeff, init_seed, prbs_len * bits_per_symbol)
     # --------------------------------------------------------------------------------------------------------------
     # Duplicating if needed and coding
     # --------------------------------------------------------------------------------------------------------------
-    prbs_bin_mult = np.tile(prbs_seq, bits_per_symbol)
-    pattern       = cdsp.tx.bin2symbol(prbs_bin_mult, 2 ** bits_per_symbol, bit_order_inv, inv_msb, inv_lsb, pn_inv)
+    pattern       = cdsp.tx.bin2symbol(prbs_seq, 2 ** bits_per_symbol, bit_order_inv, inv_msb, inv_lsb, pn_inv)
     pattern       = cdsp.tx.mapping(pattern, constellation, full_scale) if not gray_coding else cdsp.tx.mapping(cdsp.tx.coding_gray(pattern, constellation), constellation, full_scale)
+
     return pattern
     
 pattern = tx_example()
@@ -207,7 +207,7 @@ def rx_example():
     # Estimating optimal Rx FFE and passing data through
     # ==================================================================================================================
     ctle_out_mat = cdsp.buffer(ctle_out, osr, 0)
-    rx_ffe       = np.zeros(28)
+    rx_ffe       = np.zeros(ffe_len)
     err          = float('inf')
     phase        = -1
     for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
