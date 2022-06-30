@@ -352,7 +352,10 @@ Function receives a signal and breaks is into overlapping parts. Function is inp
 Function returns a 2D numpy array with "length" length rows. 
 ### 0.6. upsample
 Function performs upsampling, i.e. inserting zeros between samples. Function receives the signal and the upsampling rate, returns the upsampled signal
-
+### 0.7. zoh
+Function performs Zero Order Hold (ZOH) to an input signal. Function is inputted with:
+* signal - input signal
+* hold_idx - number of indices to hold
 ## 1. Tx sub-package information
 ### 1.1. prbs_gen
 Function receives polynomial coefficients and an initial seed, creates binary PRBS sequences of the requested length . The function is inputted with:
@@ -481,6 +484,17 @@ Function computed the IIR coefficients for the digital equivalent for the CTLE d
 * dc_gain - gain in [dB] for the DC frequencies 
 * fs - Symbol frequency, 1/Ts
 * osr - Over Sampling Rate the input signal 'sig'
+
+### 2.14 ffe_dfe
+Function passes the input signal through the FFE and DFE. Function is inputted with:
+* input_signal - input signal to pass through the FFE-DFE
+* ffe_taps - Numpy array containing the FFE taps to be used. If None, without any FFE
+* dfe_taps - Numpy array containing the DFE taps to be used. If None, without and DFE taps
+* levels - Levels used in the transmission. if None assuming levels of [-3,-1,1,3]
+* osr - Over Sampling Rate w.r.t the signal. This is needed only for the DFE buffer calculations
+* phase - Indicates at which the signal will be sampled for the DFE. Assuming that the first input is at phase 0 and there are OSR phases in total
+
+Read the respective description for further information
 
 ## 3. Channel sub-package information
 ### 3.0. Various pulse generators

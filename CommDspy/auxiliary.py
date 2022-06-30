@@ -132,7 +132,7 @@ def upsample(signal, rate):
 def zoh(signal, hold_idx):
     """
     :param signal: input to preform zero order hold on
-    :param hold_idx: number of indexes to hold
+    :param hold_idx: number of indices to hold
     :return: signal after zero order hold
     """
     return np.reshape(np.tile(signal[:, None], [1, hold_idx]), -1)

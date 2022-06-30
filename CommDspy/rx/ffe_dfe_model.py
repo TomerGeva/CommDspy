@@ -12,7 +12,24 @@ def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None, os
     :param osr: Over Sampling Rate w.r.t the signal. This is needed only for the DFE buffer calculations
     :param phase: Indicates at which the signal will be sampled for the DFE. Assuming that the first input is at phase 0
                   and there are OSR phases in total
-    :return:
+    :return: Function passes the input signal through the FFE and DFE, returns the "slicer input" as indicated in the
+             sketch below.
+             Usage notes:
+                1. if the input signal has OSR larger than 1, use zero padding in the FFE only
+                2. when using DFE taps note:
+                    2.1. The DFE taps do not need to be zero padded when using OSR of more than 1
+                    2.2. If the input signal has OSR larger than 1, indicate the sampling phase to be used for the DFE in
+                         the phase variable
+
+            The model of the ffe_dfe filter is as follows:
+
+                --------------     +         --------------
+        in  --->|    FFE     | -----> + ---->|    Slicer  | ------------->
+                --------------        ^      --------------       |
+                                     -|                           |
+                                      |      --------------       |
+                                      -------|    DFE     | <-----|
+                                             --------------
     """
     # ==================================================================================================================
     # If both FFE and DFE are None, this block is doing nothing
