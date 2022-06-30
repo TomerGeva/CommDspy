@@ -149,14 +149,15 @@ def equalization_estimation(reference_signal, signal, ffe_postcursor=23, ffe_pre
     # Extracting results
     # ==================================================================================================================
     full_taps = ls_result[0][::-1]
-    ffe = full_taps[dfe_taps:]
-    dig_gain = np.max(ffe)
-    dfe = ls_result[0][-1 * dfe_taps:][::-1] if dfe_taps > 0 else None
-    ls_err = ls_result[1]
-    err = mat_ffe_dfe.dot( ls_result[0]) - skewed_ref
-    mse = 10 * np.log10(np.var(err) / power(reference_signal))
+    ffe       = full_taps[dfe_taps:]
+    dig_gain  = np.max(ffe)
+    dfe       = ls_result[0][-1 * dfe_taps:][::-1] if dfe_taps > 0 else None
+    ls_err    = ls_result[1]
+    sig_out   = mat_ffe_dfe.dot(ls_result[0])
+    err       = sig_out - skewed_ref
+    mse = 10 * np.log10(power(err) / power(sig_out))
     if normalize:
-        return ffe / dig_gain, dfe, dig_gain, ls_err, mse
+        return ffe / dig_gain, dfe / dig_gain, dig_gain, ls_err, mse
     else:
         return ffe, dfe, 1, ls_err, mse
 
