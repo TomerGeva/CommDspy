@@ -19,8 +19,7 @@ def equalization_prbs_test(prbs_type):
     # ==================================================================================================================
     bits_per_symbol = random.randint(1, 2)
     num_poles       = random.randint(1, 8)
-    constellation = cdsp.constants.ConstellationEnum.PAM4 if bits_per_symbol > 1 else (
-        cdsp.constants.ConstellationEnum.NRZ if random.random() > 0.5 else cdsp.constants.ConstellationEnum.OOK)
+    constellation = cdsp.constants.ConstellationEnum.PAM4 if bits_per_symbol > 1 else (cdsp.constants.ConstellationEnum.NRZ if random.random() > 0.5 else cdsp.constants.ConstellationEnum.OOK)
     gray_coding = False  # random.random() > 0.5
     poly_coeff = cdsp.get_polynomial(prbs_type)
     init_seed = np.array([1] * prbs_type.value)
@@ -93,6 +92,6 @@ def equalization_prbs_test(prbs_type):
     levels = np.array([-1, 1])
     ffe_taps = equ_dut[0]
     slicer_in_dut = ffe_dfe(channel_out, ffe_taps, dfe_taps, levels=levels)
-    slicer_in_ref = signal.lfilter(ffe_taps, 1, channel_out)[len(ffe_taps)-1:]
+    slicer_in_ref = signal.lfilter(ffe_taps, 1, channel_out)[len(ffe_taps):]
     assert np.allclose(slicer_in_ref, slicer_in_dut), assert_str
 
