@@ -234,12 +234,12 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     dc_gain = -4  # [dB]
     fs      = 53.125e9
     # ==================================================================================================================
-    # Rx FFE settings
+    # Rx FFE DFE settings
     # ==================================================================================================================
     ffe_precursors  = 4
-    ffe_postcursors = 4
+    ffe_postcursors = 23
     ffe_len         = ffe_postcursors + ffe_precursors + 1
-    dfe_taps        = 4
+    dfe_taps        = 1
     # ==================================================================================================================
     # Loading data
     # ==================================================================================================================
@@ -290,8 +290,6 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     err          = float('inf')
     phase        = -1
     for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
-        # if ii < 6:
-        #     continue
         rx_ffe_dfe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
                                                             prbs_full_scale=full_scale,
                                                             ffe_postcursor=ffe_postcursors,
@@ -307,14 +305,11 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
             rx_ffe = rx_ffe_dfe_cand[0]
             rx_dfe = rx_ffe_dfe_cand[1]
             phase  = ii
-        # print(ii, rx_ffe_dfe_cand[-1], phase)
-    print(err, phase)
     # --------------------------------------------------------------------------------------------------------------
-    # Passing through the Rx FFE
+    # Passing through the Rx FFE and DFE
     # --------------------------------------------------------------------------------------------------------------
     rx_ffe_ups   = cdsp.upsample(rx_ffe, osr)
     rx_slicer_in = cdsp.rx.ffe_dfe(ctle_out, rx_ffe_ups, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale), osr=osr, phase=phase)
-    # rx_slicer_in = cdsp.rx.ffe_dfe(ctle_out, rx_ffe_ups, np.array([0]),levels=cdsp.get_levels(constellation, full_scale=full_scale), osr=osr, phase=phase)
     rx_slicer_in = rx_slicer_in[:-1*(len(rx_slicer_in) % osr)] if len(rx_slicer_in) % osr != 0 else rx_slicer_in
 
     rx_slicer_in_osr1 = cdsp.rx.ffe_dfe(ctle_out_mat.T[phase], rx_ffe, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale))
@@ -323,13 +318,10 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
         eye_d, amp_vec = cdsp.eye_diagram(rx_slicer_in, osr, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
         plt.contourf(time_ui, amp_vec, eye_d, levels=100, cmap=cdsp.EYE_COLORMAP)
-        plt.title(f'Eye Diagram,  loaded channel + pulse with SNR of {snr} [dB] ; after Rx FFE ')
+        plt.title(f'Eye Diagram, channel + pulse with SNR of {snr} [dB] ; after Rx FFE and DFE')
         plt.xlabel('Time [UI]')
         plt.ylabel('Amplitude')
         plt.show()
-
-    # rx_slicer_in_mat = cdsp.buffer(rx_slicer_in, osr, 0)
-    # return rx_slicer_in_mat[:, phase]
     return rx_slicer_in_osr1
 
 def rx_genie_checker():

@@ -159,8 +159,8 @@ The package supports simple concepts of digital processing receiver models. Exam
 3. Passing the signal through the ISI chaneel + adding noise as seen in the previous examples
 4. Defining Continuous  Time Linear Equalizer (CTLE) via zeros, poles and DC gain
 5. passing channel output through the CTLE
-6. Computing Rx Feed Forward Equalizer (FFE)
-7. Passing CTLE output through Rx FFE
+6. Computing Rx Feed Forward Equalizer (FFE) and Decision Feedback Equalizer (DFE)
+7. Passing CTLE output through Rx FFE and DFE
 ```python
 import CommDspy as cdsp
 import numpy as np
@@ -179,6 +179,20 @@ def rx_example():
     osr     = 32
     pattern = tx_example()
     # ==================================================================================================================
+    # CTLE settings
+    # ==================================================================================================================
+    zeros   = [5e8, 11e9]
+    poles   = [1e9, 20e9, 25e9]
+    dc_gain = -4  # [dB]
+    fs      = 53.125e9
+    # ==================================================================================================================
+    # Rx FFE settings
+    # ==================================================================================================================
+    ffe_precursors  = 4
+    ffe_postcursors = 23
+    ffe_len         = ffe_postcursors + ffe_precursors + 1
+    dfe_taps        = 1
+    # ==================================================================================================================
     # Loading data
     # ==================================================================================================================
     f = open(os.path.join('..', 'test_data', 'example_channel_full.json'))
@@ -189,20 +203,11 @@ def rx_example():
     # Passing through channel
     # ==================================================================================================================
     ch_out = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+    ch_out = ch_out[len(channel_sampled):]
     # ==================================================================================================================
-    # CTLE settings
+    # Passing through CTLE
     # ==================================================================================================================
-    zeros   = [5e8, 11e9]
-    poles   = [1e9, 20e9, 25e9]
-    dc_gain = -4  # [dB]
-    fs      = 53.125e9  # symbol frequency, in our case 53.125 [GHz]
     ctle_out = cdsp.rx.ctle(ch_out, zeros, poles, dc_gain, fs=fs, osr=osr)
-    # ==================================================================================================================
-    # Rx FFE settings
-    # ==================================================================================================================
-    ffe_precursors  = 4
-    ffe_postcursors = 23
-    ffe_len         = ffe_postcursors + ffe_precursors + 1
     # ==================================================================================================================
     # Estimating optimal Rx FFE and passing data through
     # ==================================================================================================================
@@ -211,25 +216,29 @@ def rx_example():
     err          = float('inf')
     phase        = -1
     for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
-        rx_ffe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
-                                                        prbs_full_scale=full_scale,
-                                                        ffe_postcursor=23, ffe_precursor=4, dfe_taps=0,
-                                                        normalize=False,
-                                                        bit_order_inv=False,
-                                                        pn_inv_precoding=False,
-                                                        gray_coded=False)
-        if rx_ffe_cand[-1] < err:
-            err    = rx_ffe_cand[-1]
-            rx_ffe = rx_ffe_cand[0]
+        rx_ffe_dfe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
+                                                            prbs_full_scale=full_scale,
+                                                            ffe_postcursor=ffe_postcursors,
+                                                            ffe_precursor=ffe_precursors,
+                                                            dfe_taps=dfe_taps,
+                                                            normalize=False,
+                                                            bit_order_inv=False,
+                                                            pn_inv_precoding=False,
+                                                            gray_coded=False,
+                                                            pn_inv_postmapping=False)
+        if rx_ffe_dfe_cand[-1] < err:
+            err    = rx_ffe_dfe_cand[-1]
+            rx_ffe = rx_ffe_dfe_cand[0]
+            rx_dfe = rx_ffe_dfe_cand[1]
             phase  = ii
     # --------------------------------------------------------------------------------------------------------------
-    # Passing through the Rx FFE
+    # Passing through the Rx FFE and DFE
     # --------------------------------------------------------------------------------------------------------------
-    rx_ffe_ups = cdsp.upsample(rx_ffe, osr)
-    rx_ffe_out = signal.lfilter(rx_ffe_ups, 1, ctle_out)[ffe_len*osr:]
+    rx_ffe_ups   = cdsp.upsample(rx_ffe, osr)
+    rx_slicer_in = cdsp.rx.ffe_dfe(ctle_out, rx_ffe_ups, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale), osr=osr, phase=phase)
     
-    rx_ffe_out_mat = cdsp.buffer(rx_ffe_out, os, 0)
-    return rx_ffe_out_mat[:, phase]
+    rx_slicer_in_osr1 = cdsp.rx.ffe_dfe(ctle_out_mat.T[phase], rx_ffe, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale))
+    return rx_slicer_in_osr1
 ```
 The signal after passing the channel:
 
@@ -261,9 +270,13 @@ We can see that there is heavy ISI that can not be easily overcome by a CTLE alo
 
 ![ffe_out30](./pictures/eye_ffe_out_rx_example_snr0.png)
 
-**Figure 11** Eye diagram, FFE output with SNR of 10 [dB]
+**Figure 11** Eye diagram, FFE output with SNR of 0 [dB]
 
-And we can see that the ISI was negated by the CTLE and FFE.
+![ffe_out30](./pictures/eye_slicer_in_example_snr10.png)
+
+**Figure 11** Eye diagram, Slicer in (after FFE and 1 tap DFE) with SNR of 10 [dB]
+
+And we can see that the ISI was negated by the CTLE and FFE and DFE.
 
 ## Geinie error checker
 The package allows locking a PRBS data on the true PRBS and use that to check for errors. Example of such usage will be as follows:
