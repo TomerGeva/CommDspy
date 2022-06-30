@@ -118,28 +118,33 @@ def equalization_estimation(reference_signal, signal, ffe_postcursor=23, ffe_pre
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    mat_row_num    = len(signal)
     postcursor_num = np.max((ffe_postcursor, dfe_taps))
+    chop_len = postcursor_num + ffe_precursor + 1
+    mat_row_num    = len(signal) - chop_len
     # ==================================================================================================================
     # Building the FFE part of the matrix in the Ax=b system
     # ==================================================================================================================
-    signal_cat = np.concatenate((signal, signal[:postcursor_num + ffe_precursor + 1]))
-    full_hankel = linalg.hankel(signal_cat, signal_cat[::-1][:postcursor_num + ffe_precursor + 1])
-    partial_hankel = full_hankel[:mat_row_num, :]
+    signal_temp = signal[dfe_taps:]
+    # signal_temp = signal
+    ffe_mat = linalg.hankel(signal_temp, signal_temp[::-1][:ffe_postcursor + ffe_precursor + 1])
+    ffe_mat = ffe_mat[:mat_row_num, :]
     # ==================================================================================================================
     # Building the DFE part of the matrix in the Ax=b system and creating the matrix A for the least squares Ax=b
     # ==================================================================================================================
     if dfe_taps > 0:
-        temp = np.concatenate((reference_signal, reference_signal[:postcursor_num + ffe_precursor + 1]))
-        dfe_mat = linalg.hankel(temp, temp[::-1][:postcursor_num])
-        dfe_mat = -1 * dfe_mat[:mat_row_num, postcursor_num - dfe_taps:].astype(float)
-        mat_ffe_dfe = np.concatenate((partial_hankel, dfe_mat), axis=1)
+        # temp = np.concatenate((reference_signal, reference_signal[:postcursor_num + ffe_precursor + 1]))
+        # temp_ref = reference_signal[1:]
+        temp_ref = reference_signal
+        dfe_mat = linalg.hankel(temp_ref, temp_ref[::-1][:dfe_taps])
+        dfe_mat = -1 * dfe_mat[:mat_row_num, :].astype(float)
+        mat_ffe_dfe = np.concatenate((ffe_mat, dfe_mat), axis=1)
     else:
-        mat_ffe_dfe = partial_hankel
+        mat_ffe_dfe = ffe_mat
     # ==================================================================================================================
     # Performing least squares to find the optimal equalization
     # ==================================================================================================================
-    ls_result = least_squares(mat_ffe_dfe, reference_signal, regularization, reg_lambda) if regularization != 'None' and reg_lambda > 0 else least_squares(mat_ffe_dfe, reference_signal)
+    skewed_ref = reference_signal[dfe_taps:dfe_taps+mat_row_num]
+    ls_result  = least_squares(mat_ffe_dfe, skewed_ref, regularization, reg_lambda) if regularization != 'None' and reg_lambda > 0 else least_squares(mat_ffe_dfe, skewed_ref)
     # ==================================================================================================================
     # Extracting results
     # ==================================================================================================================
@@ -148,7 +153,7 @@ def equalization_estimation(reference_signal, signal, ffe_postcursor=23, ffe_pre
     dig_gain = np.max(ffe)
     dfe = ls_result[0][-1 * dfe_taps:][::-1] if dfe_taps > 0 else None
     ls_err = ls_result[1]
-    err = mat_ffe_dfe @ ls_result[0] - reference_signal
+    err = mat_ffe_dfe.dot( ls_result[0]) - skewed_ref
     mse = 10 * np.log10(np.var(err) / power(reference_signal))
     if normalize:
         return ffe / dig_gain, dfe, dig_gain, ls_err, mse

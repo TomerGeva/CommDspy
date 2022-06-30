@@ -3,12 +3,15 @@ from scipy import signal
 from CommDspy.auxiliary import buffer
 from CommDspy.rx.slicer import slicer
 
-def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None):
+def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None, osr=1, phase=0):
     """
     :param input_signal: input signal to pass through the FFE-DFE
     :param ffe_taps: Numpy array containing the FFE taps to be used. If None, without any FFE
     :param dfe_taps: Numpy array containing the DFE taps to be used. If None, without and DFE taps
     :param levels: Levels used in the transmission. if None assuming levels of [-3,-1,1,3]
+    :param osr: Over Sampling Rate w.r.t the signal. This is needed only for the DFE buffer calculations
+    :param phase: Indicates at which the signal will be sampled for the DFE. Assuming that the first input is at phase 0
+                  and there are OSR phases in total
     :return:
     """
     # ==================================================================================================================
@@ -38,8 +41,8 @@ def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None):
         # Getting the slicer in value
         # ----------------------------------------------------------------------------------------------------------
         rx_ffe_out_single = buffed_signal.dot(ffe_taps[::-1])
-        rx_dfe_out_single = dfe_buffer.dot(dfe_taps[::-1])
-        slicer_in[ii]     = rx_ffe_out_single + rx_dfe_out_single
+        rx_dfe_out_single = dfe_buffer.dot(dfe_taps)
+        slicer_in[ii]     = rx_ffe_out_single - rx_dfe_out_single
         # ----------------------------------------------------------------------------------------------------------
         # Getting the slicer out value
         # ----------------------------------------------------------------------------------------------------------
@@ -47,6 +50,9 @@ def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None):
         # ----------------------------------------------------------------------------------------------------------
         # Updating the dfe buffer
         # ----------------------------------------------------------------------------------------------------------
-        dfe_buffer = np.concatenate([slicer_out[ii], dfe_buffer[1:]]) if len(dfe_taps) > 1 else np.array(slicer_out[ii])
+        if ii % osr == (phase +  osr // 2) % osr:
+            idx = ii - osr // 2
+            if idx >= 0:
+                dfe_buffer = np.concatenate([np.array([slicer_out[idx]]), dfe_buffer[:-1]]) if len(dfe_taps) > 1 else np.array([slicer_out[idx]])
 
-    return slicer_in
+    return slicer_in[osr * len(dfe_taps):]
