@@ -290,8 +290,6 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     err          = float('inf')
     phase        = -1
     for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
-        if ii < 8:
-            continue
         rx_ffe_dfe_cand = cdsp.equalization_estimation_prbs(prbs_type, sampled_phase_data, constellation,
                                                             prbs_full_scale=full_scale,
                                                             ffe_postcursor=ffe_postcursors,
@@ -307,7 +305,7 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
             rx_ffe = rx_ffe_dfe_cand[0]
             rx_dfe = rx_ffe_dfe_cand[1]
             phase  = ii
-    print(phase, err)
+    print(f'Chose phase {phase} and the NMSE for this phase is {err} [dB]')
     # --------------------------------------------------------------------------------------------------------------
     # Passing through the Rx FFE and DFE
     # --------------------------------------------------------------------------------------------------------------
