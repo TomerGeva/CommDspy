@@ -485,7 +485,19 @@ Function computed the IIR coefficients for the digital equivalent for the CTLE d
 * fs - Symbol frequency, 1/Ts
 * osr - Over Sampling Rate the input signal 'sig'
 
-### 2.14 ffe_dfe
+### 2.14. quantize
+Function performs quantization for an input signal, simulates the performance of a naive DAC. Function is inputted with:
+* signal - Input signal to perform quantization on
+* total_bits - Total bit used in the quantization
+* frac_bits - Fractional bits used in the quantization. must be complete integers, either positive or negative
+* fix_point_type -  States the type to levels to be used with the bits. can have three options:
+  * 'u': unsigned levels
+  * 's': signed --> assumes the MSB for the non-fractional bit to be used on for the sign, utilizing the redundancy on the negative end of the numbers (similar to 2=s complement
+  * 'ss': signed symmetric --> MSB is for sign, rest of the bits are for magnitude
+
+For more information please read the function description
+
+### 2.15 ffe_dfe
 Function passes the input signal through the FFE and DFE. Function is inputted with:
 * input_signal - input signal to pass through the FFE-DFE
 * ffe_taps - Numpy array containing the FFE taps to be used. If None, without any FFE

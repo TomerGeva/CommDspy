@@ -234,6 +234,12 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     dc_gain = -4  # [dB]
     fs      = 53.125e9
     # ==================================================================================================================
+    # ADC settings
+    # ==================================================================================================================
+    total_bits = 9
+    frac_bits  = 7
+    quant_type = 'ss'
+    # ==================================================================================================================
     # Rx FFE DFE settings
     # ==================================================================================================================
     ffe_precursors  = 4
@@ -282,9 +288,14 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
         plt.ylabel('Amplitude')
         plt.show()
     # ==================================================================================================================
+    # Quantizing output to simulate ADC (analog to digital converter)
+    # ==================================================================================================================
+    adc_out = cdsp.rx.quantize(ctle_out, total_bits, frac_bits, quant_type)
+    # ==================================================================================================================
     # Estimating optimal Rx FFE and passing data through
     # ==================================================================================================================
-    ctle_out_mat = cdsp.buffer(ctle_out, osr, 0)
+    # ctle_out_mat = cdsp.buffer(ctle_out, osr, 0)
+    ctle_out_mat = cdsp.buffer(adc_out, osr, 0)
     rx_ffe       = np.zeros(ffe_len)
     rx_dfe       = np.zeros(dfe_taps)
     err          = float('inf')
@@ -305,7 +316,7 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
             rx_ffe = rx_ffe_dfe_cand[0]
             rx_dfe = rx_ffe_dfe_cand[1]
             phase  = ii
-    print(f'Chose phase {phase} and the NMSE for this phase is {err} [dB]')
+    print(f'Chose phase {phase} and the NMSE for this phase is {err:.2f} [dB]')
     # --------------------------------------------------------------------------------------------------------------
     # Passing through the Rx FFE and DFE
     # --------------------------------------------------------------------------------------------------------------
@@ -333,7 +344,7 @@ def rx_genie_checker():
     constellation   = cdsp.constants.ConstellationEnum.PAM4
     gray_coding     = False
     full_scale      = True
-    rx_ffe_out      = rx_example2(rx_slicer_in_eye=False)
+    rx_ffe_out      = rx_example2(rx_slicer_in_eye=True)
     bits_per_symbol = 2
     bit_order_inv   = False
     inv_msb         = False
