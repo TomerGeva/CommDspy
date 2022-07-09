@@ -562,6 +562,7 @@ Function that adds Additive White Gaussian Noise in a power to create a wanted S
 * osr - The wanted OSR after the shaping
 * span - The span of the pulse, the span is symmetrical, i.e. for span=8, 8 symbols back and 8 symbols forward
 * beta - Roll-off factor in case the raised cosine or RRC
+                                                       
 
 ### 3.3. awgn_channel
 Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
