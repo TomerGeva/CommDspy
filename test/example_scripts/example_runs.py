@@ -255,7 +255,7 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     # ==================================================================================================================
     # Passing through channel
     # ==================================================================================================================
-    ch_out = cdsp.channel.awgn_channel(pattern, channel, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+    ch_out = cdsp.channel.awgn_channel(pattern, channel, [1], pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
     ch_out = ch_out[len(channel):]
     if ch_out_eye:
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, osr, 128, fs_value=3, quantization=1024, logscale=False)

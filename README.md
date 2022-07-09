@@ -73,6 +73,9 @@ The package can be used to pass a signal through different channels
 ### AWGN
 Adding white gaussian noise on top of the pulse shaping, this is done by:
 ```python
+import CommDspy as cdsp
+import numpy as np
+import tx_example
 # ========================================================
 # Local variables
 # ========================================================
@@ -82,7 +85,7 @@ snr     = 30
 # Generating Tx pattern + passing through pulse shaping
 # ========================================================
 pattern = tx_example()
-ch_out  = cdsp.channel.awgn(pattern, osr=32, span=8, method='rcos', beta=rolloff, snr=snr)
+ch_out  = cdsp.channel.awgn(pattern, pulse='rcos', osr=32, span=8, beta=rolloff, snr=snr)
 eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=2048, logscale=False)
 time_ui = np.linspace(0, 2, 256)
 ```
@@ -99,6 +102,8 @@ The result can be shown in the form of an eye diagram:
 ### ISI + AWGN channel
 The ISI is given via filter parameters `a` and `b` where `b` are FIR parameters and `a` are IIR parameters.
 ```python
+import CommDspy as cdsp
+import tx_example      
 # ====================================================================
 # Local variables
 # ====================================================================
@@ -117,7 +122,7 @@ a = cdsp.upsample([1, -0.2], osr)
 # Generating Tx pattern + passing through pulse shaping + channel
 # ====================================================================
 pattern = tx_example()
-ch_out = cdsp.channel.awgn_channel(pattern, b, a, osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+ch_out = cdsp.channel.awgn_channel(pattern, b, a, pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
 eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
 ```
 The result can be shown in the form of an eye diagram:
@@ -183,9 +188,9 @@ The package supports simple concepts of digital processing receiver models. Exam
 ```python
 import CommDspy as cdsp
 import numpy as np
-from scipy import signal
 import os
 import json
+import tx_example
 def rx_example():
     # ==================================================================================================================
     # Tx + Channel setting
@@ -194,7 +199,7 @@ def rx_example():
     constellation = cdsp.constants.ConstellationEnum.PAM4
     full_scale    = True
     rolloff = 0.9
-    snr     = 10
+    snr     = 10  # [dB]
     osr     = 32
     pattern = tx_example()
     # ==================================================================================================================
@@ -221,7 +226,7 @@ def rx_example():
     # ==================================================================================================================
     # Passing through channel
     # ==================================================================================================================
-    ch_out = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+    ch_out = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
     ch_out = ch_out[len(channel_sampled):]
     # ==================================================================================================================
     # Passing through CTLE
@@ -232,6 +237,7 @@ def rx_example():
     # ==================================================================================================================
     ctle_out_mat = cdsp.buffer(ctle_out, osr, 0)
     rx_ffe       = np.zeros(ffe_len)
+    rx_dfe       = np.zeros(dfe_taps)
     err          = float('inf')
     phase        = -1
     for ii, sampled_phase_data in enumerate(ctle_out_mat.T):
@@ -304,6 +310,8 @@ The package allows locking a PRBS data on the true PRBS and use that to check fo
 3. converting the symbols bacl to binary
 4. checking for errors
 ```python
+import CommDspy as cdsp
+import rx_example
 # ==================================================================================================================
 # Local variables
 # ==================================================================================================================
@@ -563,7 +571,6 @@ Function that adds Additive White Gaussian Noise in a power to create a wanted S
 * span - The span of the pulse, the span is symmetrical, i.e. for span=8, 8 symbols back and 8 symbols forward
 * beta - Roll-off factor in case the raised cosine or RRC
                                                        
-
 ### 3.3. awgn_channel
 Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
 * signal - The input signal you want to pass through the channel
