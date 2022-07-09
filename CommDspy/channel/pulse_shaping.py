@@ -13,6 +13,7 @@ def pulse_shape(signal, osr, span, method='rect', beta=0.5):
                 2. 'sinc' - sinc pulse
                 3. 'rcos' - raised cosine pulse with roll-off parameter beta
                 4. 'rrc' - root raised cosine pulse with rolloff parameter beta
+                5. 'imp' - impulse response, just doing the up-sampling
     :param beta: roll-off parameter
     :return: the signal after the pulse shaping. This function simulated an ideal channel of ch[n] = delta[n] without
     noise. This is not a practical use-case but more of a feature to gain insight. For practical channels use the
@@ -117,6 +118,8 @@ def _get_pulse(method, osr, span, beta):
         return rcos_pulse(osr, span, beta)
     elif method == 'rrc':
         return rrc_pulse(osr, span, beta)
+    elif method == 'imp':
+        return np.array([1])
     else:
         raise ValueError('Method is not available, please try another')
 

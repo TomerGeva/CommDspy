@@ -73,8 +73,14 @@ The package can be used to pass a signal through different channels
 ### AWGN
 Adding white gaussian noise on top of the pulse shaping, this is done by:
 ```python
+# ========================================================
+# Local variables
+# ========================================================
 rolloff = 0.9
 snr     = 30
+# ========================================================
+# Generating Tx pattern + passing through pulse shaping
+# ========================================================
 pattern = tx_example()
 ch_out  = cdsp.channel.awgn(pattern, osr=32, span=8, method='rcos', beta=rolloff, snr=snr)
 eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=2048, logscale=False)
@@ -93,12 +99,25 @@ The result can be shown in the form of an eye diagram:
 ### ISI + AWGN channel
 The ISI is given via filter parameters `a` and `b` where `b` are FIR parameters and `a` are IIR parameters.
 ```python
-rolloff = 0.9
+# ====================================================================
+# Local variables
+# ====================================================================
+rolloff = 0.9  # rcos rolloff
 snr = 10
-b = [0.7]
-a = [1, -0.2]
+osr = 32  # wanted over sampling rate
+# ----------------------------------------------------------------
+# Channel model, should be in the OSR we want to work with.
+# In this example I used a naive model of channel in OSR1, thus I 
+# simply upsampled it to match the OSR we work with (32) but one 
+# can do more complex methods.
+# ----------------------------------------------------------------
+b = cdsp.upsample([0.5], osr)
+a = cdsp.upsample([1, -0.2], osr)
+# ====================================================================
+# Generating Tx pattern + passing through pulse shaping + channel
+# ====================================================================
 pattern = tx_example()
-ch_out = cdsp.channel.awgn_channel(pattern, b, a, osr=32, span=8, method='rcos', beta=rolloff, snr=snr)
+ch_out = cdsp.channel.awgn_channel(pattern, b, a, osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
 eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
 ```
 The result can be shown in the form of an eye diagram:
@@ -531,15 +550,38 @@ This function simulated a perfect channel, i.e. ch[n] = delta[n] therefore at th
 
 ### 3.2. awgn
 Function that adds Additive White Gaussian Noise in a power to create a wanted SNR. Function is inputted with:
-* signal - input we and to add the AWGN to
-* snr - the SNR of the signal w.r.t the added noise
+* signal - Numpy array of signal which we want to add AWGN to
+* snr - Signal to Noise power ratio, i.e. what is the power ratio between the signal and the inputted noise. Assuming the **snr is given in dB**
+* pulse - The shape of the pulse. Can be either:
+  1. 'rect' - rectangular pulse
+  2. 'sinc' - sinc pulse
+  3. 'rcos' - raised cosine pulse with roll-off parameter beta
+  4. 'rrc' - root raised cosine pulse with rolloff parameter beta
+  5. 'imp' - impulse response, simply doing the up-sampling
+  6. None - not applying any pulse shaping
+* osr - The wanted OSR after the shaping
+* span - The span of the pulse, the span is symmetrical, i.e. for span=8, 8 symbols back and 8 symbols forward
+* beta - Roll-off factor in case the raised cosine or RRC
 
 ### 3.3. awgn_channel
 Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
-* signal - the signal we want to pass through the channel
-* b - The polynomial coefficients of the channel's nominator
-* a - The polynomial coefficients of the channel's denominator. if a[0] is not 1, all a and b coefficients are normalized by a[0]
-* snr=None - The AWGN SNR to be added to the channel output, If None, does not add noise at all
+* signal - The input signal you want to pass through the channel
+* b - Nominator polynomial values (FIR). Assuming that the taps are set to the inputted osr
+* a - Denominator polynomial values (IIR).
+  1. If a[0] is not 1, normalizes all parameters by a[0]
+  2. Assuming that the taps are set to the inputted osr
+* zi - Initial condition for the channel, i.e. the memory of the channel at the beginning of the filtering. Should have a length of {max(len(a), len(b)) - 1} if provided. If None, assumes zeros as initial conditions
+* pulse - the shape of the pulse. can be either:
+  1. 'rect' - rectangular pulse
+  2. 'sinc' - sinc pulse
+  3. 'rcos' - raised cosine pulse with roll-off parameter beta
+  4. 'rrc' - root raised cosine pulse with rolloff parameter beta
+  5. 'imp' - impulse response, simply doing the up-sampling
+  6. None - not applying any pulse shaping
+* osr - the wanted OSR after the shaping
+* span - the span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols forward
+* beta - roll-off factor for the raised cosine or RRC pulses
+* snr - SNR of the AWGN signal if the SNR is None, does not add noise. Assuming the **SNR is given in dB**
 
 ## 4. Signal analysis
 
