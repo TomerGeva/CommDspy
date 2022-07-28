@@ -3,7 +3,7 @@ from scipy.signal import lfilter
 from CommDspy.channel import pulse_shape
 
 
-def awgn(signal, snr, pulse=None, osr=1, span=1, beta=0.5):
+def awgn(signal, snr, pulse=None, osr=1, span=1, beta=0.5, rj_sigma=0.0):
     """
     :param signal:numpy array of signal which we want to add AWGN to
     :param snr: Signal to Noise power ratio, i.e. what is the power ratio between the signal and the inputted noise.
@@ -18,6 +18,8 @@ def awgn(signal, snr, pulse=None, osr=1, span=1, beta=0.5):
     :param osr: the wanted OSR after the shaping
     :param span: the span of the pulse, the span is symmetrical, i.e. for span=8, 8 symbols back and 8 symbols forward
     :param beta: roll-off factor in case the raised cosine or RRC
+    :param rj_sigma: In case we want to generate a pulse, the pulse can be added with a random jitter. This parameter
+                     holds the value of the standard deviation of the random jitter applied
     :return: signal dipped in AWGN with the wanted SNR
                                                noise
                                                 |
@@ -38,7 +40,7 @@ def awgn(signal, snr, pulse=None, osr=1, span=1, beta=0.5):
     # Pulse shaping
     # ==================================================================================================================
     if pulse is not None:
-        ch_out_pulse = pulse_shape(signal, osr=osr, span=span, method=pulse, beta=beta) if osr > 1 else signal.copy()
+        ch_out_pulse = pulse_shape(signal, osr=osr, span=span, method=pulse, beta=beta, rj_sigma=rj_sigma) if osr > 1 else signal.copy()
     else:
         ch_out_pulse = signal
     # ==================================================================================================================
@@ -48,16 +50,13 @@ def awgn(signal, snr, pulse=None, osr=1, span=1, beta=0.5):
 
     return ch_out_pulse
 
-def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, zi=None, snr=None):
+def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, rj_sigma=0.0, zi=None, snr=None):
     """
     :param signal: The input signal you want to pass through the channel
     :param b: Nominator polynomial values (FIR). Assuming that the taps are set to the inputted osr
     :param a: Denominator polynomial values (IIR).
                 1. If a[0] is not 1, normalizes all parameters by a[0]
                 2. Assuming that the taps are set to the inputted osr
-    :param zi: Initial condition for the channel, i.e. the memory of the channel at the beginning of the filtering.
-               Should have a length of {max(len(a), len(b)) - 1} if provided. If None, assumes zeros as initial
-               conditions
     :param pulse: the shape of the pulse. can be either:
                 1. 'rect' - rectangular pulse
                 2. 'sinc' - sinc pulse
@@ -69,6 +68,11 @@ def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, zi=None, snr
     :param span: the span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols
                  forward
     :param beta: roll-off factor for the raised cosine or RRC pulses
+    :param rj_sigma: In case we want to generate a pulse, the pulse can be added with a random jitter. This parameter
+                     holds the value of the standard deviation of the random jitter applied
+    :param zi: Initial condition for the channel, i.e. the memory of the channel at the beginning of the filtering.
+               Should have a length of {max(len(a), len(b)) - 1} if provided. If None, assumes zeros as initial
+               conditions
     :param snr: SNR of the AWGN signal if the SNR is None, does not add noise. Assuming the **snr is given in dB**
     :return: The signal after passing through the channel and added the AWGN. We assume that the input signal is clean.
              Assuming initial conditions for the channel are zero
@@ -82,7 +86,7 @@ def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, zi=None, snr
     # Pulse shaping
     # ==================================================================================================================
     if pulse is not None:
-        ch_out_pulse = pulse_shape(signal, osr=osr, span=span, method=pulse, beta=beta)
+        ch_out_pulse = pulse_shape(signal, osr=osr, span=span, method=pulse, beta=beta, rj_sigma=rj_sigma)
     else:
         ch_out_pulse = signal
     # ==================================================================================================================
@@ -93,6 +97,6 @@ def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, zi=None, snr
     # Adding noise if needed
     # ==================================================================================================================
     if snr is not None:
-        ch_out += awgn(ch_out, snr)
+        ch_out = awgn(ch_out, snr)
 
     return ch_out

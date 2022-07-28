@@ -5,6 +5,19 @@ Developed by: Tomer Geva
 
 ## Example uses:
 ### Generating OSR1 and OSR `n` signal
+```mermaid
+graph LR
+  subgraph Transmitter Model
+    A(PRBS generation) -- b_n --> B(Converting bits to symbols)
+    B -- A_n --> C(Tx encoding)
+    C --> D(mapping to levels)
+    subgraph Tx Coding
+      B & C
+    end
+  end
+  D -- Tx out --> ...
+```
+
 ```python
 import CommDspy as cdsp
 import numpy as np
@@ -72,6 +85,18 @@ The results can be seen using `matplotlib.pyplot` functions such as `contourf`:
 The package can be used to pass a signal through different channels
 ### AWGN
 Adding white gaussian noise on top of the pulse shaping, this is done by:
+```mermaid
+graph LR
+  A(Transmitter Model) --> B(Pulse Shaping)
+  D{Noise} --> C
+  B --> C((+))
+
+  C -- channel out --> ...
+  
+  subgraph Channel Model
+    B & C & D
+  end
+```
 ```python
 import CommDspy as cdsp
 import numpy as np
@@ -101,6 +126,18 @@ The result can be shown in the form of an eye diagram:
 
 ### ISI + AWGN channel
 The ISI is given via filter parameters `a` and `b` where `b` are FIR parameters and `a` are IIR parameters.
+```mermaid
+graph LR
+  A(Transmitter Model) --> B(Pulse Shaping)
+  D{Noise} --> E
+  B --> C(ISI Model)
+  C --> E((+))
+  E -- channel out --> ...
+  
+  subgraph Channel Model
+    B & C & D & E
+  end
+```
 ```python
 import CommDspy as cdsp
 import tx_example      
@@ -185,6 +222,26 @@ The package supports simple concepts of digital processing receiver models. Exam
 5. passing channel output through the CTLE
 6. Computing Rx Feed Forward Equalizer (FFE) and Decision Feedback Equalizer (DFE)
 7. Passing CTLE output through Rx FFE and DFE
+```mermaid
+graph LR
+  A(Transmitter Model) --> B(Channel Model)
+  
+  B --> C(CTLE)
+  C -- channel out --> E(Rx FFE)
+  E -->|+| PLUS((+))
+  G -- - --> PLUS((+))
+  PLUS --> F(Slicer)
+  I --> G(DFE)
+  F -- A_n estimation --> I((" "))
+  I --> ...
+
+  subgraph Receiver Model
+    C & E & PLUS & F & G & I
+    subgraph Z[" "]
+      PLUS & G
+    end
+  end
+```
 ```python
 import CommDspy as cdsp
 import numpy as np
@@ -553,6 +610,10 @@ Function useed to perform pulse shaping to the inputted discrete signal. Functio
   * 'sinc' - sinc pulse
   * 'rcos' - raised cosine pulse with roll-off parameter beta
   * 'rrc' - root raised cosine pulse with rolloff parameter beta
+  * 'imp' - impulse response. This means that the function will perform up sampling for the given OSR
+* beta - Roll-off factor in case the raised cosine or RRC pulse
+* rj_sigma - Random Jitter std value. If 0, no Random Jitter is added to the signal. The unit of the RJ is in UI. Example: for Baud rate of 53.125 [GHz] UI is ~18.8[psec]. Using rj_sigma=0.05 [UI] means: rj_sigma = 0.05*18.8e-12 = 0.94e-12 = 940[fsec]
+
 
 This function simulated a perfect channel, i.e. ch[n] = delta[n] therefore at the end of the channel we only have the pulse shaping.
 
@@ -569,7 +630,8 @@ Function that adds Additive White Gaussian Noise in a power to create a wanted S
   6. None - not applying any pulse shaping
 * osr - The wanted OSR after the shaping
 * span - The span of the pulse, the span is symmetrical, i.e. for span=8, 8 symbols back and 8 symbols forward
-* beta - Roll-off factor in case the raised cosine or RRC
+* beta - Roll-off factor in case the raised cosine or RRC pulse
+* rj_sigma - In case we want to generate a pulse, the pulse can be added with a random jitter. This parameter holds the value of the standard deviation of the random jitter applied
                                                        
 ### 3.3. awgn_channel
 Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
@@ -589,6 +651,7 @@ Function that passes a signal through a discrete-time channel and adds AWGN to t
 * osr - the wanted OSR after the shaping
 * span - the span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols forward
 * beta - roll-off factor for the raised cosine or RRC pulses
+* rj_sigma - In case we want to generate a pulse, the pulse can be added with a random jitter. This parameter holds the value of the standard deviation of the random jitter applied
 * snr - SNR of the AWGN signal if the SNR is None, does not add noise. Assuming the **SNR is given in dB**
 
 ## 4. Signal analysis

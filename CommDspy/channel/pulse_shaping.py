@@ -1,8 +1,9 @@
 import numpy as np
 from CommDspy.auxiliary import upsample
 from scipy.signal import convolve
+from scipy import interpolate
 
-def pulse_shape(signal, osr, span, method='rect', beta=0.5):
+def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0):
     """
     :param signal: Input signal in OSR 1 for the pulse shaping
     :param osr: the wanted OSR after the shaping
@@ -15,6 +16,9 @@ def pulse_shape(signal, osr, span, method='rect', beta=0.5):
                 4. 'rrc' - root raised cosine pulse with rolloff parameter beta
                 5. 'imp' - impulse response, just doing the up-sampling
     :param beta: roll-off parameter
+    :param rj_sigma: Random Jitter std value. If 0, no Random Jitter is added to the signal. the unit of the RJ is in UI
+                     Example: for Baud rate of 53.125 [GHz] UI is ~18.8[psec]. Using rj_sigma=0.05 [UI] means:
+                      rj_sigma = 0.05*18.8e-12 = 0.94e-12 = 940[fsec]
     :return: the signal after the pulse shaping. This function simulated an ideal channel of ch[n] = delta[n] without
     noise. This is not a practical use-case but more of a feature to gain insight. For practical channels use the
     channel sub-package
@@ -27,13 +31,30 @@ def pulse_shape(signal, osr, span, method='rect', beta=0.5):
     # ==================================================================================================================
     # Convolving
     # ==================================================================================================================
-    return convolve(sig_ups, pulse, mode='valid')
+    sig_conv = convolve(sig_ups, pulse, mode='valid')
+    if np.isclose(rj_sigma, 0):
+        return sig_conv
+    else:
+        # ----------------------------------------------------------------------------------------------------------
+        # Creating the time vector with and without the jitter
+        # ----------------------------------------------------------------------------------------------------------
+        rj       = np.random.randn(len(sig_conv)//osr) * rj_sigma
+        t        = np.arange(len(sig_conv)) / osr
+        t_mat    = t.reshape(-1, osr)
+        t_mat_rj = t_mat + rj[:, None]
+        t_rj     = t_mat_rj.reshape(-1)
+        # ----------------------------------------------------------------------------------------------------------
+        # interpolating to the wanted time with the jitter
+        # ----------------------------------------------------------------------------------------------------------
+        f = interpolate.interp1d(t, sig_conv, kind='cubic', fill_value='extrapolate')
+        return f(t_rj)
 
-def rect_pulse(osr, span):
+def rect_pulse(osr, span, t=None):
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    t = _time_vec(osr, span)
+    if t is None:
+        t = _time_vec_pulse(osr, span)
     # ==================================================================================================================
     # Creating the pulse
     # ==================================================================================================================
@@ -41,28 +62,31 @@ def rect_pulse(osr, span):
     pulse[np.all([0.5 > t, t >= -0.5], axis=0)] = 1
     return pulse
 
-def sinc_pulse(osr, span):
+def sinc_pulse(osr, span, t=None):
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    t = _time_vec(osr, span)
+    if t is None:
+        t = _time_vec_pulse(osr, span)
     # ==================================================================================================================
     # Creating the pulse
     # ==================================================================================================================
     pulse = np.sinc(t)
     return pulse
 
-def rcos_pulse(osr, span, beta):
+def rcos_pulse(osr, span, beta, t=None):
     """
     :param osr:
     :param span:
     :param beta: Roll-off factor of the raised cosine
+    :param t:
     :return:
     """
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    t    = _time_vec(osr, span)
+    if t is None:
+        t = _time_vec_pulse(osr, span)
     tneq = t[np.abs(2*beta*t) != 1]
     # ==================================================================================================================
     # Creating the pulse
@@ -72,17 +96,19 @@ def rcos_pulse(osr, span, beta):
     pulse[np.abs(2*beta*t) != 1] = np.sinc(tneq) * np.cos(np.pi * beta * tneq) / (1 - (2 * beta * tneq) ** 2)
     return pulse
 
-def rrc_pulse(osr, span, beta):
+def rrc_pulse(osr, span, beta, t=None):
     """
     :param osr:
     :param span:
     :param beta: Roll-off factor of the raised cosine
+    :param t:
     :return:
     """
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    t    = _time_vec(osr, span)
+    if t is None:
+        t = _time_vec_pulse(osr, span)
     neq0 = ~np.isclose(t, np.zeros_like(t))
     neqb = ~np.isclose(np.abs(t) - 1/(4*beta), np.zeros_like(t))
     # ==================================================================================================================
@@ -94,7 +120,7 @@ def rrc_pulse(osr, span, beta):
     pulse[neqb & neq0] = 4 * beta / np.pi * (np.cos((1 + beta) * np.pi * t[neqb & neq0]) + (np.sin((1 - beta)*np.pi*t[neqb & neq0]) / (4*beta*t[neqb & neq0]))) / (1 - (4*beta*t[neqb & neq0])**2)
     return pulse
 
-def _time_vec(osr, span):
+def _time_vec_pulse(osr, span):
     """
     :param osr: Over Sampling Rate of the pulse shaped signal
     :param span: number of symbols to span the pulse
@@ -105,19 +131,19 @@ def _time_vec(osr, span):
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    time_len = osr * 2 * span + 1
-    t = np.arange(-1 * time_len // 2, time_len // 2, 1) / osr
+    time_len = osr * 2 * span
+    t = np.arange(-1 * (time_len // 2), (time_len // 2) + 1, 1) / osr
     return t
 
-def _get_pulse(method, osr, span, beta):
+def _get_pulse(method, osr=1, span=1, beta=0.5, t=None):
     if method == 'rect':
-        return rect_pulse(osr, span)
+        return rect_pulse(osr, span, t)
     elif method == 'sinc':
-        return sinc_pulse(osr, span)
+        return sinc_pulse(osr, span, t)
     elif method == 'rcos':
-        return rcos_pulse(osr, span, beta)
+        return rcos_pulse(osr, span, beta, t)
     elif method == 'rrc':
-        return rrc_pulse(osr, span, beta)
+        return rrc_pulse(osr, span, beta, t)
     elif method == 'imp':
         return np.array([1])
     else:
