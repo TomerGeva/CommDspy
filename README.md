@@ -440,6 +440,9 @@ Function performs upsampling, i.e. inserting zeros between samples. Function rec
 Function performs Zero Order Hold (ZOH) to an input signal. Function is inputted with:
 * signal - input signal
 * hold_idx - number of indices to hold
+### 0.8. get_bin_perm
+Function returns a numpy 2D array with all the length 'k' binary vector permutations, ordered. Function receives:
+* k - nubmer of bits wanted
 ## 1. Tx sub-package information
 ### 1.1. prbs_gen
 Function receives polynomial coefficients and an initial seed, creates binary PRBS sequences of the requested length . The function is inputted with:
@@ -481,7 +484,19 @@ Function perform Multi-Level-Transmit 3 encoding. Function is inputted with a bi
 ### 1.9. coding_differential_manchester
 Function performs differential manchester encoding. Function is inputted with a binary pattern and outputs the pattern in differential manchester encoding. Note that the output is twice the length of the input. This requires doubling the bandwidth or slower data transfer rates due to the coding rate being 0.5
 
-### 1.10. mapping
+### 1.10. coding_linear
+Function performs linear block coding over F2 (binary field) where:
+* Addition is XOR
+* Multiplication is AND
+
+This function assumes the encoding is linear and is encapsulated in the generating matrix G. Function derives the coded bit block size from G. The dimensions of G are kXn, thus the data block size is 'k' and the coded block size is 'n'. Encoding is done via matrix multiplication.
+* If the pattern length is not divisible by k, padding with zeros to make it divisible
+
+Function is inputted with:
+* pattern - binary pattern to perform linear block encoding. Should be binary 1D numpy array
+* G - Generating matrix. Should be binary numpy 2D array
+
+### 1.11. mapping
 Function used to map the symbols to their matching constellation levels . This is usually done as the last step prior to pulse shaping and transmission. Function is inputted with:
 * signal - Ihe signal to be mapped, should be UNCODED symbols array
 * constellation - The constellation we want to map to signal to
@@ -497,7 +512,7 @@ Function receives data matrix from the slicer input and performs the slicing ope
 
 ### 2.2. demapping
 Function performs de-mapping, i.e. converts the levels of the constellation to their respective integer value levels. Function is inputted with:
-* :param - Numpy array of constellation symbols.
+* signal - Numpy array of constellation symbols.
   * If PAM4 assuming that the constellation is [-3x,-x,x,3x]
   * If NRZ assuming that the constellation is [-x,x]
   * If OOK assuming that the constellation is [0, x]
@@ -526,7 +541,21 @@ Function perform MLT-3 decoding. function receives the different levels, i.e. 0,
 ### 2.8. decoding_differential_manchester
 Function perform differential manchester decoding. Function is inputted a binary sequence and returns the decoded bits. Note that te returned signal will have half the length of the input signal
 
-### 2.9. symbol2bin
+### 2.9. decoding_linear
+Function performs block decoding according to the following procedure:
+1. Computes the codebook according to the generating matrix G (assuming full codebook)
+2. Computes tha hamming distance for each block from all the codes in the codebook
+3. allocates the original data matching the codeword
+
+If we use error correction, also returns the error probability as computed from the hamming distance, and is equal to 1 over the number of codewords with minimal hamming distance.
+
+Function is inputted with:
+* pattern - binary array to perform linear block decoding on. pattern length must be divisible by the block
+                    length, otherwise, ignoring the last bits
+* G - Generating matrix used to encode the pattern
+* error_correction: If True, checks for block which are not in the codebook, and replaces them with the codeword with the closest hamming distance. If there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1 it was.
+
+### 2.10. symbol2bin
 Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence
 * symbol_mat - The binary sequence wanted to be converted 
 * num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS 2 and 4
@@ -535,7 +564,7 @@ Function receives an UNCODED symbol sequence, returns the binary representation 
 * inv_lsb=False - Boolean stating if we want to invert the lsb
 * pn_inv=False - Boolean stating if we want to invert all bits
 
-### 2.10. prbs_checker
+### 2.11. prbs_checker
 Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
 1. builds a reference PRBS sequence
 2. synchronizes on the pattern
@@ -548,10 +577,10 @@ The function is inputted with:
 * init_lock - indicating if the data-in is aligned with the reference PRBS (with init seed of ones)
 * loss_th=100 - number of erred bit in the data to consider loss of PRBS lock
 
-### 2.11. prbs_ana_econ
+### 2.12. prbs_ana_econ
 Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
 
-### 2.12. ctle
+### 2.13. ctle
 Function passes an input signal through a CTLE defined via the poles, zeros and DC gain. Function is inputted with:
 * signal - input signal to pass through the CTLE
 * zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
@@ -561,7 +590,7 @@ Function passes an input signal through a CTLE defined via the poles, zeros and 
 * osr - Over Sampling Rate the input signal 'sig'
 * zi - Initial condition for the CTLE, Default is None, where we start with zeros
 
-### 2.13. get_ctle_filter
+### 2.14. get_ctle_filter
 Function computed the IIR coefficients for the digital equivalent for the CTLE defined via the zeros, poles and DC gain. Function is inputted with
 * zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
 * poles - list of frequencies where there are poles in [Hz]. If the given poles are positive, multiply by -1 to enforce stability
@@ -569,7 +598,7 @@ Function computed the IIR coefficients for the digital equivalent for the CTLE d
 * fs - Symbol frequency, 1/Ts
 * osr - Over Sampling Rate the input signal 'sig'
 
-### 2.14. quantize
+### 2.15. quantize
 Function performs quantization for an input signal, simulates the performance of a naive DAC. Function is inputted with:
 * signal - Input signal to perform quantization on
 * total_bits - Total bit used in the quantization
@@ -581,7 +610,7 @@ Function performs quantization for an input signal, simulates the performance of
 
 For more information please read the function description
 
-### 2.15 ffe_dfe
+### 2.16 ffe_dfe
 Function passes the input signal through the FFE and DFE. Function is inputted with:
 * input_signal - input signal to pass through the FFE-DFE
 * ffe_taps - Numpy array containing the FFE taps to be used. If None, without any FFE

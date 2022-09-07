@@ -165,9 +165,9 @@ def decoding_bipolar_test():
     # Getting DUT coded pattern
     # ==================================================================================================================
     coded_dut = cdsp.tx.coding_bipolar(pattern)
-    decoded_dut = cdsp.rx.decoding_bipolar(coded_dut, error_deterction=False)
+    decoded_dut = cdsp.rx.decoding_bipolar(coded_dut, error_detection=False)
     assert np.allclose(pattern, decoded_dut), 'Bipolar decoding failed!'
-    decoded_dut = cdsp.rx.decoding_bipolar(coded_dut, error_deterction=True)
+    decoded_dut = cdsp.rx.decoding_bipolar(coded_dut, error_detection=True)
     assert np.allclose(pattern, decoded_dut), 'Bipolar decoding failed!'
 
 def coding_mlt3_test():
@@ -243,3 +243,44 @@ def decoding_differential_manchester_test():
     decoded_dut = cdsp.rx.decoding_differential_manchester(coded_dut)
     assert np.allclose(pattern, decoded_dut), 'Differential Manchester decoding failed!'
 
+def coding_linear_block_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, 100)
+    k       = np.random.randint(1, 6, 1)[0]
+    n       = k + 1
+    G       = np.concatenate([np.eye(k), np.ones([k, 1])], axis=1).astype(int)  # creating parity matrix
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_linear(pattern, G)
+    # ==================================================================================================================
+    # Computing the coding in a different way
+    # ==================================================================================================================
+    padding = k - (len(pattern) % k) if len(pattern) % k > 0 else 0
+    pattern_padded = np.concatenate([pattern, np.array([0] * padding)]).astype(int)
+    pattern_blocks = np.reshape(pattern_padded, [-1, k])
+    block_parity   = np.sum(pattern_blocks, axis=1) % 2
+    pattern_blocks_coded = np.concatenate([pattern_blocks, block_parity[:, None]], axis=1)
+    coded_ref = np.reshape(pattern_blocks_coded, -1)
+
+    assert np.all(coded_ref == coded_dut), 'Linear block encoding failed!'
+
+def decoding_linear_block_test():
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pattern = np.random.randint(0, 2, 100)
+    k = np.random.randint(1, 6, 1)[0]
+    n = k + 1
+    G = np.concatenate([np.eye(k), np.ones([k, 1])], axis=1).astype(int)  # creating parity matrix
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut    = cdsp.tx.coding_linear(pattern, G)
+    decoded_dut  = cdsp.rx.decoding_linear(coded_dut, G, error_correction=False)
+    assert np.allclose(pattern, decoded_dut[:len(pattern)]), 'Linear block decoding failed!'
+    # coded_dut[1] = 1 - coded_dut[1]
+    decoded_dut, p_err = cdsp.rx.decoding_linear(coded_dut, G, error_correction=True)
+    assert np.allclose(pattern, decoded_dut[:len(pattern)]), 'Linear block decoding failed!'

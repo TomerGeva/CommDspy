@@ -136,3 +136,11 @@ def zoh(signal, hold_idx):
     :return: signal after zero order hold
     """
     return np.reshape(np.tile(signal[:, None], [1, hold_idx]), -1)
+
+def get_bin_perm(k):
+    """
+    :param k: number of bits
+    :return: returns a numpy 2D array with all the length 'k' binary vector permutations
+    """
+    perm = np.arange(2 ** k)
+    return ((perm[:, None] & (1 << np.arange(k - 1, -1, -1))) > 0).astype(int)

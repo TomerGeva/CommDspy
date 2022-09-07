@@ -352,6 +352,12 @@ def test_prbs_gen_4():
         required_length = random.randint(1, prbs_type.value)
         test.prbs_gen_test(prbs_type, required_length)
 
+def test_coding_linear_block():
+    test.coding_linear_block_test()
+
+def test_decoding_linear_block():
+    test.decoding_linear_block_test()
+
 def test_coding_diffferential_manchester():
     test.coding_differential_manchester_test()
 
@@ -445,5 +451,5 @@ def test_coding_gray_plus_mapping():
 
 
 if __name__ == '__main__':
-    test_equalization()
+    test_decoding_linear_block()
     pass
