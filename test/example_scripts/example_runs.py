@@ -99,7 +99,7 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
         b = cdsp.upsample([0.5], osr)
         a = cdsp.upsample([1, -0.2], osr)
         pattern = tx_example()
-        ch_out = cdsp.channel.awgn_channel(pattern, b, a, osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+        ch_out, _ = cdsp.channel.awgn_channel(pattern, b, a, osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, osr, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
         plt.contourf(time_ui, amp_vec, eye_d, levels=100, cmap=cdsp.EYE_COLORMAP)
@@ -143,7 +143,7 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
     # ==================================================================================================================
     # Passing through channel
     # ==================================================================================================================
-    ch_out = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+    ch_out, _ = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
     if ch_out_eye:
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
@@ -256,8 +256,8 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     # ==================================================================================================================
     # Passing through channel
     # ==================================================================================================================
-    # ch_out = cdsp.channel.awgn_channel(pattern, channel, [1], pulse='imp', osr=osr, span=8, beta=rolloff, snr=snr)
-    ch_out = cdsp.channel.awgn_channel(pattern, channel, [1], pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
+    # ch_out, _ = cdsp.channel.awgn_channel(pattern, channel, [1], pulse='imp', osr=osr, span=8, beta=rolloff, snr=snr)
+    ch_out, _ = cdsp.channel.awgn_channel(pattern, channel, [1], pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
     ch_out = ch_out[len(channel):]
     if ch_out_eye:
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, osr, 128, fs_value=3, quantization=1024, logscale=False)

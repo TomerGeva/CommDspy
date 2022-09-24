@@ -81,6 +81,8 @@ def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, rj_sigma=0.0
                             |---------------|    |---------------|     v
                 signal ---> |  pulse shape  | -->|    channel    | --> + ---> output
                             |---------------|    |---------------|
+
+            In addition, returns the memory of the channel at the end of the signal passed
     """
     # ==================================================================================================================
     # Pulse shaping
@@ -90,13 +92,15 @@ def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, rj_sigma=0.0
     else:
         ch_out_pulse = signal
     # ==================================================================================================================
-    # Pulse shaping
+    # Passing through the signal
     # ==================================================================================================================
-    ch_out = lfilter(b, a, ch_out_pulse, zi=zi)
+    if zi is None:
+        zi = np.zeros(max([len(a), len(b)])-1)
+    ch_out, zo = lfilter(b, a, ch_out_pulse, zi=zi)
     # ==================================================================================================================
     # Adding noise if needed
     # ==================================================================================================================
     if snr is not None:
         ch_out = awgn(ch_out, snr)
 
-    return ch_out
+    return ch_out, zo

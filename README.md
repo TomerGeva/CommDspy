@@ -159,7 +159,7 @@ a = cdsp.upsample([1, -0.2], osr)
 # Generating Tx pattern + passing through pulse shaping + channel
 # ====================================================================
 pattern = tx_example()
-ch_out = cdsp.channel.awgn_channel(pattern, b, a, pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
+ch_out, _ = cdsp.channel.awgn_channel(pattern, b, a, pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
 eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
 ```
 The result can be shown in the form of an eye diagram:
@@ -283,7 +283,7 @@ def rx_example():
     # ==================================================================================================================
     # Passing through channel
     # ==================================================================================================================
-    ch_out = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
+    ch_out, _ = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
     ch_out = ch_out[len(channel_sampled):]
     # ==================================================================================================================
     # Passing through CTLE
@@ -690,6 +690,8 @@ Function that passes a signal through a discrete-time channel and adds AWGN to t
 * beta - roll-off factor for the raised cosine or RRC pulses
 * rj_sigma - In case we want to generate a pulse, the pulse can be added with a random jitter. This parameter holds the value of the standard deviation of the random jitter applied
 * snr - SNR of the AWGN signal if the SNR is None, does not add noise. Assuming the **SNR is given in dB**
+
+Function returns the signal at the output of the ISI AWGN channel as well as the memory of the channel at the end of the passing.
 
 ## 4. Signal analysis
 
