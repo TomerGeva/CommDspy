@@ -184,4 +184,142 @@ def coding_linear(pattern, G):
     coded_pattern  = pattern_blocks.dot(G) % 2            # m X n matrix
     return np.reshape(coded_pattern, -1)
 
+def coding_conv(pattern, G, feedback=None, use_feedback=None):
+    """
+    :param pattern: binary pattern to perform linear block encoding. Should be binary 1D numpy array.
+                    NOTE - If the convolution code has an input number of 'n', then the length of the pattern should be
+                           divisible by that same 'n'. otherwise, padding with zeros to match. Then, function assumes
+                           that the input will be serial. Example: for 2 inputs and pattern of [0, 1, 1, 0] the inputs
+                           will be (0, 1) and (1, 0)
+    :param G: Generating matrix of the linear convolution code. Should be dictionary of binary numpy 2D array. Unlike
+              the linear block coding, the generating matrix indicates transfer function from the input to the output,
+              and the (i,j)th entry is the transfer function from the ith input to the jth output, namely the power
+              series representing the impulse response at the jth output to an impulse at the ith input.
+    :param feedback: Feedback polynomial for the inputs with feedback loops. The data type is a dictionary where the
+                     keys are the input indices, similar to G, and the values are 1D numpy arrays matching the feedback
+                     polynomial for each of the inputs. Feedback polynomial should always have 1 in the '0' location.
+    :param use_feedback: 2d numpy array with size of (inputs, outputs) stating which output should use the feedback loop
+                         ('1') and which outputs don't ('0') w.r.t. each input.
+    :return:
+    This convolution coding assumes the code is not recursive, and the memory operates in the form of shift register for
+    each input.
+    This function assumes the following:
+    1. If the convolution code has an input number of 'n', then the length of the pattern should be divisible by that
+       same 'n'. otherwise, padding with zeros to match. Then, function assumes that the input will be serial.
+       Example: for 2 inputs and pattern of [0, 1, 1, 0] the inputs will be (0, 1) and (1, 0)
+    2. The starting state for each shift register is the '0' state
 
+    :examples:
+        1. This code has 1 input, 2 outputs, memory depth of 2. Diagram:
+                   -----------------> + ---------------> + -------> c_0
+                   |                  ^                  ^
+                   |     |------|     |      |------|    |
+            w -----+ --> |   D  |----------->|   D  |----+
+                   |     |------|            |------|    |
+                   |                                     v
+                   ------------------------------------> + -------> c_1
+            G = [1 + D + D^2 ; 1 + D] is inputted by:
+             * G = {0:np.array([[1,1,1], [1,1,0]])} ; 1 key in the dict, with size of (2, 3)
+
+        2. Tis code has 2 inputs, 3 outputs and memory depth of 2. Diagram:
+         w_0 --------------------------------------------------> c_0
+                |                                    |
+                |     |------|                       v
+                |---> |   D  |---------------------> +
+                      |------|                       |
+                                                     |
+                      |------|      |------|         v
+                |---> |   D  | ---> |   D  |-------> + --------> c_2
+                |     |------|      |------|
+                |
+          w_1 -------------------------------------------------> c_1
+          G = [[1, 0, 1 + D],
+               [0, 1,  D^2 ]]  is inputted by:
+            * G = {0:np.array([[1,0],[0,0],[1,1]]) , 1: np.array([[0,0,0],[1,0,0],[0,0,1]])} ; 2 entries in the list
+                ** 1st entry with size of (3, 2)
+                ** 2nd entry with size of (3, 3)
+
+    """
+    # ==================================================================================================================
+    # Basic checking of data validity
+    # ==================================================================================================================
+    check_binary(pattern)
+    for ii in G:
+        check_binary(G[ii])
+        # ----------------------------------------------------------------------------------------------------------
+        # Checking that the feedback rules are OK and that all is binary
+        # ----------------------------------------------------------------------------------------------------------
+        if feedback is not None:
+            if use_feedback is None:
+                raise ValueError('use_feedback must not be None is feedback is used')
+            elif len(use_feedback) != G[0].shape[0]:
+                raise ValueError('Length of use_feedback should be similar to the number of outputs')
+            check_binary(feedback[ii])
+            for jj, G_ii_jj in enumerate(G[ii]):
+                if use_feedback[ii, jj] == 0:
+                    if len(G_ii_jj) > 1:
+                        if sum(G_ii_jj[1:]) > 0:
+                            raise ValueError('Use feedback is disabled for this output, but the transfer function requires a FIR')
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    n_in  = len(G)
+    n_out = G[0].shape[0]
+    # ==================================================================================================================
+    # Zero padding if needed, then reshaping
+    # ==================================================================================================================
+    if len(pattern) % n_in != 0:
+        pad_len         = n_in - (len(pattern) % n_in)
+        pattern_padded  = np.concatenate([pattern, [0]*pad_len])
+        pattern_reshape = np.reshape(pattern_padded, [-1, n_in])
+    else:
+        pattern_reshape = np.reshape(pattern, [-1, n_in])
+    # ==================================================================================================================
+    # Coding
+    # ==================================================================================================================
+    out_vals = np.zeros([n_out, pattern_reshape.shape[0]])
+    for ii in range(n_in):
+        # ----------------------------------------------------------------------------------------------------------
+        # Getting the ith input pattern and transfer functions
+        # ----------------------------------------------------------------------------------------------------------
+        G_ii = G[ii]
+        if feedback is None:
+            iir_vals = 1.0
+        elif ii not in feedback.keys():
+            iir_vals = 1.0
+        else:
+            iir_vals = feedback[ii].astype(float)
+        in_pattern = pattern_reshape.T[ii]
+        for jj in range(n_out):
+            # ------------------------------------------------------------------------------------------------------
+            # Getting the ijth transfer function
+            # ------------------------------------------------------------------------------------------------------
+            G_ii_jj  = G_ii[jj]
+            if np.all(G_ii_jj == 0):  # input ii does not affect output jj, skipping
+                continue
+            if type(iir_vals) != float:
+                # **********************************************************************************************
+                # Another validity check, should never reach this error
+                # **********************************************************************************************
+                if len(G_ii_jj) > 1:
+                        if sum(G_ii_jj[1:]) > 0 and use_feedback == 0:
+                            raise ValueError('Invalid inputs, should never reach this error')
+                # **********************************************************************************************
+                # If the output is systematic, no need to filter
+                # **********************************************************************************************
+                elif use_feedback[ii, jj] == 0: # the jj output is systematic w.r.t. the ii input
+                    out_vals[jj] += in_pattern
+                    continue
+            # ------------------------------------------------------------------------------------------------------
+            # Passing the data through the transfer function
+            # ------------------------------------------------------------------------------------------------------
+            out_ii_jj     = lfilter(G_ii_jj.astype(float), iir_vals, in_pattern)
+            out_vals[jj] += out_ii_jj
+    # ==================================================================================================================
+    # Setting the data to binary
+    # ==================================================================================================================
+    out_vals = (out_vals % 2).astype(int)
+    # ==================================================================================================================
+    # Reshaping back to the output
+    # ==================================================================================================================
+    return np.reshape(out_vals.T, -1)

@@ -496,7 +496,15 @@ Function is inputted with:
 * pattern - binary pattern to perform linear block encoding. Should be binary 1D numpy array
 * G - Generating matrix. Should be binary numpy 2D array
 
-### 1.11. mapping
+### 1.11. coding_conv
+Function performs convolution coding. In the most general case, the function can perform non-recursive or recursive, systematic or non systematic coding. Function is inputted with:
+* pattern - binary pattern to perform linear block encoding. Should be binary 1D numpy array. NOTE - If the convolution code has an input number of 'n', then the length of the pattern should be divisible by that same 'n'. otherwise, padding with zeros to match. Then, function assumes that the input will be serial. Example: for 2 inputs and pattern of [0, 1, 1, 0] the inputs will be (0, 1) and (1, 0)
+* G - Generating matrix of the linear convolution code. Should be dictionary of binary numpy 2D array. Unlike the linear block coding, the generating matrix indicates transfer function from the input to the output, and the (i,j)th entry is the transfer function from the ith input to the jth output, namely the power series representing the impulse response at the jth output to an impulse at the ith input.
+* feedback - Feedback polynomial for the inputs with feedback loops. The data type is a dictionary where the keys are the input indices, similar to G, and the values are 1D numpy arrays matching the feedback polynomial for each of the inputs. Feedback polynomial should always have 1 in the '0' location.
+* use_feedback - 2d numpy array with size of (inputs, outputs) stating which output should use the feedback loop ('1') and which outputs don't ('0') w.r.t. each input. NOTE that if for input ii, there is a feedback loop, only systematic outputs do not use the feedback. Therefore, if there is a feedback loop and the generating matrix is not systematic for the jj output, the use_feedback[ii,jj] MUST be 1
+
+For more information + use examples, see the documentation of the function
+### 1.12. mapping
 Function used to map the symbols to their matching constellation levels . This is usually done as the last step prior to pulse shaping and transmission. Function is inputted with:
 * signal - Ihe signal to be mapped, should be UNCODED symbols array
 * constellation - The constellation we want to map to signal to
