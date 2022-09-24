@@ -95,7 +95,10 @@ def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, rj_sigma=0.0
     # Passing through the signal
     # ==================================================================================================================
     if zi is None:
-        zi = np.zeros(max([len(a), len(b)])-1)
+        if type(a) in [list, np.ndarray]:
+            zi = np.zeros(max([len(a), len(b)])-1)
+        else:  # a is int or float
+            zi = np.zeros(max([1, len(b)])-1)
     ch_out, zo = lfilter(b, a, ch_out_pulse, zi=zi)
     # ==================================================================================================================
     # Adding noise if needed

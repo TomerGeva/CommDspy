@@ -57,8 +57,8 @@ def channel_estimation_prbs_test(prbs_type):
     # ==================================================================================================================
     # Passing signal through the channel
     # ==================================================================================================================
-    channel_out = cdsp.channel.awgn_channel(ref_pattern, channel_ref, 1)
-    channel_out = channel_out[len(channel_ref)+1:]
+    channel_out, _ = cdsp.channel.awgn_channel(ref_pattern, channel_ref, [1])
+    channel_out    = channel_out[len(channel_ref)+1:]
     # ==================================================================================================================
     # Passing through DUT
     # ==================================================================================================================
