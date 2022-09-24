@@ -1,5 +1,5 @@
 import numpy as np
-from CommDspy.misc.help_functions import check_binary
+from CommDspy.misc.help_functions import check_binary, check_valid_conv
 from CommDspy.constants import ConstellationEnum
 from CommDspy.auxiliary import get_levels, get_gray_level_vec
 from scipy.signal import lfilter
@@ -243,23 +243,7 @@ def coding_conv(pattern, G, feedback=None, use_feedback=None):
     # ==================================================================================================================
     # Basic checking of data validity
     # ==================================================================================================================
-    check_binary(pattern)
-    for ii in G:
-        check_binary(G[ii])
-        # ----------------------------------------------------------------------------------------------------------
-        # Checking that the feedback rules are OK and that all is binary
-        # ----------------------------------------------------------------------------------------------------------
-        if feedback is not None:
-            if use_feedback is None:
-                raise ValueError('use_feedback must not be None is feedback is used')
-            elif len(use_feedback) != G[0].shape[0]:
-                raise ValueError('Length of use_feedback should be similar to the number of outputs')
-            check_binary(feedback[ii])
-            for jj, G_ii_jj in enumerate(G[ii]):
-                if use_feedback[ii, jj] == 0:
-                    if len(G_ii_jj) > 1:
-                        if sum(G_ii_jj[1:]) > 0:
-                            raise ValueError('Use feedback is disabled for this output, but the transfer function requires a FIR')
+    check_valid_conv(pattern, G, feedback, use_feedback)
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================

@@ -553,15 +553,15 @@ Function perform differential manchester decoding. Function is inputted a binary
 Function performs block decoding according to the following procedure:
 1. Computes the codebook according to the generating matrix G (assuming full codebook)
 2. Computes tha hamming distance for each block from all the codes in the codebook
-3. allocates the original data matching the codeword
+3. Allocates the original data matching the codeword, i.e. performing error correction if possible. If there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1 it was.
 
-If we use error correction, also returns the error probability as computed from the hamming distance, and is equal to 1 over the number of codewords with minimal hamming distance.
+If we set error_prob to True, also returns the error probability as computed from the hamming distance, and is equal to 1 over the number of codewords with minimal hamming distance
 
 Function is inputted with:
 * pattern - binary array to perform linear block decoding on. pattern length must be divisible by the block
                     length, otherwise, ignoring the last bits
 * G - Generating matrix used to encode the pattern
-* error_correction: If True, checks for block which are not in the codebook, and replaces them with the codeword with the closest hamming distance. If there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1 it was.
+* error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with the closest hamming distance. If there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1 it was.
 
 ### 2.10. symbol2bin
 Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence

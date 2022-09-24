@@ -1,5 +1,6 @@
 import numpy as np
-from CommDspy.misc.help_functions import check_binary
+from CommDspy.misc.help_functions import check_binary, check_valid_conv
+from CommDspy.misc.map_decoding import map_decoding
 from CommDspy.constants import ConstellationEnum
 from CommDspy.auxiliary import get_levels, get_gray_level_vec, get_bin_perm
 from scipy.signal import lfilter
@@ -141,19 +142,20 @@ def decoding_differential_manchester(pattern):
     transitions  = 1 -  np.abs(np.diff(pattern_flat, axis=1))  # should be -1, 1 or 0 for mistakes
     return np.reshape(transitions, new_pattern_shape).astype(int)
 
-def decoding_linear(pattern, G, error_correction=False):
+def decoding_linear(pattern, G, error_prob=False):
     """
     :param pattern: binary array to perform linear block decoding on. pattern length must be divisible by the block
                     length, otherwise, ignoring the last bits
     :param G: Generating matrix used to encode the pattern
-    :param error_correction: If True, checks for block which are not in the codebook, and replaces them with the
-                             codeword with the closest hamming distance. If there is more than 1 codeword with minimal
-                             distance, chooses one of them as we can not know which 1 it was.
-    :return: Function performs block decoding according to the following procedure:
+    :param error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with
+                       the closest hamming distance.
+    :return: Function performs MAP block decoding according to the following procedure:
                 1. Computes the codebook according to the generating matrix G (assuming full codebook)
                 2. Computes tha hamming distance for each block from all the codes in the codebook
-                3. allocates the original data matching the codeword
-             If we use error correction, also returns the error probability as computed from the hamming distance, and
+                3. Allocates the original data matching the codeword, i.e. performing error correction if possible. If
+                   there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1
+                   it was.
+             If we set error_prob to True, also returns the error probability as computed from the hamming distance, and
              is equal to 1 over the number of codewords with minimal hamming distance
        Examples:
         1. decoded_pattern = decoding_linear(coded_pattern, G)
@@ -185,27 +187,42 @@ def decoding_linear(pattern, G, error_correction=False):
     # ==================================================================================================================
     # Decoding
     # ==================================================================================================================
-    hamming         = np.sum(np.abs(codebook[:, None, :] - pattern_block[None, :, :]), axis=2)
-    if error_correction:
-        # ----------------------------------------------------------------------------------------------------------
-        # Creating the error_prob vector
-        # ----------------------------------------------------------------------------------------------------------
-        p_err = np.zeros(pattern_block.shape[0])
-        # ----------------------------------------------------------------------------------------------------------
-        # Error correction
-        # ----------------------------------------------------------------------------------------------------------
-        min_hamming  = np.min(hamming, axis=0)
-        not_codeword = min_hamming > 0
-        correct_idx  = np.argmin(hamming[:, not_codeword], axis=0)
-        pattern_block[not_codeword] = codebook[correct_idx]
-        # ----------------------------------------------------------------------------------------------------------
-        # Fixing the hamming matrix, filling p_err
-        # ----------------------------------------------------------------------------------------------------------
-        p_err[not_codeword]                = 1 / np.sum(hamming[:, not_codeword] == min_hamming[not_codeword], axis=0)
-        hamming[correct_idx, not_codeword] = 0
-    decoded_idx     = np.argmin(hamming, axis=0)
-    decoded_blocks  = perm_bin[decoded_idx]
-    if not error_correction:
-        return np.reshape(decoded_blocks, -1)
-    else:
-        return np.reshape(decoded_blocks, -1), p_err
+    return map_decoding(perm_bin, codebook, pattern_block, error_prob)
+
+def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, error_correction=False):
+    """
+
+    :param pattern: Convolution coded pattern we need to perform decoding on
+    :param G: Generating matrix from the convolution code. Read the CommDspy.tx.coding_conv for more description
+    :param tb_len: Traceback length, how far we should go for each block to decode. This is usually set as 5 times the
+                   constraint length, i.e. 5 times the maximal memory depth plus 1
+    :param feedback: Feedback polynomial for convolution encoder. Read the CommDspy.tx.coding_conv for more description
+    :param use_feedback: 2d numpy array stating if the usage of the feedback. Read the CommDspy.tx.coding_conv for more
+                         description.
+    :param error_correction: If True, checks for block which are not in the codebook, and replaces them with the
+                             codeword with the closest hamming distance. If there is more than 1 codeword with minimal
+                             distance, chooses one of them as we can not know which 1 it was.
+    :return:
+    """
+    # ==================================================================================================================
+    # Basic checking of data validity
+    # ==================================================================================================================
+    check_valid_conv(pattern, G, feedback, use_feedback)
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    n_in  = len(G)
+    n_out = G[0].shape[0]
+    # ==================================================================================================================
+    # Extracting the constraint length and memory array
+    # ==================================================================================================================
+    memory         = []
+    constraint_len = 0
+    for G_ii in G:
+        memory.append(G_ii.shape[1] - 1)
+        if G_ii.shape[1] > constraint_len:
+            constraint_len = G_ii.shape[1]
+    # ==================================================================================================================
+    # Extracting the constraint length and memory array
+    # ==================================================================================================================
+

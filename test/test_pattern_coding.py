@@ -279,10 +279,10 @@ def decoding_linear_block_test():
     # Getting DUT coded pattern
     # ==================================================================================================================
     coded_dut    = cdsp.tx.coding_linear(pattern, G)
-    decoded_dut  = cdsp.rx.decoding_linear(coded_dut, G, error_correction=False)
+    decoded_dut  = cdsp.rx.decoding_linear(coded_dut, G, error_prob=False)
     assert np.allclose(pattern, decoded_dut[:len(pattern)]), 'Linear block decoding failed!'
     # coded_dut[1] = 1 - coded_dut[1]
-    decoded_dut, p_err = cdsp.rx.decoding_linear(coded_dut, G, error_correction=True)
+    decoded_dut, p_err = cdsp.rx.decoding_linear(coded_dut, G, error_prob=True)
     assert np.allclose(pattern, decoded_dut[:len(pattern)]), 'Linear block decoding failed!'
 
 def coding_conv_basic_test():

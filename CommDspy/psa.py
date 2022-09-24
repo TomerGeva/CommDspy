@@ -42,7 +42,6 @@ def psa(signal, fs, rbw=None, mode='dB', obw=None, r=50, osr=4, window='blackman
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
-    factor = 6.3  # 8 [dB]
     signal_flat = np.reshape(signal, -1)
     if obw is not None:
         mode = 'dBc'
@@ -83,8 +82,6 @@ def psa(signal, fs, rbw=None, mode='dB', obw=None, r=50, osr=4, window='blackman
     # ==================================================================================================================
     nfft      = int(2 ** (np.ceil(np.log2(window_n * osr))))
     n_overlap = int(np.floor(window_n * overlap))
-    k         = np.fix((len(signal_flat) - n_overlap) / (window_n - n_overlap))
-    # norm_factor *= k * np.linalg.norm(window_actual)**2 * factor
     # ==================================================================================================================
     # Computing power spectrum estimation
     # ==================================================================================================================
