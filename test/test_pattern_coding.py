@@ -348,7 +348,7 @@ def decoding_conv_basic_test():
     # --------------------------------------------------------------------------------------------------------------
     # Creating the generating matrix, dictionary representation
     # --------------------------------------------------------------------------------------------------------------
-    condition = False  # only the zero input should result in zero codeword and only from 1 starting state, usually '0'
+    condition = False
     while not condition:
         for ii in range(n_in):
             G_ii = []
@@ -364,14 +364,6 @@ def decoding_conv_basic_test():
         # 3. Each output has to be dependant on the input, meaning the constant 0 output is not valid
         # **************************************************************************************************
         trellis_obj = Trellis(G, None, None)
-        # check_set = set()
-        # for key in trellis_obj.trellis:
-        #     out, state = trellis_obj.trellis[key]
-        #     check_set.add(tuple([key[1], out, state]))
-        # condition = len(check_set) == len(trellis_obj.trellis)
-        # for ii in G:
-        #     if np.sum(G[ii]) == 0:
-        #         condition = False
         # 1.
         wrong_dict_states = 0
         for key in trellis_obj.trellis:
