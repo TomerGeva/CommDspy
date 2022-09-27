@@ -355,6 +355,9 @@ def test_prbs_gen_4():
 def test_coding_conv_basic():
     test.coding_conv_basic_test()
 
+def test_decoding_conv_basic():
+    test.decoding_conv_basic_test()
+
 def test_coding_linear_block():
     test.coding_linear_block_test()
 
@@ -454,6 +457,7 @@ def test_coding_gray_plus_mapping():
 
 
 if __name__ == '__main__':
-    test_equalization()
+    # test_equalization()
     # test_coding_conv_basic()
+    test_decoding_conv_basic()
     pass

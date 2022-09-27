@@ -28,7 +28,10 @@ def map_decoding(permutations, codebook, pattern_block, error_prob):
     else:
         return np.reshape(decoded_blocks, -1)
 
-def create_trellis(G, feedback=None, use_feedback=None):
+# //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# Trellis object and function
+# //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Trellis:
     """
     :param G:
     :param feedback: ignored atm
@@ -37,28 +40,34 @@ def create_trellis(G, feedback=None, use_feedback=None):
                 - keys are tuples of (input, state)
                 - values are tuples of (output, next_state)
     """
+    def __init__(self, G, feedback=None, use_feedback=None):
+        self.n_in = len(G)
+        self.n_out = G[0].shape[0]
+        # ==================================================================================================================
+        # Extracting the constraint length and memory array
+        # ==================================================================================================================
+        memory = []  # hold the number of memory registers in the coding scheme
+        constraint_len = 0
+        for ii in G:
+            memory.append(G[ii].shape[1] - 1)
+            if G[ii].shape[1] > constraint_len:
+                constraint_len = G[ii].shape[1]
+        memory_cumsum = np.concatenate([[0], np.cumsum(memory)])
+        # ==================================================================================================================
+        # Extracting the constraint length and memory array
+        # ==================================================================================================================
+        self.num_states = 2 ** sum(memory)
+        self.inputs = get_bin_perm(self.n_in)
+        self.states = get_bin_perm(sum(memory))
+        # ==================================================================================================================
+        # Creating the trellis
+        # ==================================================================================================================
+        self.trellis = create_trellis(G, self.states, self.inputs, memory_cumsum)
+
+def create_trellis(G, states, inputs, memory_cumsum):
     n_in  = len(G)
     n_out = G[0].shape[0]
     trellis_dict = {}
-    # ==================================================================================================================
-    # Extracting the constraint length and memory array
-    # ==================================================================================================================
-    memory = []  # hold the number of memory registers in the coding scheme
-    constraint_len = 0
-    for ii in G:
-        memory.append(G[ii].shape[1] - 1)
-        if G[ii].shape[1] > constraint_len:
-            constraint_len = G[ii].shape[1]
-    memory_cumsum = np.concatenate([[0], np.cumsum(memory)])
-    # ==================================================================================================================
-    # Extracting the constraint length and memory array
-    # ==================================================================================================================
-    num_states = 2 ** sum(memory)
-    inputs     = get_bin_perm(n_in)
-    states     = get_bin_perm(sum(memory))
-    # ==================================================================================================================
-    # Creating the trellis
-    # ==================================================================================================================
     for state in states:
         # ----------------------------------------------------------------------------------------------------------
         # Filling memory for this state
@@ -80,7 +89,7 @@ def create_trellis(G, feedback=None, use_feedback=None):
                 memory_k = np.concatenate([[in_k], memory_dict[kk]])
                 G_kk     = G[kk]
                 # _____________ output vector computation __________________
-                c_vec   += (G_kk.dot(memory_k)) % 2
+                c_vec    = (c_vec + G_kk.dot(memory_k)) % 2
                 # _____________   next state computation  __________________
                 next_state_k                                        = memory_k[:-1]
                 next_state[memory_cumsum[kk]:memory_cumsum[kk + 1]] = next_state_k
@@ -92,7 +101,7 @@ def create_trellis(G, feedback=None, use_feedback=None):
     return trellis_dict
 
 
-# if __name__ == '__main__':
-#     G = {0: np.array([[1, 0, 1], [1, 1, 1]])}
-#     trellis = create_trellis(G)
-#     print('hi')
+if __name__ == '__main__':
+    G = {0: np.array([[1, 0, 1], [1, 1, 1]])}
+    trellis, n_states = create_trellis(G)
+    print('hi')

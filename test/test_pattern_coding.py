@@ -1,5 +1,6 @@
 import numpy as np
 import CommDspy as cdsp
+from CommDspy.misc.map_decoding import Trellis
 
 
 def coding_gray_test(constellation):
@@ -334,4 +335,45 @@ def coding_conv_basic_test():
     # ==================================================================================================================
     coded_ref_tot = np.reshape(coded_ref.T, -1)
     assert all(coded_ref_tot == coded_dut), 'Convolution encoding with FIR only failed!'
+
+def decoding_conv_basic_test():
+    # np.random.seed(153)
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pat_len = 100
+    pattern = np.random.randint(0, 2, pat_len)
+    n_in  =  np.random.randint(1, 4)
+    n_out =  np.random.randint(n_in + 1, n_in + 4)
+    G = {}
+    # --------------------------------------------------------------------------------------------------------------
+    # Creating the generating matrix, dictionary representation
+    # --------------------------------------------------------------------------------------------------------------
+    condition = False  # only the zero input should result in zero codeword and only from 1 starting state, usually '0'
+    while not condition:
+        for ii in range(n_in):
+            G_ii = []
+            constraint_length = np.random.randint(1, 5)
+            for jj in range(n_out):
+                transfer_function = np.random.randint(0, 2, [constraint_length])
+                G_ii.append(transfer_function)
+            G[ii] = np.array(G_ii)
+        # **************************************************************************************************
+        # Checking the condition - if only the zero word produces the 0 codeword
+        # **************************************************************************************************
+        trellis_obj = Trellis(G, None, None)
+        wrong_dict_states = 0
+        for key in trellis_obj.trellis:
+            out, state = trellis_obj.trellis[key]
+            if sum(out) == 0 and sum(state) == 0 and sum(key[1]) == 0:
+                continue
+            elif sum(out) == 0:
+                wrong_dict_states += 1
+        condition = wrong_dict_states == 0
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut   = cdsp.tx.coding_conv(pattern, G)
+    decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, error_prob=False)
+    assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Basic convolution MAP decoding failed!'
 

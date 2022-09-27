@@ -1,6 +1,6 @@
 import numpy as np
 from CommDspy.misc.help_functions import check_binary, check_valid_conv
-from CommDspy.misc.map_decoding import map_decoding
+from CommDspy.misc.map_decoding import map_decoding, Trellis
 from CommDspy.constants import ConstellationEnum
 from CommDspy.auxiliary import get_levels, get_gray_level_vec, get_bin_perm
 from scipy.signal import lfilter
@@ -189,20 +189,28 @@ def decoding_linear(pattern, G, error_prob=False):
     # ==================================================================================================================
     return map_decoding(perm_bin, codebook, pattern_block, error_prob)
 
-def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, error_correction=False):
+def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False):
     """
 
     :param pattern: Convolution coded pattern we need to perform decoding on
     :param G: Generating matrix from the convolution code. Read the CommDspy.tx.coding_conv for more description
     :param tb_len: Traceback length, how far we should go for each block to decode. This is usually set as 5 times the
-                   constraint length, i.e. 5 times the maximal memory depth plus 1
+                   constraint length, i.e. n_out * 5 * (m+1) where m is the longest memory. Note, this value should be
+                   divisible by the number of outputs per input "chunck". Example: if the code has 2 inputs and 5
+                    outputs, tb_len should be divisible by 5
     :param feedback: Feedback polynomial for convolution encoder. Read the CommDspy.tx.coding_conv for more description
     :param use_feedback: 2d numpy array stating if the usage of the feedback. Read the CommDspy.tx.coding_conv for more
                          description.
-    :param error_correction: If True, checks for block which are not in the codebook, and replaces them with the
-                             codeword with the closest hamming distance. If there is more than 1 codeword with minimal
-                             distance, chooses one of them as we can not know which 1 it was.
-    :return:
+    :param error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with
+                       the closest hamming distance.
+    :return: Function performs MAP block decoding according to the following procedure:
+                1. Computes the codebook according to the generating matrix G (assuming full codebook)
+                2. Computes tha hamming distance for each block from all the codes in the codebook
+                3. Allocates the original data matching the codeword, i.e. performing error correction if possible. If
+                   there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1
+                   it was.
+             If we set error_prob to True, also returns the error probability as computed from the hamming distance, and
+             is equal to 1 over the number of codewords with minimal hamming distance
     """
     # ==================================================================================================================
     # Basic checking of data validity
@@ -214,15 +222,41 @@ def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, erro
     n_in  = len(G)
     n_out = G[0].shape[0]
     # ==================================================================================================================
-    # Extracting the constraint length and memory array
+    # Creating the trellis dictionary and total input possibilities
     # ==================================================================================================================
-    memory         = []
-    constraint_len = 0
-    for G_ii in G:
-        memory.append(G_ii.shape[1] - 1)
-        if G_ii.shape[1] > constraint_len:
-            constraint_len = G_ii.shape[1]
+    n_chunks    = tb_len // n_out
+    n_bits_in   = n_in * n_chunks
+    trellis_obj = Trellis(G, feedback, use_feedback)
     # ==================================================================================================================
-    # Extracting the constraint length and memory array
+    # Creating the codebook
     # ==================================================================================================================
-
+    # Each start state produces 2 ** n_bits_in codewords, thus we will have a total of num_states * 2 ** n_bits_in
+    # codewords total. The input index will be output index modulo (2 ** n_bits_in codewords)
+    inputs   = get_bin_perm(n_bits_in)
+    codebook = np.zeros([len(trellis_obj.states) * 2**n_bits_in, tb_len], dtype=int)
+    for ii, start_state in enumerate(trellis_obj.states):
+        # ----------------------------------------------------------------------------------------------------------
+        # Creating the codeword for each input and each possible starting state
+        # ----------------------------------------------------------------------------------------------------------
+        for jj, input_vec in enumerate(inputs):
+            input_chunks = np.reshape(input_vec, [-1, n_in])
+            prev_state   = start_state
+            # **************************************************************************************************
+            # Getting the output + next_state for each chunk, creating the codeword
+            # **************************************************************************************************
+            for kk, chunk in enumerate(input_chunks):
+                key = (tuple(chunk), tuple(prev_state))
+                output, prev_state = trellis_obj.trellis[key]
+                codebook[ii*2**n_bits_in+jj, n_out*kk:n_out*(kk+1)] = output
+    # ==================================================================================================================
+    # Reshaping
+    # ==================================================================================================================
+    if len(pattern) % tb_len != 0:
+        residual = len(pattern) % tb_len
+        pattern_block = np.reshape(pattern[:-1 * residual], [-1, tb_len])
+    else:
+        pattern_block = np.reshape(pattern, [-1, tb_len])
+    # ==================================================================================================================
+    # Decoding
+    # ==================================================================================================================
+    return map_decoding(np.tile(inputs, [len(trellis_obj.states), 1]), codebook, pattern_block, error_prob)
