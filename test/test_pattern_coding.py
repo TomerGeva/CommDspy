@@ -337,7 +337,6 @@ def coding_conv_basic_test():
     assert all(coded_ref_tot == coded_dut), 'Convolution encoding with FIR only failed!'
 
 def decoding_conv_basic_test():
-    # np.random.seed(153)
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
@@ -359,9 +358,21 @@ def decoding_conv_basic_test():
                 G_ii.append(transfer_function)
             G[ii] = np.array(G_ii)
         # **************************************************************************************************
-        # Checking the condition - if only the zero word produces the 0 codeword
+        # Checking the conditions:
+        # 1. If only the zero word produces the 0 codeword
+        # 2. From each states, each transition produces a different output
+        # 3. Each output has to be dependant on the input, meaning the constant 0 output is not valid
         # **************************************************************************************************
         trellis_obj = Trellis(G, None, None)
+        # check_set = set()
+        # for key in trellis_obj.trellis:
+        #     out, state = trellis_obj.trellis[key]
+        #     check_set.add(tuple([key[1], out, state]))
+        # condition = len(check_set) == len(trellis_obj.trellis)
+        # for ii in G:
+        #     if np.sum(G[ii]) == 0:
+        #         condition = False
+        # 1.
         wrong_dict_states = 0
         for key in trellis_obj.trellis:
             out, state = trellis_obj.trellis[key]
@@ -370,6 +381,23 @@ def decoding_conv_basic_test():
             elif sum(out) == 0:
                 wrong_dict_states += 1
         condition = wrong_dict_states == 0
+        # 2.
+        sets_dict = {}
+        # Creating the sets
+        for key in trellis_obj.trellis:
+            out, state = trellis_obj.trellis[key]
+            if key[1] in sets_dict:
+                sets_dict[key[1]].add(out)
+            else:
+                sets_dict[key[1]] = set(out)
+        # Checking
+        for in_state in sets_dict:
+            if len(sets_dict[in_state]) != len(trellis_obj.inputs):
+                condition = False
+        # 3.
+        for ii in G:
+            if np.sum(G[ii]) == 0:
+                condition = False
     # ==================================================================================================================
     # Getting DUT coded pattern
     # ==================================================================================================================
