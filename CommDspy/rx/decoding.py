@@ -2,7 +2,7 @@ import numpy as np
 from CommDspy.misc.help_functions import check_binary, check_valid_conv
 from CommDspy.misc.map_decoding import map_decoding, Trellis
 from CommDspy.constants import ConstellationEnum
-from CommDspy.auxiliary import get_levels, get_gray_level_vec, get_bin_perm
+from CommDspy.auxiliary import get_levels, get_gray_level_vec, get_bin_perm, hamming, bin2uint, uint2bin
 from scipy.signal import lfilter
 
 
@@ -191,7 +191,6 @@ def decoding_linear(pattern, G, error_prob=False):
 
 def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False):
     """
-
     :param pattern: Convolution coded pattern we need to perform decoding on
     :param G: Generating matrix from the convolution code. Read the CommDspy.tx.coding_conv for more description
     :param tb_len: Traceback length, how far we should go for each block to decode. This is usually set as 5 times the
@@ -251,12 +250,108 @@ def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, erro
     # ==================================================================================================================
     # Reshaping
     # ==================================================================================================================
-    if len(pattern) % tb_len != 0:
-        residual = len(pattern) % tb_len
-        pattern_block = np.reshape(pattern[:-1 * residual], [-1, tb_len])
-    else:
-        pattern_block = np.reshape(pattern, [-1, tb_len])
+    pattern_block = _trunc_reshape(pattern, tb_len)
     # ==================================================================================================================
     # Decoding
     # ==================================================================================================================
     return map_decoding(np.tile(inputs, [len(trellis_obj.states), 1]), codebook, pattern_block, error_prob)
+
+def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False, mode='hard'):
+    """
+    :param pattern: Convolution coded pattern we need to perform decoding on
+    :param G: Generating matrix from the convolution code. Read the CommDspy.tx.coding_conv for more description
+    :param tb_len: Traceback length, how far we should go for each block to decode. This is usually set as 5 times the
+                   constraint length, i.e. n_out * 5 * (m+1) where m is the longest memory. Note, this value should be
+                   divisible by the number of outputs per input "chunck". Example: if the code has 2 inputs and 5
+                    outputs, tb_len should be divisible by 5
+    :param feedback: Feedback polynomial for convolution encoder. Read the CommDspy.tx.coding_conv for more description
+    :param use_feedback: 2d numpy array stating if the usage of the feedback. Read the CommDspy.tx.coding_conv for more
+                         description.
+    :param error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with
+                       the closest hamming distance.
+    :param mode: either 'hard' or 'soft' viterbi encoding.
+             'hard' mode uses hamming distance and uses only binary data.
+             'soft' mode uses euclidean distance and can be inputted with floats
+    :return: Function performs viterbi decoding. Currently supports only hard decoding. in the future soft will also be
+             implemented
+    THIS FUNCTION RUNS IN A FOR LOOP FOR ALL THE BLOCKS. ANOTHER FUNCTION WILL DO THE VITERBI TO ALL BLOCKS TOGETHER
+    """
+    # ==================================================================================================================
+    # Basic checking of data validity
+    # ==================================================================================================================
+    check_valid_conv(pattern, G, feedback, use_feedback)
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    n_in      = len(G)
+    n_out     = G[0].shape[0]
+    n_chunks  = tb_len // n_out
+    input_mat = np.zeros([len(pattern) // tb_len, n_in*n_chunks], dtype=int)
+    trellis_obj   = Trellis(G, feedback, use_feedback)  # Trellis object, holding all the important things
+    hamming_dist  = np.zeros([len(trellis_obj.states), n_chunks], dtype=int)
+    hamming_state = np.zeros([len(trellis_obj.states), n_chunks], dtype=int)
+    input_tensor  = np.zeros([len(trellis_obj.states), n_chunks, n_in], dtype=int)
+    state_bits    = np.log2(trellis_obj.num_states).astype(int)
+    # ==================================================================================================================
+    # Reshaping
+    # ==================================================================================================================
+    pattern_block = _trunc_reshape(pattern, tb_len)
+    # ==================================================================================================================
+    # Starting the viterbi algorithm block by block
+    # ==================================================================================================================
+    for ii in range(pattern_block.shape[0]):
+        # ----------------------------------------------------------------------------------------------------------
+        # Forwarrd propagating - Computing the accumulative hamming along each path, selecting the best
+        # ----------------------------------------------------------------------------------------------------------
+        for chunk_idx in range(n_chunks):
+            pattern_chunk = pattern_block[ii, n_out*chunk_idx:n_out*(chunk_idx+1)]
+            step_hamming  = np.ones([trellis_obj.num_states, trellis_obj.num_states], dtype=int) * n_out
+            # ----------------------------------------------------------------------------------------------------------
+            # For each chunk compute all possible hamming distances
+            # ----------------------------------------------------------------------------------------------------------
+            # step_hamming[ii,jj] = hamming from state ii to state jj
+            for key in trellis_obj.trellis:
+                state_out     = key[1]
+                out, state_in = trellis_obj.trellis[key]
+                # Converting states from binary arrays to integer values
+                state_in_int  = bin2uint(np.array(state_in))
+                state_out_int = bin2uint(np.array(state_out))
+                d_ham, _      = hamming(np.array(out)[None, :], pattern_chunk[None, :])
+                # computing hamming distance
+                step_hamming[state_out_int, state_in_int] = d_ham
+            # ----------------------------------------------------------------------------------------------------------
+            # Noting the best for this step, the return path and the input for the best per state
+            # ----------------------------------------------------------------------------------------------------------
+            hamming_state[:, chunk_idx] = np.argmin(step_hamming, axis=0)
+            if chunk_idx > 0:
+                hamming_dist[:, chunk_idx] = np.min(step_hamming, axis=0) + hamming_dist[hamming_state[:,chunk_idx], chunk_idx-1]
+            else:
+                hamming_dist[:, chunk_idx] = np.min(step_hamming, axis=0)
+            for in_state in range(trellis_obj.num_states):
+                out_state = hamming_state[in_state, chunk_idx]
+                in_state_bin  = uint2bin(np.array(in_state), state_bits)
+                out_state_bin = uint2bin(np.array(out_state), state_bits)
+                input_tensor[in_state, chunk_idx] = trellis_obj.io_dict[(tuple(out_state_bin), tuple(in_state_bin))][0]
+        # ----------------------------------------------------------------------------------------------------------
+        # Backward propagating - Going along the selected path, recovering the input
+        # ----------------------------------------------------------------------------------------------------------
+        last_state = np.argmin(hamming_dist[:, -1])
+        state      = last_state
+        for chunk_idx in range(n_chunks-1, -1, -1):
+            input_mat[ii, n_in*chunk_idx:n_in*(chunk_idx+1)] = input_tensor[state, chunk_idx]
+            state = hamming_state[state, chunk_idx]
+
+    return np.reshape(input_mat, -1), last_state
+
+
+
+# //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# Auxiliary
+# //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+def _trunc_reshape(input_vec, block_len):
+    if len(input_vec) % block_len != 0:
+        residual  = len(input_vec) % block_len
+        input_mat = np.reshape(input_vec[:-1 * residual], [-1, block_len])
+    else:
+        input_mat = np.reshape(input_vec, [-1, block_len])
+    return input_mat

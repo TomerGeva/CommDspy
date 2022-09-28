@@ -144,3 +144,26 @@ def get_bin_perm(k):
     """
     perm = np.arange(2 ** k)
     return ((perm[:, None] & (1 << np.arange(k - 1, -1, -1))) > 0).astype(int)
+
+def hamming(pattern_block, codebook):
+    """
+    :param pattern_block: 2d numpy array with dimension N X l holding the pattern in blocks with length 'l'
+    :param codebook: 2d numpy array holding the codebook with M codewords, with size M x l
+    :return: For a codeword of length 'l', computing the hamming distance from each word in the codebook, returning a 2d
+             num array where the (ii,jj) location hold for the hamming distance of pattern ii from codeword jj. Also
+             returns the minimal hamming distance index for each block in the pattern
+    """
+    hamming     = np.sum(np.abs(codebook[:, None, :] - pattern_block[None, :, :]), axis=2)
+    decoded_idx = np.argmin(hamming, axis=0)
+    return hamming, decoded_idx
+
+def bin2uint(bin_tensor):
+    weights = [1<< ii for ii in range(bin_tensor.shape[-1]-1, -1, -1)]
+    return bin_tensor.dot(weights)
+
+def uint2bin(int_tensor, n_bits):
+    dims     = int_tensor.shape
+    input_1d = np.reshape(int_tensor, -1)
+    bin_2d   = np.squeeze(((input_1d[:, None] & (1 << np.arange(n_bits - 1, -1, -1))) > 0).astype(int))
+    dims_new = np.concatenate([dims, [n_bits]]).astype(int)
+    return np.reshape(bin_2d, dims_new)

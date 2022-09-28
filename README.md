@@ -443,6 +443,17 @@ Function performs Zero Order Hold (ZOH) to an input signal. Function is inputted
 ### 0.8. get_bin_perm
 Function returns a numpy 2D array with all the length 'k' binary vector permutations, ordered. Function receives:
 * k - nubmer of bits wanted
+### 0.9. hamming
+Computes the hamming distance from each input row in 'pattern_block' to each codeword in 'codebook'. Function is inputted with:
+* pattern_block - 2d numpy array with dimension N X l holding the pattern in blocks with length 'l'
+* codebook - 2d numpy array holding the codebook with M codewords, with size M x l
+
+Function returns both the hamming distance matrices and the index for the minimal hamming distance per input.
+### 0.10 bin2uint
+Computes the integer representation of a binary array in uint fashion
+### 0.11.uint2bin
+Computes the binary representation of uints
+
 ## 1. Tx sub-package information
 ### 1.1. prbs_gen
 Function receives polynomial coefficients and an initial seed, creates binary PRBS sequences of the requested length . The function is inputted with:
@@ -563,7 +574,41 @@ Function is inputted with:
 * G - Generating matrix used to encode the pattern
 * error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with the closest hamming distance. If there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1 it was.
 
-### 2.10. symbol2bin
+### 2.10. decoding_conv_map
+Function performs MAP block decoding according to the following procedure:
+  1. Computes the codebook according to the generating matrix G (assuming full codebook)
+  2. Computes tha hamming distance for each block from all the codes in the codebook
+  3. Allocates the original data matching the codeword, i.e. performing error correction if possible. If
+     there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1
+     it was.
+         
+If we set error_prob to True, also returns the error probability as computed from the hamming distance, and is equal to 1 over the number of codewords with minimal hamming distance.
+
+Function is inputted with:
+* pattern - Convolution coded pattern we need to perform decoding on
+* G - Generating matrix from the convolution code. Read the CommDspy.tx.coding_conv for more description
+* tb_len - Traceback length, how far we should go for each block to decode. This is usually set as 5 times the constraint length, i.e. n_out * 5 * (m+1) where m is the longest memory. Note, this value should be divisible by the number of outputs per input "chunck". Example: if the code has 2 inputs and 5 outputs, tb_len should be divisible by 5
+* feedback - Feedback polynomial for convolution encoder. Read the CommDspy.tx.coding_conv for more description
+* use_feedback - 2d numpy array stating if the usage of the feedback. Read the CommDspy.tx.coding_conv for more
+                     description.
+* error_prob - If True, checks for block which are not in the codebook, and replaces them with the codeword with
+                   the closest hamming distance.
+
+### 2.11. decoding_conv_viterbi
+Function performs viterbi decoding. Currently supports only hard decoding. in the future soft will also be implemented.
+
+Function is inputted with:
+* pattern - Convolution coded pattern we need to perform decoding on
+* G - Generating matrix from the convolution code. Read the CommDspy.tx.coding_conv for more description
+* tb_len - Traceback length, how far we should go for each block to decode. This is usually set as 5 times the constraint length, i.e. n_out * 5 * (m+1) where m is the longest memory. Note, this value should be divisible by the number of outputs per input "chunck". Example: if the code has 2 inputs and 5 outputs, tb_len should be divisible by 5
+* feedback: Feedback polynomial for convolution encoder. Read the CommDspy.tx.coding_conv for more description
+* use_feedback: 2d numpy array stating if the usage of the feedback. Read the CommDspy.tx.coding_conv for more description.
+* error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with the closest hamming distance.
+* mode: either 'hard' or 'soft' viterbi encoding.
+  1. 'hard' mode uses hamming distance and uses only binary data.
+  2. 'soft' mode uses euclidean distance and can be inputted with floats
+  
+### 2.12. symbol2bin
 Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence
 * symbol_mat - The binary sequence wanted to be converted 
 * num_of_symbols - The number of symbols in the UNCODED pattern. NOW ONLY SUPPORTS 2 and 4
@@ -572,7 +617,7 @@ Function receives an UNCODED symbol sequence, returns the binary representation 
 * inv_lsb=False - Boolean stating if we want to invert the lsb
 * pn_inv=False - Boolean stating if we want to invert all bits
 
-### 2.11. prbs_checker
+### 2.13. prbs_checker
 Function receives a slicer out capture matrix (or slicer in matrix after offine slicing) and does the following:
 1. builds a reference PRBS sequence
 2. synchronizes on the pattern
@@ -585,10 +630,10 @@ The function is inputted with:
 * init_lock - indicating if the data-in is aligned with the reference PRBS (with init seed of ones)
 * loss_th=100 - number of erred bit in the data to consider loss of PRBS lock
 
-### 2.12. prbs_ana_econ
+### 2.14. prbs_ana_econ
 Does the same as prbs_ana but, this function is more memory efficient at the cost of longer runtime
 
-### 2.13. ctle
+### 2.15. ctle
 Function passes an input signal through a CTLE defined via the poles, zeros and DC gain. Function is inputted with:
 * signal - input signal to pass through the CTLE
 * zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
@@ -598,7 +643,7 @@ Function passes an input signal through a CTLE defined via the poles, zeros and 
 * osr - Over Sampling Rate the input signal 'sig'
 * zi - Initial condition for the CTLE, Default is None, where we start with zeros
 
-### 2.14. get_ctle_filter
+### 2.16. get_ctle_filter
 Function computed the IIR coefficients for the digital equivalent for the CTLE defined via the zeros, poles and DC gain. Function is inputted with
 * zeros - list of frequencies where there are zeros in [Hz]. If the given zeros are positive, multiply by -1 to enforce stability
 * poles - list of frequencies where there are poles in [Hz]. If the given poles are positive, multiply by -1 to enforce stability
@@ -606,7 +651,7 @@ Function computed the IIR coefficients for the digital equivalent for the CTLE d
 * fs - Symbol frequency, 1/Ts
 * osr - Over Sampling Rate the input signal 'sig'
 
-### 2.15. quantize
+### 2.17. quantize
 Function performs quantization for an input signal, simulates the performance of a naive DAC. Function is inputted with:
 * signal - Input signal to perform quantization on
 * total_bits - Total bit used in the quantization
@@ -618,7 +663,7 @@ Function performs quantization for an input signal, simulates the performance of
 
 For more information please read the function description
 
-### 2.16 ffe_dfe
+### 2.18 ffe_dfe
 Function passes the input signal through the FFE and DFE. Function is inputted with:
 * input_signal - input signal to pass through the FFE-DFE
 * ffe_taps - Numpy array containing the FFE taps to be used. If None, without any FFE

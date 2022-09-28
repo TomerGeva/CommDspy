@@ -1,6 +1,7 @@
 import numpy as np
 import CommDspy as cdsp
 from CommDspy.misc.map_decoding import Trellis
+from time import time
 
 
 def coding_gray_test(constellation):
@@ -337,6 +338,7 @@ def coding_conv_basic_test():
     assert all(coded_ref_tot == coded_dut), 'Convolution encoding with FIR only failed!'
 
 def decoding_conv_basic_test():
+    np.random.seed(20)
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
@@ -352,7 +354,7 @@ def decoding_conv_basic_test():
     while not condition:
         for ii in range(n_in):
             G_ii = []
-            constraint_length = np.random.randint(1, 5)
+            constraint_length = np.random.randint(2, 5)
             for jj in range(n_out):
                 transfer_function = np.random.randint(0, 2, [constraint_length])
                 G_ii.append(transfer_function)
@@ -365,14 +367,11 @@ def decoding_conv_basic_test():
         # **************************************************************************************************
         trellis_obj = Trellis(G, None, None)
         # 1.
-        wrong_dict_states = 0
+        state_transition_set = set()
         for key in trellis_obj.trellis:
             out, state = trellis_obj.trellis[key]
-            if sum(out) == 0 and sum(state) == 0 and sum(key[1]) == 0:
-                continue
-            elif sum(out) == 0:
-                wrong_dict_states += 1
-        condition = wrong_dict_states == 0
+            state_transition_set.add(tuple([key[1], out, state]))
+        condition = len(state_transition_set) == len(trellis_obj.trellis)
         # 2.
         sets_dict = {}
         # Creating the sets
@@ -381,7 +380,8 @@ def decoding_conv_basic_test():
             if key[1] in sets_dict:
                 sets_dict[key[1]].add(out)
             else:
-                sets_dict[key[1]] = set(out)
+                sets_dict[key[1]] = set()
+                sets_dict[key[1]].add(out)
         # Checking
         for in_state in sets_dict:
             if len(sets_dict[in_state]) != len(trellis_obj.inputs):
@@ -394,6 +394,12 @@ def decoding_conv_basic_test():
     # Getting DUT coded pattern
     # ==================================================================================================================
     coded_dut   = cdsp.tx.coding_conv(pattern, G)
+    t1 = time()
     decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, error_prob=False)
+    print(f'MAP decoding done in {time() - t1:.3f} seconds')
     assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Basic convolution MAP decoding failed!'
+    t1 = time()
+    decoded_dut2, _ = cdsp.rx.decoding_conv_viterbi(coded_dut, G, 5*n_out, feedback=None, use_feedback=None)
+    print(f'Slow viterbi decoding done in {time() - t1:.3f} seconds')
+    assert np.allclose(pattern[:len(decoded_dut2)], decoded_dut2), 'Basic convolution VITERBI decoding failed!'
 

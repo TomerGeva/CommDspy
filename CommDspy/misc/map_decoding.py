@@ -62,12 +62,14 @@ class Trellis:
         # ==================================================================================================================
         # Creating the trellis
         # ==================================================================================================================
-        self.trellis = create_trellis(G, self.states, self.inputs, memory_cumsum)
+        self.trellis, self.io_dict = create_trellis(G, self.states, self.inputs, memory_cumsum)
+
 
 def create_trellis(G, states, inputs, memory_cumsum):
     n_in  = len(G)
     n_out = G[0].shape[0]
     trellis_dict = {}
+    io_dict      = {}  # keys are (out_state, in_state), values are (in, out)
     for state in states:
         # ----------------------------------------------------------------------------------------------------------
         # Filling memory for this state
@@ -78,14 +80,14 @@ def create_trellis(G, states, inputs, memory_cumsum):
         # ----------------------------------------------------------------------------------------------------------
         # finding next_states and outputs for each input from the current state
         # ----------------------------------------------------------------------------------------------------------
-        for input in inputs:
-            key = (tuple(input), tuple(state))
+        for input_vec in inputs:
+            key = (tuple(input_vec), tuple(state))
             # **************************************************************************************************
             # For each state and input, we compute the outputs and the next state ignoring feedback at the moment
             # **************************************************************************************************
             c_vec      = np.zeros(n_out)
             next_state = np.zeros_like(state)
-            for kk, in_k in enumerate(input):
+            for kk, in_k in enumerate(input_vec):
                 memory_k = np.concatenate([[in_k], memory_dict[kk]])
                 G_kk     = G[kk]
                 # _____________ output vector computation __________________
@@ -97,8 +99,10 @@ def create_trellis(G, states, inputs, memory_cumsum):
             # Adding to trellis dict
             # **************************************************************************************************
             trellis_dict[key] = (tuple(c_vec.astype(int)), tuple(next_state))
+            io_key            = (tuple(tuple(state)), tuple(next_state))
+            io_dict[io_key]   = (tuple(input_vec), tuple(c_vec.astype(int)))
 
-    return trellis_dict
+    return trellis_dict, io_dict
 
 
 if __name__ == '__main__':
