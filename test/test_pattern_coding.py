@@ -338,7 +338,7 @@ def coding_conv_basic_test():
     assert all(coded_ref_tot == coded_dut), 'Convolution encoding with FIR only failed!'
 
 def decoding_conv_basic_test():
-    np.random.seed(20)
+    np.random.seed(41)
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
@@ -467,11 +467,11 @@ def coding_conv_feedback_test():
             memory[ii] = np.concatenate([[kk_i_fb], memory[ii][:-1]]) if len(memory[ii]) > 1 else np.array([kk_i_fb])
         for jj in range(n_out):
             for ii in range(n_in):  # the ith input in the kth chunk
-                G_ii_jj           = G[ii][jj]
+                G_ii_jj = G[ii][jj]
                 if len(G_ii_jj) == 1 or use_feedback[ii, jj] == 0:
                     # no memory, either systematic or always 0 output, depending on G_ii_jj[0] value.
                     # 1 - systematic ; 0 - zero output
-                    coded_ref[jj, kk] = coded_ref[jj, kk] ^ input_chuck[ii] * G_ii_jj[0]
+                    coded_ref[jj, kk] = coded_ref[jj, kk] ^ (input_chuck[ii] * G_ii_jj[0])
                 else:
                     coded_ref[jj, kk] = coded_ref[jj, kk] ^ (G_ii_jj.dot(memory[ii]) % 2)
     # ==================================================================================================================
@@ -479,3 +479,85 @@ def coding_conv_feedback_test():
     # ==================================================================================================================
     coded_ref_tot = np.reshape(coded_ref.T, -1)
     assert all(coded_ref_tot == coded_dut), 'Recursive convolution encoding failed!'
+
+def decoding_conv_feedback_test():
+    # np.random.seed(20)
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pat_len = 100
+    pattern = np.random.randint(0, 2, pat_len)
+    n_in  =  np.random.randint(1, 4)
+    n_out =  np.random.randint(n_in + 1, n_in + 4)
+    G        = {}
+    feedback = {}
+    use_feedback = np.zeros([n_in, n_out], dtype=int)
+    condition = False
+    while not condition:
+        # ----------------------------------------------------------------------------------------------------------
+        # Creating the generating matrix, dictionary representation
+        # ----------------------------------------------------------------------------------------------------------
+        for ii in range(n_in):
+            G_ii = []
+            constraint_length = np.random.randint(2, 5)
+            for jj in range(n_out):
+                transfer_function = np.random.randint(0, 2, [constraint_length])
+                G_ii.append(transfer_function)
+            G[ii] = np.array(G_ii)
+        # ----------------------------------------------------------------------------------------------------------
+        # Creating the feedback polynomials, dictionary representation
+        # ----------------------------------------------------------------------------------------------------------
+        for ii in range(n_in):
+            if np.random.rand() < 0.5 and G[ii].shape[1] > 1:  # creating feedback for this input
+                memory = G[ii].shape[1] - 1
+                feedback[ii] = np.concatenate([[1], np.random.randint(0, 2, memory)])
+                for jj, G_ii_jj in enumerate(G[ii]):
+                    if sum(G_ii_jj) > 1:
+                        use_feedback[ii, jj] = 1
+                    elif G_ii_jj[0] == 0:
+                        use_feedback[ii, jj] = 1
+                    else:
+                        use_feedback[ii, jj] = int(np.random.rand() < 0.5)  # 50% chance to use the feedback
+        # ----------------------------------------------------------------------------------------------------------
+        # Checking the conditions:
+        # 1. If only the zero word produces the 0 codeword
+        # 2. From each states, each transition produces a different output
+        # 3. Each output has to be dependant on the input, meaning the constant 0 output is not valid
+        # ----------------------------------------------------------------------------------------------------------
+        trellis_obj = Trellis(G, None, None)
+        # 1.
+        state_transition_set = set()
+        for key in trellis_obj.trellis:
+            out, state = trellis_obj.trellis[key]
+            state_transition_set.add(tuple([key[1], out, state]))
+        condition = len(state_transition_set) == len(trellis_obj.trellis)
+        # 2.
+        sets_dict = {}
+        # Creating the sets
+        for key in trellis_obj.trellis:
+            out, state = trellis_obj.trellis[key]
+            if key[1] in sets_dict:
+                sets_dict[key[1]].add(out)
+            else:
+                sets_dict[key[1]] = set()
+                sets_dict[key[1]].add(out)
+        # Checking
+        for in_state in sets_dict:
+            if len(sets_dict[in_state]) != len(trellis_obj.inputs):
+                condition = False
+        # 3.
+        for ii in G:
+            if np.sum(G[ii]) == 0:
+                condition = False
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut   = cdsp.tx.coding_conv(pattern, G)
+    t1 = time()
+    decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, error_prob=False)
+    print(f'MAP decoding done in {time() - t1:.3f} seconds')
+    assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Basic convolution MAP decoding failed!'
+    t1 = time()
+    decoded_dut2, _ = cdsp.rx.decoding_conv_viterbi(coded_dut, G, 5*n_out, feedback=feedback, use_feedback=use_feedback)
+    print(f'Slow viterbi decoding done in {time() - t1:.3f} seconds')
+    assert np.allclose(pattern[:len(decoded_dut2)], decoded_dut2), 'Basic convolution VITERBI decoding failed!'
