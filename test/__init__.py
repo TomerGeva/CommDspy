@@ -8,7 +8,7 @@ from test.test_pattern_coding import coding_bipolar_test, decoding_bipolar_test
 from test.test_pattern_coding import coding_mlt3_test, decoding_mlt3_test
 from test.test_pattern_coding import coding_linear_block_test, decoding_linear_block_test
 from test.test_pattern_coding import coding_differential_manchester_test, decoding_differential_manchester_test
-from test.test_pattern_coding import coding_conv_basic_test, decoding_conv_basic_test
+from test.test_pattern_coding import coding_conv_basic_test, decoding_conv_basic_test, coding_conv_feedback_test
 from test.test_pattern_lock import lock_pattern_to_signal_binary_test, lock_pattern_to_signal_test
 from test.test_prbs_analysis import prbs_analysis_test
 from test.test_noise import awgn_test

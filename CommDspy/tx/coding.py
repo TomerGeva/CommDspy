@@ -184,7 +184,7 @@ def coding_linear(pattern, G):
     coded_pattern  = pattern_blocks.dot(G) % 2            # m X n matrix
     return np.reshape(coded_pattern, -1)
 
-def coding_conv(pattern, G, feedback=None, use_feedback=None):
+def coding_conv(pattern, G, feedback=None, use_feedback=None, zi=None):
     """
     :param pattern: binary pattern to perform linear block encoding. Should be binary 1D numpy array.
                     NOTE - If the convolution code has an input number of 'n', then the length of the pattern should be
@@ -200,6 +200,8 @@ def coding_conv(pattern, G, feedback=None, use_feedback=None):
                      polynomial for each of the inputs. Feedback polynomial should always have 1 in the '0' location.
     :param use_feedback: 2d numpy array with size of (inputs, outputs) stating which output should use the feedback loop
                          ('1') and which outputs don't ('0') w.r.t. each input.
+    :param zi: Initial state of the memory per input. This as well will be inputted as a dictionary. If for input, there
+               is no initial state, zero state is assumed.
     :return:
     This convolution coding assumes the code is not recursive, and the memory operates in the form of shift register for
     each input.
@@ -221,7 +223,7 @@ def coding_conv(pattern, G, feedback=None, use_feedback=None):
             G = [1 + D + D^2 ; 1 + D] is inputted by:
              * G = {0:np.array([[1,1,1], [1,1,0]])} ; 1 key in the dict, with size of (2, 3)
 
-        2. Tis code has 2 inputs, 3 outputs and memory depth of 2. Diagram:
+        2. This code has 2 inputs, 3 outputs and memory depth of 2. Diagram:
          w_0 --------------------------------------------------> c_0
                 |                                    |
                 |     |------|                       v
@@ -238,7 +240,18 @@ def coding_conv(pattern, G, feedback=None, use_feedback=None):
             * G = {0:np.array([[1,0],[0,0],[1,1]]) , 1: np.array([[0,0,0],[1,0,0],[0,0,1]])} ; 2 entries in the list
                 ** 1st entry with size of (3, 2)
                 ** 2nd entry with size of (3, 3)
-
+        3. Recursive systematic code with 1 input, 2 outputs. Diagram:
+                |------------------------------------------> c_0
+                |
+                |              |------|
+        w_0 --------> + ------>|   D  | -------------------> c_1
+                      ^        |------|            |
+                      |                            |
+                      |----------------------------|
+        G = [[1, D]] is inputted by:
+          * G = {0:np.array([[1, 0],[0, 1]])}
+          * feedback = {0:np.array([1, 1])}
+          * use_feedback = [[0, 1]] (c_0 does not use the feedback, since it is systematic)
     """
     # ==================================================================================================================
     # Basic checking of data validity
@@ -249,6 +262,8 @@ def coding_conv(pattern, G, feedback=None, use_feedback=None):
     # ==================================================================================================================
     n_in  = len(G)
     n_out = G[0].shape[0]
+    if use_feedback is None:
+        use_feedback = np.zeros([n_in, n_out], dtype=int)
     # ==================================================================================================================
     # Zero padding if needed, then reshaping
     # ==================================================================================================================
@@ -286,13 +301,16 @@ def coding_conv(pattern, G, feedback=None, use_feedback=None):
                 # Another validity check, should never reach this error
                 # **********************************************************************************************
                 if len(G_ii_jj) > 1:
-                        if sum(G_ii_jj[1:]) > 0 and use_feedback == 0:
+                        if sum(G_ii_jj[1:]) > 0 and use_feedback[ii, jj] == 0:
                             raise ValueError('Invalid inputs, should never reach this error')
-                # **********************************************************************************************
-                # If the output is systematic, no need to filter
-                # **********************************************************************************************
-                elif use_feedback[ii, jj] == 0: # the jj output is systematic w.r.t. the ii input
+            # **************************************************************************************************
+            # If the output is systematic, no need to filter, checking that:
+            # **************************************************************************************************
+            if len(G_ii_jj) > 1:  # if reached here, there is no feedback used
+                if G_ii_jj[0] == 1 and sum(G_ii_jj[1:]) == 0 and use_feedback[ii, jj] == 0: # the jj output is systematic w.r.t. the ii input
                     out_vals[jj] += in_pattern
+                    if use_feedback[ii, jj] == 1:
+                        raise ValueError('Invalid inputs, should never reach this error2')
                     continue
             # ------------------------------------------------------------------------------------------------------
             # Passing the data through the transfer function

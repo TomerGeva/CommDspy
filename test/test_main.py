@@ -352,6 +352,9 @@ def test_prbs_gen_4():
         required_length = random.randint(1, prbs_type.value)
         test.prbs_gen_test(prbs_type, required_length)
 
+def test_coding_conv_feedback():
+    test.coding_conv_feedback_test()
+
 def test_coding_conv_basic():
     test.coding_conv_basic_test()
 
@@ -459,5 +462,6 @@ def test_coding_gray_plus_mapping():
 if __name__ == '__main__':
     # test_equalization()
     # test_coding_conv_basic()
-    test_decoding_conv_basic()
+    # test_decoding_conv_basic()
+    test_coding_conv_feedback()
     pass

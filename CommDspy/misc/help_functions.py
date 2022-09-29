@@ -19,12 +19,14 @@ def check_valid_conv(pattern, G, feedback, use_feedback):
         if feedback is not None:
             if use_feedback is None:
                 raise ValueError('use_feedback must not be None is feedback is used')
-            elif len(use_feedback) != G[0].shape[0]:
-                raise ValueError('Length of use_feedback should be similar to the number of outputs')
-            check_binary(feedback[ii])
+            elif use_feedback.shape[0] != len(G) or use_feedback.shape[1] != G[0].shape[0]:
+                raise ValueError('Size of use_feedback should be similar to the number of inputs and outputs')
+            for fb_ii in feedback:
+                check_binary(feedback[fb_ii])
             for jj, G_ii_jj in enumerate(G[ii]):
-                if use_feedback[ii, jj] == 0:
+                if use_feedback[ii, jj] == 1 and ii not in feedback.keys():
+                    raise ValueError(f'Use feedback is enabled for input {ii} output {jj}, but the feedback dict does not have a feedback polynomial')
+                if use_feedback[ii, jj] == 0 and ii in feedback.keys():
                     if len(G_ii_jj) > 1:
                         if sum(G_ii_jj[1:]) > 0:
-                            raise ValueError(
-                                'Use feedback is disabled for this output, but the transfer function requires a FIR')
+                            raise ValueError(f'Use feedback is disabled for input {ii} output {jj}, but the transfer function requires a FIR')

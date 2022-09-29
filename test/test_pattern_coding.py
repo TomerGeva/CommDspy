@@ -403,3 +403,79 @@ def decoding_conv_basic_test():
     print(f'Slow viterbi decoding done in {time() - t1:.3f} seconds')
     assert np.allclose(pattern[:len(decoded_dut2)], decoded_dut2), 'Basic convolution VITERBI decoding failed!'
 
+def coding_conv_feedback_test():
+    # np.random.seed(2)
+    # np.random.seed(200)
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
+    pat_len = 100
+    pattern = np.random.randint(0, 2, pat_len)
+    n_in    = np.random.randint(1, 4)
+    n_out   = np.random.randint(n_in+1, n_in + 4)
+    G        = {}
+    feedback = {}
+    use_feedback = np.zeros([n_in, n_out], dtype=int)
+    # --------------------------------------------------------------------------------------------------------------
+    # Creating the generating matrix, dictionary representation
+    # --------------------------------------------------------------------------------------------------------------
+    for ii in range(n_in):
+        G_ii = []
+        constraint_length = np.random.randint(1, 5)
+        for jj in range(n_out):
+            transfer_function = np.random.randint(0, 2, [constraint_length])
+            G_ii.append(transfer_function)
+        G[ii] = np.array(G_ii)
+    # --------------------------------------------------------------------------------------------------------------
+    # Creating the feedback polynomials, dictionary representation
+    # --------------------------------------------------------------------------------------------------------------
+    for ii in range(n_in):
+        if np.random.rand() < 0.5 and G[ii].shape[1] > 1: # creating feedback for this input
+            memory = G[ii].shape[1] - 1
+            feedback[ii] = np.concatenate([[1], np.random.randint(0, 2, memory)])
+            for jj, G_ii_jj in enumerate(G[ii]):
+                if sum(G_ii_jj) > 1:
+                    use_feedback[ii, jj] = 1
+                elif G_ii_jj[0] == 0:
+                    use_feedback[ii, jj] = 1
+                else:
+                    use_feedback[ii, jj] = int(np.random.rand() < 0.5)  # 50% chance to use the feedback
+    # ==================================================================================================================
+    # Getting DUT coded pattern
+    # ==================================================================================================================
+    coded_dut = cdsp.tx.coding_conv(pattern, G, feedback, use_feedback)
+    # ==================================================================================================================
+    # Computing the coding in a different way
+    # ==================================================================================================================
+    pattern_reshape = cdsp.buffer(pattern, n_in)
+    coded_ref       = np.zeros([n_out, pattern_reshape.shape[0]], dtype=int)
+    # -------------------------------------------------------
+    # Creating the memory for each of the inputs
+    # -------------------------------------------------------
+    memory = {}  # memory plus the current input
+    for kk in range(n_in):
+        memory[kk] = np.zeros(G[kk].shape[1], dtype=int)
+    # -----------------------------------------------------------------------------------
+    # Running through each of the input chunks, computing the output w.r.t to all inputs
+    # -----------------------------------------------------------------------------------
+    for kk, input_chuck in enumerate(pattern_reshape):
+        for ii, kk_i in enumerate(input_chuck):  # Updating the constraint
+            if ii in feedback.keys():
+                kk_i_fb = (kk_i + memory[ii][:-1].dot(feedback[ii][1:])) % 2
+            else:
+                kk_i_fb = kk_i
+            memory[ii] = np.concatenate([[kk_i_fb], memory[ii][:-1]]) if len(memory[ii]) > 1 else np.array([kk_i_fb])
+        for jj in range(n_out):
+            for ii in range(n_in):  # the ith input in the kth chunk
+                G_ii_jj           = G[ii][jj]
+                if len(G_ii_jj) == 1 or use_feedback[ii, jj] == 0:
+                    # no memory, either systematic or always 0 output, depending on G_ii_jj[0] value.
+                    # 1 - systematic ; 0 - zero output
+                    coded_ref[jj, kk] = coded_ref[jj, kk] ^ input_chuck[ii] * G_ii_jj[0]
+                else:
+                    coded_ref[jj, kk] = coded_ref[jj, kk] ^ (G_ii_jj.dot(memory[ii]) % 2)
+    # ==================================================================================================================
+    # Reshaping
+    # ==================================================================================================================
+    coded_ref_tot = np.reshape(coded_ref.T, -1)
+    assert all(coded_ref_tot == coded_dut), 'Recursive convolution encoding failed!'
