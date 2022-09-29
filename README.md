@@ -231,9 +231,9 @@ graph LR
   E -->|+| PLUS((+))
   G -- - --> PLUS((+))
   PLUS --> F(Slicer)
+  F --> I((" "))
   I --> G(DFE)
-  F -- A_n estimation --> I((" "))
-  I --> ...
+  I -- A_n estimation --> ...
 
   subgraph Receiver Model
     C & E & PLUS & F & G & I
