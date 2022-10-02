@@ -301,6 +301,7 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
     # Starting the viterbi algorithm block by block
     # ==================================================================================================================
     output_tensor_reshape = np.reshape(trellis_obj.output_tensor, [-1, n_out])
+    in_state_int_vec      = np.arange(trellis_obj.num_states)
     for ii in range(pattern_block.shape[0]):
         # ----------------------------------------------------------------------------------------------------------
         # Forward propagating - Computing the accumulative hamming along each path, selecting the best
@@ -322,24 +323,16 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
             else:
                 hamming_dist[:, chunk_idx] = np.min(step_hamming, axis=0)
             decoded_mat_prev = decoded_mat.copy()
-            for in_state in range(trellis_obj.num_states):
-                out_state = hamming_state[in_state, chunk_idx]
-                in_state_bin  = uint2bin(np.array(in_state), state_bits)
-                out_state_bin = uint2bin(np.array(out_state), state_bits)
-                if chunk_idx > 0:
-                    decoded_mat[in_state,:n_in*(chunk_idx+1)] = np.concatenate([decoded_mat_prev[out_state, :n_in*chunk_idx], trellis_obj.input_tensor[out_state, in_state]])
-                else:
-                    decoded_mat[in_state,:n_in*(chunk_idx+1)] = trellis_obj.input_tensor[out_state, in_state]
-                input_tensor[in_state, chunk_idx] = trellis_obj.io_dict[(tuple(out_state_bin), tuple(in_state_bin))][0]
+            out_state = hamming_state[in_state_int_vec, chunk_idx]
+            if chunk_idx > 0:
+                decoded_mat[in_state_int_vec, :n_in*(chunk_idx+1)] = np.concatenate([decoded_mat_prev[out_state, :n_in * chunk_idx], trellis_obj.input_tensor[out_state, in_state_int_vec]], axis=1)
+            else:
+                decoded_mat[in_state_int_vec, :n_in*(chunk_idx+1)] = trellis_obj.input_tensor[out_state, in_state_int_vec]
         # ----------------------------------------------------------------------------------------------------------
         # Backward propagating - Going along the selected path, recovering the input
         # ----------------------------------------------------------------------------------------------------------
         last_state = np.argmin(hamming_dist[:, -1])
         input_mat[ii] = decoded_mat[last_state]
-        # state      = last_state
-        # for chunk_idx in range(n_chunks-1, -1, -1):
-        #     input_mat[ii, n_in*chunk_idx:n_in*(chunk_idx+1)] = input_tensor[state, chunk_idx]
-        #     state = hamming_state[state, chunk_idx]
 
     return np.reshape(input_mat, -1), last_state
 

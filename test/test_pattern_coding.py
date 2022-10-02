@@ -338,15 +338,16 @@ def coding_conv_basic_test():
     assert all(coded_ref_tot == coded_dut), 'Convolution encoding with FIR only failed!'
 
 def decoding_conv_basic_test():
-    np.random.seed(21)
+    # np.random.seed(21)
     # np.random.seed(61)
+    # np.random.seed(51)
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
     pat_len = 100
     pattern = np.random.randint(0, 2, pat_len)
-    n_in  =  np.random.randint(1, 4)
-    n_out =  np.random.randint(n_in + 2, n_in + 4)
+    n_in  = 3  # np.random.randint(1, 4)
+    n_out = 7  # np.random.randint(n_in + 2, n_in + 4)
     G = {}
     # --------------------------------------------------------------------------------------------------------------
     # Creating the generating matrix, dictionary representation
@@ -403,20 +404,17 @@ def decoding_conv_basic_test():
                     if sum(key[1]) > 0 or sum(in_state) > 0:
                         condition = False
                         break
-    print(pattern[:n_in*5])
-    print(n_in)
-    print(n_out)
     # ==================================================================================================================
     # Getting DUT coded pattern
     # ==================================================================================================================
     coded_dut   = cdsp.tx.coding_conv(pattern, G)
     # t1 = time()
     # decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, error_prob=False)
-    # print(f'MAP decoding done in {time() - t1:.3f} seconds')
+    # print(f'MAP decoding done in {time() - t1:.5f} seconds')
     # assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Basic convolution MAP decoding failed!'
     t1 = time()
     decoded_dut2, _ = cdsp.rx.decoding_conv_viterbi(coded_dut, G, 5*n_out, feedback=None, use_feedback=None)
-    print(f'Slow viterbi decoding done in {time() - t1:.3f} seconds')
+    print(f'Slow viterbi decoding done in {time() - t1:.5f} seconds')
     assert np.allclose(pattern[:len(decoded_dut2)], decoded_dut2), 'Basic convolution VITERBI decoding failed!'
 
 def coding_conv_feedback_test():
