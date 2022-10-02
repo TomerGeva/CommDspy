@@ -1,6 +1,6 @@
 import numpy as np
 from CommDspy.misc.help_functions import check_binary, check_valid_conv
-from CommDspy.misc.map_decoding import map_decoding, Trellis
+from CommDspy.misc.ml_decoding import ml_decoding, Trellis
 from CommDspy.constants import ConstellationEnum
 from CommDspy.auxiliary import get_levels, get_gray_level_vec, get_bin_perm, hamming, bin2uint, uint2bin
 from scipy.signal import lfilter
@@ -187,7 +187,7 @@ def decoding_linear(pattern, G, error_prob=False):
     # ==================================================================================================================
     # Decoding
     # ==================================================================================================================
-    return map_decoding(perm_bin, codebook, pattern_block, error_prob)
+    return ml_decoding(perm_bin, codebook, pattern_block, error_prob)
 
 def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False):
     """
@@ -254,7 +254,7 @@ def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, erro
     # ==================================================================================================================
     # Decoding
     # ==================================================================================================================
-    return map_decoding(np.tile(inputs, [len(trellis_obj.states), 1]), codebook, pattern_block, error_prob)
+    return ml_decoding(np.tile(inputs, [len(trellis_obj.states), 1]), codebook, pattern_block, error_prob)
 
 def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False, mode='hard'):
     """
@@ -272,7 +272,7 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
     :param mode: either 'hard' or 'soft' viterbi encoding.
              'hard' mode uses hamming distance and uses only binary data.
              'soft' mode uses euclidean distance and can be inputted with floats
-    :return: Function performs viterbi decoding. Currently supports only hard decoding. in the future soft will also be
+    :return: Function performs viterbi decoding. Currently, supports only hard decoding. in the future soft will also be
              implemented
     THIS FUNCTION RUNS IN A FOR LOOP FOR ALL THE BLOCKS. ANOTHER FUNCTION WILL DO THE VITERBI TO ALL BLOCKS TOGETHER
     """
@@ -291,6 +291,7 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
     hamming_dist  = np.zeros([len(trellis_obj.states), n_chunks], dtype=int)
     hamming_state = np.zeros([len(trellis_obj.states), n_chunks], dtype=int)
     input_tensor  = np.zeros([len(trellis_obj.states), n_chunks, n_in], dtype=int)
+    decoded_mat   = np.zeros([len(trellis_obj.states), n_chunks * n_in], dtype=int)  # holds the decoded input 'chunk' for each state
     state_bits    = np.log2(trellis_obj.num_states).astype(int)
     # ==================================================================================================================
     # Reshaping
@@ -299,26 +300,19 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
     # ==================================================================================================================
     # Starting the viterbi algorithm block by block
     # ==================================================================================================================
+    output_tensor_reshape = np.reshape(trellis_obj.output_tensor, [-1, n_out])
     for ii in range(pattern_block.shape[0]):
         # ----------------------------------------------------------------------------------------------------------
-        # Forwarrd propagating - Computing the accumulative hamming along each path, selecting the best
+        # Forward propagating - Computing the accumulative hamming along each path, selecting the best
         # ----------------------------------------------------------------------------------------------------------
         for chunk_idx in range(n_chunks):
             pattern_chunk = pattern_block[ii, n_out*chunk_idx:n_out*(chunk_idx+1)]
-            step_hamming  = np.ones([trellis_obj.num_states, trellis_obj.num_states], dtype=int) * n_out
             # ----------------------------------------------------------------------------------------------------------
             # For each chunk compute all possible hamming distances
             # ----------------------------------------------------------------------------------------------------------
-            # step_hamming[ii,jj] = hamming from state ii to state jj
-            for key in trellis_obj.trellis:
-                state_out     = key[1]
-                out, state_in = trellis_obj.trellis[key]
-                # Converting states from binary arrays to integer values
-                state_in_int  = bin2uint(np.array(state_in))
-                state_out_int = bin2uint(np.array(state_out))
-                d_ham, _      = hamming(np.array(out)[None, :], pattern_chunk[None, :])
-                # computing hamming distance
-                step_hamming[state_out_int, state_in_int] = d_ham
+            # step_hamming[ii,jj] = hamming from state ii to state jj, computing for all transitions in one step
+            step_hamming, _ = hamming(output_tensor_reshape, pattern_chunk[None, :])
+            step_hamming    = np.reshape(step_hamming, trellis_obj.output_tensor.shape[:-1])
             # ----------------------------------------------------------------------------------------------------------
             # Noting the best for this step, the return path and the input for the best per state
             # ----------------------------------------------------------------------------------------------------------
@@ -327,19 +321,25 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
                 hamming_dist[:, chunk_idx] = np.min(step_hamming, axis=0) + hamming_dist[hamming_state[:,chunk_idx], chunk_idx-1]
             else:
                 hamming_dist[:, chunk_idx] = np.min(step_hamming, axis=0)
+            decoded_mat_prev = decoded_mat.copy()
             for in_state in range(trellis_obj.num_states):
                 out_state = hamming_state[in_state, chunk_idx]
                 in_state_bin  = uint2bin(np.array(in_state), state_bits)
                 out_state_bin = uint2bin(np.array(out_state), state_bits)
+                if chunk_idx > 0:
+                    decoded_mat[in_state,:n_in*(chunk_idx+1)] = np.concatenate([decoded_mat_prev[out_state, :n_in*chunk_idx], trellis_obj.input_tensor[out_state, in_state]])
+                else:
+                    decoded_mat[in_state,:n_in*(chunk_idx+1)] = trellis_obj.input_tensor[out_state, in_state]
                 input_tensor[in_state, chunk_idx] = trellis_obj.io_dict[(tuple(out_state_bin), tuple(in_state_bin))][0]
         # ----------------------------------------------------------------------------------------------------------
         # Backward propagating - Going along the selected path, recovering the input
         # ----------------------------------------------------------------------------------------------------------
         last_state = np.argmin(hamming_dist[:, -1])
-        state      = last_state
-        for chunk_idx in range(n_chunks-1, -1, -1):
-            input_mat[ii, n_in*chunk_idx:n_in*(chunk_idx+1)] = input_tensor[state, chunk_idx]
-            state = hamming_state[state, chunk_idx]
+        input_mat[ii] = decoded_mat[last_state]
+        # state      = last_state
+        # for chunk_idx in range(n_chunks-1, -1, -1):
+        #     input_mat[ii, n_in*chunk_idx:n_in*(chunk_idx+1)] = input_tensor[state, chunk_idx]
+        #     state = hamming_state[state, chunk_idx]
 
     return np.reshape(input_mat, -1), last_state
 

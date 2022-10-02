@@ -1,7 +1,7 @@
 import numpy as np
-from CommDspy.auxiliary import get_bin_perm
+from CommDspy.auxiliary import get_bin_perm, uint2bin
 
-def map_decoding(permutations, codebook, pattern_block, error_prob):
+def ml_decoding(permutations, codebook, pattern_block, error_prob):
     p_err   = None
     hamming = np.sum(np.abs(codebook[:, None, :] - pattern_block[None, :, :]), axis=2)
     if error_prob:
@@ -36,12 +36,25 @@ class Trellis:
     :param G:
     :param feedback: ignored atm
     :param use_feedback: ignored atm
-    :return: Creating a trellis dictionart where:
-                - keys are tuples of (input, state)
-                - values are tuples of (output, next_state)
+    :return:
+    1. Creating a trellis dictionary where:
+        - keys are tuples of (input, state)
+        - values are tuples of (output, next_state)
+    2. Creating io_dict where:
+        - keys are tuples of (out_state, in_state)
+        - values are tuples of (input_vec, output_vec)
+    3. Creating input_tensor, a NxNxn_in 3D tensor where
+        - input_tensor[ii,jj] holds the binary input vector required to transition from state ii to state jj. If no such
+          transition is available, holds -1 values.
+    4. Creating output_tensor a NxNxn_out 3D tensor where
+        - output_tensor[ii,jj] holds the binary output vector required to transition from state ii to state jj. If no
+          such transition is available, holds -1 values.
     """
     def __init__(self, G, feedback=None, use_feedback=None):
-        self.n_in = len(G)
+        # ==============================================================================================================
+        # Local variables
+        # ==============================================================================================================
+        self.n_in  = len(G)
         self.n_out = G[0].shape[0]
         # ==============================================================================================================
         # Extracting the constraint length and memory array
@@ -62,10 +75,23 @@ class Trellis:
         # ==============================================================================================================
         # Creating the trellis
         # ==============================================================================================================
-        self.trellis, self.io_dict = create_trellis(G, self.states, self.inputs, memory_cumsum) #, feedback=feedback, use_feedback=use_feedback)
+        self.trellis, self.io_dict = create_trellis_bin(G, self.states, self.inputs, memory_cumsum) #, feedback=feedback, use_feedback=use_feedback)
+        # ==============================================================================================================
+        # Another representation of the trellis, input_tensor and output_tensor
+        # ==============================================================================================================
+        self.input_tensor  = np.ones([self.num_states, self.num_states, self.n_in], dtype=int) * (-1)
+        self.output_tensor = np.ones([self.num_states, self.num_states, self.n_out], dtype=int) * (-1)
+        for ii in range(self.num_states):
+            for jj in range(self.num_states):
+                out_state = uint2bin(np.array([ii]), sum(memory))
+                in_state  = uint2bin(np.array([jj]), sum(memory))
+                io_vals   = self.io_dict.get((tuple(out_state[0]), tuple(in_state[0])), None)
+                if io_vals is not None:
+                    self.input_tensor[ii, jj]  = io_vals[0]
+                    self.output_tensor[ii, jj] = io_vals[1]
 
 
-def create_trellis(G, states, inputs, memory_cumsum, feedback=None, use_feedback=None):
+def create_trellis_bin(G, states, inputs, memory_cumsum, feedback=None, use_feedback=None):
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
@@ -135,5 +161,5 @@ def create_trellis(G, states, inputs, memory_cumsum, feedback=None, use_feedback
 
 if __name__ == '__main__':
     G = {0: np.array([[1, 0, 1], [1, 1, 1]])}
-    trellis, n_states = create_trellis(G)
+    trellis = Trellis(G)
     print('hi')

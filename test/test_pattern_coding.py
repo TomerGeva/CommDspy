@@ -1,6 +1,6 @@
 import numpy as np
 import CommDspy as cdsp
-from CommDspy.misc.map_decoding import Trellis
+from CommDspy.misc.ml_decoding import Trellis
 from time import time
 
 
@@ -338,14 +338,15 @@ def coding_conv_basic_test():
     assert all(coded_ref_tot == coded_dut), 'Convolution encoding with FIR only failed!'
 
 def decoding_conv_basic_test():
-    np.random.seed(41)
+    np.random.seed(21)
+    # np.random.seed(61)
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
     pat_len = 100
     pattern = np.random.randint(0, 2, pat_len)
     n_in  =  np.random.randint(1, 4)
-    n_out =  np.random.randint(n_in + 1, n_in + 4)
+    n_out =  np.random.randint(n_in + 2, n_in + 4)
     G = {}
     # --------------------------------------------------------------------------------------------------------------
     # Creating the generating matrix, dictionary representation
@@ -362,8 +363,9 @@ def decoding_conv_basic_test():
         # **************************************************************************************************
         # Checking the conditions:
         # 1. If only the zero word produces the 0 codeword
-        # 2. From each states, each transition produces a different output
-        # 3. Each output has to be dependant on the input, meaning the constant 0 output is not valid
+        # 2. From each state, each transition produces a different output
+        # 3. Each output has to be dependent on the input, meaning the constant 0 output is not valid
+        # 4. only the transition from state '0' to state '0' produces the '0' output
         # **************************************************************************************************
         trellis_obj = Trellis(G, None, None)
         # 1.
@@ -375,29 +377,43 @@ def decoding_conv_basic_test():
         # 2.
         sets_dict = {}
         # Creating the sets
-        for key in trellis_obj.trellis:
-            out, state = trellis_obj.trellis[key]
-            if key[1] in sets_dict:
-                sets_dict[key[1]].add(out)
-            else:
-                sets_dict[key[1]] = set()
-                sets_dict[key[1]].add(out)
-        # Checking
-        for in_state in sets_dict:
-            if len(sets_dict[in_state]) != len(trellis_obj.inputs):
-                condition = False
+        if condition:
+            for key in trellis_obj.trellis:
+                out, state = trellis_obj.trellis[key]
+                if key[1] in sets_dict:
+                    sets_dict[key[1]].add(out)
+                else:
+                    sets_dict[key[1]] = set()
+                    sets_dict[key[1]].add(out)
+            # Checking
+            for in_state in sets_dict:
+                if len(sets_dict[in_state]) != len(trellis_obj.inputs):
+                    condition = False
         # 3.
-        for ii in G:
-            if np.sum(G[ii]) == 0:
-                condition = False
+        if condition:
+            for ii in G:
+                if np.sum(G[ii]) == 0:
+                    condition = False
+        # 4.
+        if condition:
+            for key in trellis_obj.trellis:
+                out, in_state = trellis_obj.trellis[key]
+                if sum(out) == 0:
+                    # if (sum(key[1]) > 0 and sum(in_state) == 0) or (sum(key[1]) == 0 and sum(in_state) > 0):
+                    if sum(key[1]) > 0 or sum(in_state) > 0:
+                        condition = False
+                        break
+    print(pattern[:n_in*5])
+    print(n_in)
+    print(n_out)
     # ==================================================================================================================
     # Getting DUT coded pattern
     # ==================================================================================================================
     coded_dut   = cdsp.tx.coding_conv(pattern, G)
-    t1 = time()
-    decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, error_prob=False)
-    print(f'MAP decoding done in {time() - t1:.3f} seconds')
-    assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Basic convolution MAP decoding failed!'
+    # t1 = time()
+    # decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, error_prob=False)
+    # print(f'MAP decoding done in {time() - t1:.3f} seconds')
+    # assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Basic convolution MAP decoding failed!'
     t1 = time()
     decoded_dut2, _ = cdsp.rx.decoding_conv_viterbi(coded_dut, G, 5*n_out, feedback=None, use_feedback=None)
     print(f'Slow viterbi decoding done in {time() - t1:.3f} seconds')
