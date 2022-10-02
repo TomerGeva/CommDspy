@@ -290,9 +290,7 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
     trellis_obj   = Trellis(G, feedback, use_feedback)  # Trellis object, holding all the important things
     hamming_dist  = np.zeros([len(trellis_obj.states), n_chunks], dtype=int)
     hamming_state = np.zeros([len(trellis_obj.states), n_chunks], dtype=int)
-    input_tensor  = np.zeros([len(trellis_obj.states), n_chunks, n_in], dtype=int)
     decoded_mat   = np.zeros([len(trellis_obj.states), n_chunks * n_in], dtype=int)  # holds the decoded input 'chunk' for each state
-    state_bits    = np.log2(trellis_obj.num_states).astype(int)
     # ==================================================================================================================
     # Reshaping
     # ==================================================================================================================
