@@ -603,10 +603,7 @@ Function is inputted with:
 * tb_len - Traceback length, how far we should go for each block to decode. This is usually set as 5 times the constraint length, i.e. n_out * 5 * (m+1) where m is the longest memory. Note, this value should be divisible by the number of outputs per input "chunck". Example: if the code has 2 inputs and 5 outputs, tb_len should be divisible by 5
 * feedback: Feedback polynomial for convolution encoder. Read the CommDspy.tx.coding_conv for more description
 * use_feedback: 2d numpy array stating if the usage of the feedback. Read the CommDspy.tx.coding_conv for more description.
-* error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with the closest hamming distance.
-* mode: either 'hard' or 'soft' viterbi encoding.
-  1. 'hard' mode uses hamming distance and uses only binary data.
-  2. 'soft' mode uses euclidean distance and can be inputted with floats
+* error_prob: If True, returns the error probability for each block. The error probability is computed by 1 over the number of end states with the minimal hamming distance. If there is one state with minimal hamming distance, the error prob will be 0 for that block.
   
 ### 2.12. symbol2bin
 Function receives an UNCODED symbol sequence, returns the binary representation of the symbol sequence
