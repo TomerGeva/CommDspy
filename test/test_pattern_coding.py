@@ -495,7 +495,7 @@ def coding_conv_feedback_test():
     assert all(coded_ref_tot == coded_dut), 'Recursive convolution encoding failed!'
 
 def decoding_conv_feedback_test():
-    # np.random.seed(20)
+    # np.random.seed(50)
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
@@ -503,11 +503,11 @@ def decoding_conv_feedback_test():
     pattern = np.random.randint(0, 2, pat_len)
     n_in  =  np.random.randint(1, 4)
     n_out =  np.random.randint(n_in + 2, n_in + 5)
-    G        = {}
-    feedback = {}
-    use_feedback = np.zeros([n_in, n_out], dtype=int)
     condition = False
     while not condition:
+        G            = {}
+        feedback     = {}
+        use_feedback = np.zeros([n_in, n_out], dtype=int)
         # ----------------------------------------------------------------------------------------------------------
         # Creating the generating matrix, dictionary representation
         # ----------------------------------------------------------------------------------------------------------
@@ -568,19 +568,20 @@ def decoding_conv_feedback_test():
                     condition = False
         # 4.
         if condition:
-                    for key in trellis_obj.trellis:
-                        out, in_state = trellis_obj.trellis[key]
-                        if sum(out) == 0:
-                            # if (sum(key[1]) > 0 and sum(in_state) == 0) or (sum(key[1]) == 0 and sum(in_state) > 0):
-                            if sum(key[1]) > 0 or sum(in_state) > 0:
-                                condition = False
-                                break
+            for key in trellis_obj.trellis:
+                out, in_state = trellis_obj.trellis[key]
+                if sum(out) == 0:
+                    # if (sum(key[1]) > 0 and sum(in_state) == 0) or (sum(key[1]) == 0 and sum(in_state) > 0):
+                    if sum(key[1]) > 0 or sum(in_state) > 0:
+                        condition = False
+                        break
     # ==================================================================================================================
     # Getting DUT coded pattern
     # ==================================================================================================================
-    coded_dut   = cdsp.tx.coding_conv(pattern, G)
+    print('found valid encoder')
+    coded_dut   = cdsp.tx.coding_conv(pattern, G, feedback, use_feedback)
     t1 = time()
-    decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, error_prob=False)
+    decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, feedback=feedback, use_feedback=use_feedback, error_prob=False)
     print(f'MAP decoding done in {time() - t1:.5f} seconds')
     assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Recursive convolution MAP decoding failed!'
     t1 = time()

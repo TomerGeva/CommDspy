@@ -47,7 +47,7 @@ class Trellis:
         - input_tensor[ii,jj] holds the binary input vector required to transition from state ii to state jj. If no such
           transition is available, holds -1 values.
     4. Creating output_tensor a NxNxn_out 3D tensor where
-        - output_tensor[ii,jj] holds the binary output vector required to transition from state ii to state jj. If no
+        - output_tensor[ii,jj] holds the binary output vector resulted by transition from state ii to state jj. If no
           such transition is available, holds -1 values.
     """
     def __init__(self, G, feedback=None, use_feedback=None):
@@ -75,7 +75,7 @@ class Trellis:
         # ==============================================================================================================
         # Creating the trellis
         # ==============================================================================================================
-        self.trellis, self.io_dict = create_trellis_bin(G, self.states, self.inputs, memory_cumsum) #, feedback=feedback, use_feedback=use_feedback)
+        self.trellis, self.io_dict = create_trellis_bin(G, self.states, self.inputs, memory_cumsum, feedback=feedback, use_feedback=use_feedback)
         # ==============================================================================================================
         # Another representation of the trellis, input_tensor and output_tensor
         # ==============================================================================================================
@@ -129,7 +129,7 @@ def create_trellis_bin(G, states, inputs, memory_cumsum, feedback=None, use_feed
                 G_kk     = G[kk]
                 # _________ performing the feedback if needed ______________
                 if kk in feedback.keys():
-                    in_k_fb = (in_k + memory_dict[kk][:-1].dot(feedback[kk][1:])) % 2
+                    in_k_fb = (in_k + memory_dict[kk].dot(feedback[kk][1:])) % 2
                 else:
                     in_k_fb = in_k
                 memory_k = np.concatenate([[in_k_fb], memory_dict[kk]])
