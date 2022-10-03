@@ -267,8 +267,9 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
     :param feedback: Feedback polynomial for convolution encoder. Read the CommDspy.tx.coding_conv for more description
     :param use_feedback: 2d numpy array stating if the usage of the feedback. Read the CommDspy.tx.coding_conv for more
                          description.
-    :param error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with
-                       the closest hamming distance.
+    :param error_prob: If True, returns the error probability for each block. The error probability is cmputed by 1 over
+                       the number of end states with the minimal hamming distance. If there is one state with minimal
+                       hamming distance, the error prob will be 0 for that block.
     :return: Function performs hard viterbi decoding over binary state memory and data. If there are 4 states, they will
     (probably) be {(0,0), (0,1), (1,0), (1,1)} and the input/output are binary vectors (or scalars).
     """
@@ -287,6 +288,8 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
     hamming_dist  = np.zeros([len(trellis_obj.states), n_chunks], dtype=int)
     hamming_state = np.zeros([len(trellis_obj.states), n_chunks], dtype=int)
     decoded_mat   = np.zeros([len(trellis_obj.states), n_chunks * n_in], dtype=int)  # holds the decoded input 'chunk' for each state
+    if error_prob:
+        error_prob_vec = np.zeros(len(pattern) // tb_len)
     # ==================================================================================================================
     # Reshaping
     # ==================================================================================================================
@@ -325,10 +328,17 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
         # ----------------------------------------------------------------------------------------------------------
         # Backward propagating - Going along the selected path, recovering the input
         # ----------------------------------------------------------------------------------------------------------
-        last_state = np.argmin(hamming_dist[:, -1])
+        last_state    = np.argmin(hamming_dist[:, -1])
         input_mat[ii] = decoded_mat[last_state]
-
-    return np.reshape(input_mat, -1), last_state
+        if error_prob:
+            min_hamming = np.min(hamming_dist[:, -1])
+            count       = sum(hamming_dist[:, -1] == min_hamming)
+            if count > 1:
+                error_prob_vec[ii] = 1 / count
+    if error_prob:
+        return np.reshape(input_mat, -1), last_state, error_prob_vec
+    else:
+        return np.reshape(input_mat, -1), last_state
 
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
