@@ -574,8 +574,8 @@ Function is inputted with:
 * G - Generating matrix used to encode the pattern
 * error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with the closest hamming distance. If there is more than 1 codeword with minimal distance, chooses one of them as we can not know which 1 it was.
 
-### 2.10. decoding_conv_map
-Function performs MAP block decoding according to the following procedure:
+### 2.10. decoding_conv_ml
+Function performs ML block decoding according to the following procedure:
   1. Computes the codebook according to the generating matrix G (assuming full codebook)
   2. Computes tha hamming distance for each block from all the codes in the codebook
   3. Allocates the original data matching the codeword, i.e. performing error correction if possible. If
@@ -595,7 +595,7 @@ Function is inputted with:
                    the closest hamming distance.
 
 ### 2.11. decoding_conv_viterbi
-Function performs viterbi decoding. Currently supports only hard decoding. in the future soft will also be implemented.
+Function performs hard viterbi decoding over binary state memory and data. If there are 4 states, they will (probably) be {(0,0), (0,1), (1,0), (1,1)} and the input/output are binary vectors (or scalars). 
 
 Function is inputted with:
 * pattern - Convolution coded pattern we need to perform decoding on

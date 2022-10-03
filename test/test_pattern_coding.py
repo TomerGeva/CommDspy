@@ -409,7 +409,7 @@ def decoding_conv_basic_test():
     # ==================================================================================================================
     coded_dut   = cdsp.tx.coding_conv(pattern, G)
     t1 = time()
-    decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, error_prob=False)
+    decoded_dut = cdsp.rx.decoding_conv_ml(coded_dut, G, tb_len=5*n_out, error_prob=False)
     print(f'MAP decoding done in {time() - t1:.5f} seconds')
     assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Basic convolution MAP decoding failed!'
     t1 = time()
@@ -581,7 +581,7 @@ def decoding_conv_feedback_test():
     print('found valid encoder')
     coded_dut   = cdsp.tx.coding_conv(pattern, G, feedback, use_feedback)
     t1 = time()
-    decoded_dut = cdsp.rx.decoding_conv_map(coded_dut, G, tb_len=5*n_out, feedback=feedback, use_feedback=use_feedback, error_prob=False)
+    decoded_dut = cdsp.rx.decoding_conv_ml(coded_dut, G, tb_len=5*n_out, feedback=feedback, use_feedback=use_feedback, error_prob=False)
     print(f'MAP decoding done in {time() - t1:.5f} seconds')
     assert np.allclose(pattern[:len(decoded_dut)], decoded_dut), 'Recursive convolution MAP decoding failed!'
     t1 = time()

@@ -189,7 +189,7 @@ def decoding_linear(pattern, G, error_prob=False):
     # ==================================================================================================================
     return ml_decoding(perm_bin, codebook, pattern_block, error_prob)
 
-def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False):
+def decoding_conv_ml(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False):
     """
     :param pattern: Convolution coded pattern we need to perform decoding on
     :param G: Generating matrix from the convolution code. Read the CommDspy.tx.coding_conv for more description
@@ -256,7 +256,7 @@ def decoding_conv_map(pattern, G, tb_len, feedback=None, use_feedback=None, erro
     # ==================================================================================================================
     return ml_decoding(np.tile(inputs, [len(trellis_obj.states), 1]), codebook, pattern_block, error_prob)
 
-def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False, mode='hard'):
+def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, error_prob=False):
     """
     :param pattern: Convolution coded pattern we need to perform decoding on
     :param G: Generating matrix from the convolution code. Read the CommDspy.tx.coding_conv for more description
@@ -269,12 +269,8 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
                          description.
     :param error_prob: If True, checks for block which are not in the codebook, and replaces them with the codeword with
                        the closest hamming distance.
-    :param mode: either 'hard' or 'soft' viterbi encoding.
-             'hard' mode uses hamming distance and uses only binary data.
-             'soft' mode uses euclidean distance and can be inputted with floats
-    :return: Function performs viterbi decoding. Currently, supports only hard decoding. in the future soft will also be
-             implemented
-    THIS FUNCTION RUNS IN A FOR LOOP FOR ALL THE BLOCKS. ANOTHER FUNCTION WILL DO THE VITERBI TO ALL BLOCKS TOGETHER
+    :return: Function performs hard viterbi decoding over binary state memory and data. If there are 4 states, they will
+    (probably) be {(0,0), (0,1), (1,0), (1,1)} and the input/output are binary vectors (or scalars).
     """
     # ==================================================================================================================
     # Basic checking of data validity
@@ -333,7 +329,6 @@ def decoding_conv_viterbi(pattern, G, tb_len, feedback=None, use_feedback=None, 
         input_mat[ii] = decoded_mat[last_state]
 
     return np.reshape(input_mat, -1), last_state
-
 
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
