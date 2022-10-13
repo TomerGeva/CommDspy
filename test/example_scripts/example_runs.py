@@ -69,8 +69,8 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
     # ==================================================================================================================
     # Eye diagram
     # ==================================================================================================================
+    tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern, osr=osr, span=8, method='rcos', beta=rolloff, rj_sigma=0.01)
     if pulse_eye:
-        tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern,osr=osr, span=8, method='rcos', beta=rolloff, rj_sigma=0.01)
         plt.figure()
         eye_d, amp_vec = cdsp.eye_diagram(tx_out_rcos, osr, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
@@ -83,8 +83,7 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
     # AWGN channel
     # ==================================================================================================================
     if awgn_eye:
-        pattern = tx_example()
-        ch_out = cdsp.channel.awgn(pattern, osr=osr, span=8, pulse='rcos', beta=rolloff, snr=snr)
+        ch_out = cdsp.channel.awgn(tx_out_rcos, snr=snr)
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, osr, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
         plt.contourf(time_ui, amp_vec, eye_d, levels=100,cmap=cdsp.EYE_COLORMAP)

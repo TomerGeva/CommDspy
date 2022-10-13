@@ -3,29 +3,18 @@ from scipy.signal import lfilter
 from CommDspy.channel import pulse_shape
 
 
-def awgn(signal, snr, pulse=None, osr=1, span=1, beta=0.5, rj_sigma=0.0):
+def awgn(signal, snr):
     """
     :param signal:numpy array of signal which we want to add AWGN to
     :param snr: Signal to Noise power ratio, i.e. what is the power ratio between the signal and the inputted noise.
                 Assuming the **snr is given in dB**
-    :param pulse: the shape of the pulse. can be either:
-                1. 'rect' - rectangular pulse
-                2. 'sinc' - sinc pulse
-                3. 'rcos' - raised cosine pulse with roll-off parameter beta
-                4. 'rrc' - root raised cosine pulse with rolloff parameter beta
-                5. 'imp' - impulse response, simply doing the up-sampling
-                6. None - not applying any pulse shaping
-    :param osr: the wanted OSR after the shaping
-    :param span: the span of the pulse, the span is symmetrical, i.e. for span=8, 8 symbols back and 8 symbols forward
-    :param beta: roll-off factor in case the raised cosine or RRC
-    :param rj_sigma: In case we want to generate a pulse, the pulse can be added with a random jitter. This parameter
-                     holds the value of the standard deviation of the random jitter applied
     :return: signal dipped in AWGN with the wanted SNR
-                                               noise
-                                                |
-                          |---------------|     v
-                signal -->|  pulse shape  | --> + ---> output
-                          |---------------|
+
+                              noise
+                               |
+                               v
+                signal ------> + ---> output
+
     """
     # ==================================================================================================================
     # Local variables
@@ -37,18 +26,11 @@ def awgn(signal, snr, pulse=None, osr=1, span=1, beta=0.5, rj_sigma=0.0):
     snr_lin     = 10 ** (snr / 10)
     noise_power = sig_power_hat / snr_lin
     # ==================================================================================================================
-    # Pulse shaping
-    # ==================================================================================================================
-    if pulse is not None:
-        ch_out_pulse = pulse_shape(signal, osr=osr, span=span, method=pulse, beta=beta, rj_sigma=rj_sigma) if osr > 1 else signal.copy()
-    else:
-        ch_out_pulse = signal
-    # ==================================================================================================================
     # Creating the noise and adding it to the signal
     # ==================================================================================================================
-    ch_out_pulse = ch_out_pulse + np.random.normal(0, np.sqrt(noise_power), ch_out_pulse.shape)
+    ch_out = signal + np.random.normal(0, np.sqrt(noise_power), signal.shape)
 
-    return ch_out_pulse
+    return ch_out
 
 def awgn_channel(signal, b, a, pulse=None, osr=1, span=1, beta=0.5, rj_sigma=0.0, zi=None, snr=None):
     """

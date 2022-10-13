@@ -1,16 +1,15 @@
 import numpy as np
 from CommDspy.auxiliary import upsample
-from scipy.signal import convolve
 from scipy.signal import lfilter
 from scipy import interpolate
 
-def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0, zi=None):
+def pulse_shape(signal, osr=1, span=1, pulse='rect', beta=0.5, rj_sigma=0.0, zi=None):
     """
     :param signal: Input signal in OSR 1 for the pulse shaping
     :param osr: the wanted OSR after the shaping
     :param span: the span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols
                  forward
-    :param method: the shape of the pulse. can be either:
+    :param pulse: the shape of the pulse. can be either:
                 1. 'rect' - rectangular pulse
                 2. 'sinc' - sinc pulse
                 3. 'rcos' - raised cosine pulse with roll-off parameter beta
@@ -29,8 +28,8 @@ def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0, zi
     # ==================================================================================================================
     # Local parameters
     # ==================================================================================================================
-    sig_ups = upsample(signal, osr)
-    pulse   = _get_pulse(method, osr, span, beta)
+    sig_ups   = upsample(signal, osr)
+    pulse_vec = _get_pulse(pulse, osr, span, beta)
     if zi is None:
         zi = np.zeros(osr * span * 2)
     elif len(zi) != osr * span:
@@ -38,8 +37,7 @@ def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0, zi
     # ==================================================================================================================
     # Convolving
     # ==================================================================================================================
-    # sig_conv = convolve(sig_ups, pulse, mode='valid')
-    sig_conv, zo = lfilter(pulse, [1], sig_ups, zi=zi)
+    sig_conv, zo = lfilter(pulse_vec, [1], sig_ups, zi=zi)
     if np.isclose(rj_sigma, 0):
         return sig_conv, zo
     else:

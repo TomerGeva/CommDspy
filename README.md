@@ -110,9 +110,10 @@ snr     = 30
 # Generating Tx pattern + passing through pulse shaping
 # ========================================================
 pattern = tx_example()
-ch_out  = cdsp.channel.awgn(pattern, pulse='rcos', osr=32, span=8, beta=rolloff, snr=snr)
+tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern, osr=32, span=8, method='rcos', beta=rolloff)
+ch_out         = cdsp.channel.awgn(tx_out_rcos, snr=snr)
 eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=2048, logscale=False)
-time_ui = np.linspace(0, 2, 256)
+time_ui        = np.linspace(0, 2, 256)
 ```
 The result can be shown in the form of an eye diagram:
 
