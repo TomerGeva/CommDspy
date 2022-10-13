@@ -51,10 +51,10 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
         tx_out_rcos = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
         tx_out_rrc  = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
         plt.figure()
-        plt.plot(np.arange(0, len(tx_out_rect))/32, tx_out_rect, '-')
-        plt.plot(np.arange(0, len(tx_out_rect))/32, tx_out_sinc, '-')
-        plt.plot(np.arange(0, len(tx_out_rect))/32, tx_out_rcos, '-')
-        plt.plot(np.arange(0, len(tx_out_rect))/32, tx_out_rrc, '-')
+        plt.plot(np.arange(0, len(tx_out_rect[0]))/32, tx_out_rect, '-')
+        plt.plot(np.arange(0, len(tx_out_rect[0]))/32, tx_out_sinc, '-')
+        plt.plot(np.arange(0, len(tx_out_rect[0]))/32, tx_out_rcos, '-')
+        plt.plot(np.arange(0, len(tx_out_rect[0]))/32, tx_out_rrc, '-')
         plt.plot(pattern[8:-8], 'o')
         plt.grid()
         plt.legend(['Rect pulse',
@@ -70,7 +70,7 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
     # Eye diagram
     # ==================================================================================================================
     if pulse_eye:
-        tx_out_rcos = cdsp.channel.pulse_shape(pattern,osr=osr, span=8, method='rcos', beta=rolloff, rj_sigma=0.01)
+        tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern,osr=osr, span=8, method='rcos', beta=rolloff, rj_sigma=0.01)
         plt.figure()
         eye_d, amp_vec = cdsp.eye_diagram(tx_out_rcos, osr, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)

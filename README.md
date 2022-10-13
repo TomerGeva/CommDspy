@@ -57,10 +57,10 @@ pattern = tx_example()
 # Pulse shaping
 # ==================================================================================================================
 rolloff     = 0.5
-tx_out_rect = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rect')
-tx_out_sinc = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='sinc')
-tx_out_rcos = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
-tx_out_rrc  = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
+tx_out_rect, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rect')
+tx_out_sinc, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='sinc')
+tx_out_rcos, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
+tx_out_rrc, zo  = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
 ```
 Results:
 
@@ -692,7 +692,7 @@ Function useed to perform pulse shaping to the inputted discrete signal. Functio
   * 'imp' - impulse response. This means that the function will perform up sampling for the given OSR
 * beta - Roll-off factor in case the raised cosine or RRC pulse
 * rj_sigma - Random Jitter std value. If 0, no Random Jitter is added to the signal. The unit of the RJ is in UI. Example: for Baud rate of 53.125 [GHz] UI is ~18.8[psec]. Using rj_sigma=0.05 [UI] means: rj_sigma = 0.05*18.8e-12 = 0.94e-12 = 940[fsec]
-
+* zi -  memory for the pulse shaping. If None, assuming reset, i.e. all '0' memory. MUST be with length of: 'osr' * 'span' * 2
 
 This function simulated a perfect channel, i.e. ch[n] = delta[n] therefore at the end of the channel we only have the pulse shaping.
 

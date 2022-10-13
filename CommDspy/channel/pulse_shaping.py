@@ -1,9 +1,10 @@
 import numpy as np
 from CommDspy.auxiliary import upsample
 from scipy.signal import convolve
+from scipy.signal import lfilter
 from scipy import interpolate
 
-def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0):
+def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0, zi=None):
     """
     :param signal: Input signal in OSR 1 for the pulse shaping
     :param osr: the wanted OSR after the shaping
@@ -19,6 +20,8 @@ def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0):
     :param rj_sigma: Random Jitter std value. If 0, no Random Jitter is added to the signal. the unit of the RJ is in UI
                      Example: for Baud rate of 53.125 [GHz] UI is ~18.8[psec]. Using rj_sigma=0.05 [UI] means:
                       rj_sigma = 0.05*18.8e-12 = 0.94e-12 = 940[fsec]
+    :param zi: memory for the pulse shaping. If None, assuming reset, i.e. all '0' memory. MUST be with length of:
+               'osr' * 'span' * 2
     :return: the signal after the pulse shaping. This function simulated an ideal channel of ch[n] = delta[n] without
     noise. This is not a practical use-case but more of a feature to gain insight. For practical channels use the
     channel sub-package
@@ -28,12 +31,17 @@ def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0):
     # ==================================================================================================================
     sig_ups = upsample(signal, osr)
     pulse   = _get_pulse(method, osr, span, beta)
+    if zi is None:
+        zi = np.zeros(osr * span * 2)
+    elif len(zi) != osr * span:
+        raise ValueError(f'Memory length does not match the requested pulse, length should be {osr*span*2:d}')
     # ==================================================================================================================
     # Convolving
     # ==================================================================================================================
-    sig_conv = convolve(sig_ups, pulse, mode='valid')
+    # sig_conv = convolve(sig_ups, pulse, mode='valid')
+    sig_conv, zo = lfilter(pulse, [1], sig_ups, zi=zi)
     if np.isclose(rj_sigma, 0):
-        return sig_conv
+        return sig_conv, zo
     else:
         # ----------------------------------------------------------------------------------------------------------
         # Creating the time vector with and without the jitter
@@ -47,7 +55,7 @@ def pulse_shape(signal, osr=1, span=1, method='rect', beta=0.5, rj_sigma=0.0):
         # interpolating to the wanted time with the jitter
         # ----------------------------------------------------------------------------------------------------------
         f = interpolate.interp1d(t, sig_conv, kind='cubic', fill_value='extrapolate')
-        return f(t_rj)
+        return f(t_rj), zo
 
 def rect_pulse(osr, span, t=None):
     # ==================================================================================================================
