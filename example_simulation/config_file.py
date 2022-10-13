@@ -2,7 +2,7 @@ import numpy as np
 import CommDspy as cdsp
 import os
 import json
-from test.example_scripts.example_simulation.data_objects import PrbsData, CodingData, MappingData, ChannelData
+from example_simulation.data_objects import PrbsData, CodingData, MappingData, ChannelData
 # ======================================================================================================================
 # Tx data
 # ======================================================================================================================
@@ -41,7 +41,7 @@ rolloff    = 0.35   # pulse rolloff factor
 rj_sigma   = 0      # random jitter std
 
 channel_type = 'isi_awgn'
-f    = open(os.path.join('..', '..', 'test_data', 'example_channel_full.json'))
+f    = open(os.path.join('../test/example_scripts', '..', 'test_data', 'example_channel_full.json'))
 data = json.load(f)
 f.close()
 channel_isi = cdsp.upsample(data['channel_sampled'], osr)
