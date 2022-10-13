@@ -32,7 +32,7 @@ def pulse_shape(signal, osr=1, span=1, pulse='rect', beta=0.5, rj_sigma=0.0, zi=
     pulse_vec = _get_pulse(pulse, osr, span, beta)
     if zi is None:
         zi = np.zeros(osr * span * 2)
-    elif len(zi) != osr * span:
+    elif len(zi) != osr * span * 2:
         raise ValueError(f'Memory length does not match the requested pulse, length should be {osr*span*2:d}')
     # ==================================================================================================================
     # Convolving
