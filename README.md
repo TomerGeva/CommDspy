@@ -160,7 +160,8 @@ a = cdsp.upsample([1, -0.2], osr)
 # Generating Tx pattern + passing through pulse shaping + channel
 # ====================================================================
 pattern = tx_example()
-ch_out, _ = cdsp.channel.awgn_channel(pattern, b, a, pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
+tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern, osr=osr, span=8, pulse='rcos', beta=rolloff, rj_sigma=0.01)
+ch_out, _ = cdsp.channel.awgn_channel(tx_out_rcos, b, a, snr=snr)
 eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
 ```
 The result can be shown in the form of an eye diagram:
@@ -284,7 +285,8 @@ def rx_example():
     # ==================================================================================================================
     # Passing through channel
     # ==================================================================================================================
-    ch_out, _ = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
+    tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern, osr=osr, span=8, pulse='rcos', beta=rolloff, rj_sigma=0.01)
+    ch_out, _ = cdsp.channel.awgn_channel(tx_out_rcos, channel_sampled, [1], snr=snr)
     ch_out = ch_out[len(channel_sampled):]
     # ==================================================================================================================
     # Passing through CTLE
@@ -695,23 +697,12 @@ Function useed to perform pulse shaping to the inputted discrete signal. Functio
 * rj_sigma - Random Jitter std value. If 0, no Random Jitter is added to the signal. The unit of the RJ is in UI. Example: for Baud rate of 53.125 [GHz] UI is ~18.8[psec]. Using rj_sigma=0.05 [UI] means: rj_sigma = 0.05*18.8e-12 = 0.94e-12 = 940[fsec]
 * zi -  memory for the pulse shaping. If None, assuming reset, i.e. all '0' memory. MUST be with length of: 'osr' * 'span' * 2
 
-This function simulated a perfect channel, i.e. ch[n] = delta[n] therefore at the end of the channel we only have the pulse shaping.
+This function simulated a perfect channel, i.e. ch[n] = delta[n] therefore at the end of the channel we only have the pulse shaping. Also returns the memory of the convolution.
 
 ### 3.2. awgn
 Function that adds Additive White Gaussian Noise in a power to create a wanted SNR. Function is inputted with:
 * signal - Numpy array of signal which we want to add AWGN to
 * snr - Signal to Noise power ratio, i.e. what is the power ratio between the signal and the inputted noise. Assuming the **snr is given in dB**
-* pulse - The shape of the pulse. Can be either:
-  1. 'rect' - rectangular pulse
-  2. 'sinc' - sinc pulse
-  3. 'rcos' - raised cosine pulse with roll-off parameter beta
-  4. 'rrc' - root raised cosine pulse with rolloff parameter beta
-  5. 'imp' - impulse response, simply doing the up-sampling
-  6. None - not applying any pulse shaping
-* osr - The wanted OSR after the shaping
-* span - The span of the pulse, the span is symmetrical, i.e. for span=8, 8 symbols back and 8 symbols forward
-* beta - Roll-off factor in case the raised cosine or RRC pulse
-* rj_sigma - In case we want to generate a pulse, the pulse can be added with a random jitter. This parameter holds the value of the standard deviation of the random jitter applied
                                                        
 ### 3.3. awgn_channel
 Function that passes a signal through a discrete-time channel and adds AWGN to the output. Function is inputted with:
@@ -720,19 +711,8 @@ Function that passes a signal through a discrete-time channel and adds AWGN to t
 * a - Denominator polynomial values (IIR).
   1. If a[0] is not 1, normalizes all parameters by a[0]
   2. Assuming that the taps are set to the inputted osr
+* snr - Signal to Noise power ratio, i.e. what is the power ratio between the signal and the inputted noise. Assuming the **snr is given in dB**
 * zi - Initial condition for the channel, i.e. the memory of the channel at the beginning of the filtering. Should have a length of {max(len(a), len(b)) - 1} if provided. If None, assumes zeros as initial conditions
-* pulse - the shape of the pulse. can be either:
-  1. 'rect' - rectangular pulse
-  2. 'sinc' - sinc pulse
-  3. 'rcos' - raised cosine pulse with roll-off parameter beta
-  4. 'rrc' - root raised cosine pulse with rolloff parameter beta
-  5. 'imp' - impulse response, simply doing the up-sampling
-  6. None - not applying any pulse shaping
-* osr - the wanted OSR after the shaping
-* span - the span of the pulse, the span is symmetrical, i.e. a span of 8 means 8 symbols back and 8 symbols forward
-* beta - roll-off factor for the raised cosine or RRC pulses
-* rj_sigma - In case we want to generate a pulse, the pulse can be added with a random jitter. This parameter holds the value of the standard deviation of the random jitter applied
-* snr - SNR of the AWGN signal if the SNR is None, does not add noise. Assuming the **SNR is given in dB**
 
 Function returns the signal at the output of the ISI AWGN channel as well as the memory of the channel at the end of the passing.
 

@@ -69,7 +69,7 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
     # ==================================================================================================================
     # Eye diagram
     # ==================================================================================================================
-    tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern, osr=osr, span=8, method='rcos', beta=rolloff, rj_sigma=0.01)
+    tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern, osr=osr, span=8, pulse='rcos', beta=rolloff, rj_sigma=0.01)
     if pulse_eye:
         plt.figure()
         eye_d, amp_vec = cdsp.eye_diagram(tx_out_rcos, osr, 128, fs_value=3, quantization=1024, logscale=False)
@@ -87,7 +87,7 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, osr, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
         plt.contourf(time_ui, amp_vec, eye_d, levels=100,cmap=cdsp.EYE_COLORMAP)
-        plt.title(f'Eye Diagram, AWGN noise + pulse with SNR of {snr} [dB]')
+        plt.title(f'Eye Diagram, pulse + AWGN noise with SNR of {snr} [dB]')
         plt.xlabel('Time [UI]')
         plt.ylabel('Amplitude')
         plt.show()
@@ -97,12 +97,11 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
     if awgn_ch_eye:
         b = cdsp.upsample([0.5], osr)
         a = cdsp.upsample([1, -0.2], osr)
-        pattern = tx_example()
-        ch_out, _ = cdsp.channel.awgn_channel(pattern, b, a, osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+        ch_out, _ = cdsp.channel.awgn_channel(tx_out_rcos, b, a, snr=snr)
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, osr, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
         plt.contourf(time_ui, amp_vec, eye_d, levels=100, cmap=cdsp.EYE_COLORMAP)
-        plt.title(f'Eye Diagram, ISI + AWGN noise + pulse with SNR of {snr} [dB]')
+        plt.title(f'Eye Diagram, pulse + ISI + AWGN noise with SNR of {snr} [dB]')
         plt.xlabel('Time [UI]')
         plt.ylabel('Amplitude')
         plt.show()
@@ -142,12 +141,13 @@ def rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye
     # ==================================================================================================================
     # Passing through channel
     # ==================================================================================================================
-    ch_out, _ = cdsp.channel.awgn_channel(pattern, channel_sampled, [1], osr=osr, span=8, method='rcos', beta=rolloff, snr=snr)
+    tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern, osr=osr, span=8, pulse='rcos', beta=rolloff, rj_sigma=0.01)
+    ch_out, _ = cdsp.channel.awgn_channel(tx_out_rcos, channel_sampled, [1], snr=snr)
     if ch_out_eye:
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, 32, 128, fs_value=3, quantization=1024, logscale=False)
         time_ui = np.linspace(0, 2, 256)
         plt.contourf(time_ui, amp_vec, eye_d, levels=100, cmap=cdsp.EYE_COLORMAP)
-        plt.title(f'Eye Diagram, loaded channel + pulse with SNR of {snr} [dB]')
+        plt.title(f'Eye Diagram, pulse + loaded channel with SNR of {snr} [dB]')
         plt.xlabel('Time [UI]')
         plt.ylabel('Amplitude')
         plt.show()
@@ -255,8 +255,8 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     # ==================================================================================================================
     # Passing through channel
     # ==================================================================================================================
-    # ch_out, _ = cdsp.channel.awgn_channel(pattern, channel, [1], pulse='imp', osr=osr, span=8, beta=rolloff, snr=snr)
-    ch_out, _ = cdsp.channel.awgn_channel(pattern, channel, [1], pulse='rcos', osr=osr, span=8, beta=rolloff, snr=snr)
+    tx_out_rcos, _ = cdsp.channel.pulse_shape(pattern, osr=osr, span=8, pulse='rcos', beta=rolloff, rj_sigma=0.01)
+    ch_out, _ = cdsp.channel.awgn_channel(tx_out_rcos, channel, [1], snr=snr)
     ch_out = ch_out[len(channel):]
     if ch_out_eye:
         eye_d, amp_vec = cdsp.eye_diagram(ch_out, osr, 128, fs_value=3, quantization=1024, logscale=False)
@@ -374,7 +374,7 @@ def rx_genie_checker():
 if __name__ == '__main__':
     np.random.seed(140993)
     # tx_example()
-    channel_example(pulse_eye=True, awgn_ch_eye=False)
-    # rx_example(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=True)
-    # rx_genie_checker()
+    # channel_example(pulse_eye=True, awgn_ch_eye=False)
+    # rx_example(ch_out_eye=True, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=True)
+    rx_genie_checker()
     # rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer_in_eye=True)
