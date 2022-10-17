@@ -69,8 +69,7 @@ def test_noise_awgn():
     """
     for prbs_type in prbs_types:
         for constellation in constellations:
-            test.awgn_:q
-            test(prbs_type, constellation)
+            test.awgn_test(prbs_type, constellation)
 
 def test_prbs_analisys():
     """

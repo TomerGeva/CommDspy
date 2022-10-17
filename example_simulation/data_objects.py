@@ -53,7 +53,7 @@ class MappingData:
             self.levels = levels / np.max(np.abs(levels)) * amp_pp_mv / 2
 
 class ChannelData:
-    def __init__(self, pulse, pulse_span, ch_type, fir_coefs=None, iir_coefs=None, rolloff=0.35, osr=1, snr=22, pulse_rj_sigma=0, pulse_memory=None, ch_memory=None):
+    def __init__(self, pulse, pulse_span, ch_type, fir_coefs=None, iir_coefs=None, rolloff=0.35, osr=1, snr=22, pulse_rj_sigma=0, pulse_zi=None, ch_zi=None):
         self.pulse          = pulse
         self.pulse_span     = pulse_span
         self.rolloff        = rolloff
@@ -62,9 +62,45 @@ class ChannelData:
         self.fir_coefs      = [1] if fir_coefs is None else fir_coefs
         self.osr            = osr
         self.snr            = snr
-        self.ch_memory      = ch_memory
-        self.pulse_memory   = pulse_memory
+        self.ch_zi          = ch_zi
+        self.pulse_zi       = pulse_zi
         self.pulse_rj_sigma = pulse_rj_sigma
 
+class CtleData:
+    def __init__(self, zeros, poles, dc_gain, fs, osr, zi=None):
+        self.zeros   = zeros
+        self.poles   = poles
+        self.dc_gain = dc_gain
+        self.fs      = fs       # sampling frequency
+        self.osr     = osr      # Over Sampling
+        self.zi      = zi
 
+class AdcData:
+    def __init__(self, total_bits, frac_bits, quant_type):
+        self.total_bits = total_bits
+        self.frac_bits  = frac_bits
+        self.quant_type = quant_type
 
+class FfeDfeData:
+    def __init__(self, ffe_precursors, ffe_postcursors, dfe_taps,
+                 ffe_vec=None, dfe_vec=None,
+                 levels=None):
+        self.ffe_precursors  = ffe_precursors
+        self.ffe_postcursors = ffe_postcursors
+        self.dfe_taps        = dfe_taps
+        if ffe_vec is None:
+            self.ffe_vec = np.zeros(ffe_precursors+1+ffe_postcursors)
+        elif len(ffe_vec) == ffe_precursors+ffe_postcursors+1:
+            self.ffe_vec = ffe_vec
+        else:
+            raise ValueError('FFE vec length does not match parameters')
+        if dfe_vec is None:
+            self.dfe_vec = np.zeros(dfe_taps)
+        elif len(dfe_vec) == dfe_taps:
+            self.dfe_vec = dfe_vec
+        else:
+            raise ValueError('DFE vec length does not match parameters')
+        if len(self.dfe_vec) > 0 and levels is None:
+            raise ValueError('DFE is needed, but constellation levels are not provided')
+        else:
+            self.levels = levels

@@ -18,34 +18,34 @@ class Channel:
         # ==============================================================================================================
         # Memory
         # ==============================================================================================================
-        if channel_data.ch_memory is None:
+        if channel_data.ch_zi is None:
             if type(self.iir_coefs) in [list, np.ndarray]:
-                self.ch_memory = np.zeros(max([len(self.iir_coefs), len(self.fir_coefs)])-1)
+                self.ch_zi = np.zeros(max([len(self.iir_coefs), len(self.fir_coefs)])-1)
             else:  # only FIR
-                self.ch_memory = np.zeros(max([1, len(self.fir_coefs)])-1)
+                self.ch_zi = np.zeros(max([1, len(self.fir_coefs)])-1)
         else:
-            self.ch_memory     = channel_data.ch_memory
-        if channel_data.pulse_memory is None:
+            self.ch_zi     = channel_data.ch_zi
+        if channel_data.pulse_zi is None:
             pulse_len_fui = self.pulse_span * self.osr * 2  # pulse length is fractional of UI
-            self.pulse_memory  = np.zeros(pulse_len_fui)
+            self.pulse_zi = np.zeros(pulse_len_fui)
         else:
-            self.pulse_memory  = channel_data.pulse_memory
+            self.pulse_zi  = channel_data.pulse_zi
 
-    def pass_through(self, signal_chunk):
-        pulse_out, self.pulse_memory = cdsp.channel.pulse_shape(signal_chunk,
+    def __call__(self, signal_chunk):
+        pulse_out, self.pulse_zi = cdsp.channel.pulse_shape(signal_chunk,
                                                                 osr=self.osr,
                                                                 span=self.pulse_span,
                                                                 pulse=self.pulse,
                                                                 beta=self.rolloff,
                                                                 rj_sigma=self.pulse_rj_sigma,
-                                                                zi=self.pulse_memory)
+                                                                zi=self.pulse_zi)
         if self.ch_type == 'pulse':
             return pulse_out
         elif self.ch_type == 'awgn':
             return cdsp.channel.awgn(pulse_out, snr=self.snr)
         elif self.ch_type == 'isi_awgn':
-            ch_out, self.ch_memory = cdsp.channel.awgn_channel(pulse_out, self.fir_coefs, self.iir_coefs,
-                                                               zi=self.ch_memory,
-                                                               snr=self.snr)
+            ch_out, self.ch_zi = cdsp.channel.awgn_channel(pulse_out, self.fir_coefs, self.iir_coefs,
+                                                           zi=self.ch_zi,
+                                                           snr=self.snr)
             return ch_out
 

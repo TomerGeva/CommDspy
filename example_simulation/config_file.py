@@ -33,11 +33,12 @@ Mapping_data = MappingData(constellation, levels, amp_pp_mv)
 # ======================================================================================================================
 # Channel data
 # ======================================================================================================================
-osr        = 32     # over sampling rate
+
 snr        = 10     # [dB], AWGN at the moment
 pulse      = 'rcos' # raised cosine pulse
-pulse_span = 8      # [UI], how long is the pulse
 rolloff    = 0.35   # pulse rolloff factor
+pulse_span = 8      # [UI], how long is the pulse
+osr        = 32     # over sampling rate
 rj_sigma   = 0      # random jitter std
 
 channel_type = 'isi_awgn'
@@ -49,5 +50,6 @@ del f, data
 Channel_data = ChannelData(pulse, pulse_span, channel_type,
                            fir_coefs=channel_isi,
                            rolloff=rolloff,
+                           pulse_rj_sigma=rj_sigma,
                            osr=osr,
                            snr=snr)

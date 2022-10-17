@@ -47,7 +47,7 @@ class Encoder:
         self.feedback                = coding_data.feedback
         self.use_feedback            = coding_data.use_feedback
 
-    def encode(self, pattern_block):
+    def __call__(self, pattern_block):
         # ==============================================================================================================
         # Starting with binary encoding options
         # ==============================================================================================================
@@ -101,7 +101,7 @@ class Transmitter:
 
     def generate(self):
         prbs_chunk         = next(self.prbs_gen)
-        encoded_prbs_chunk = self.encoder.encode(prbs_chunk)  # need to sort memory for encoding with memory, e.g. differential
+        encoded_prbs_chunk = self.encoder(prbs_chunk)  # need to sort memory for encoding with memory, e.g. differential
         mapped_prbs_chunk  = cdsp.tx.mapping(encoded_prbs_chunk,
                                              constellation=self.constellation,
                                              levels=self.levels)

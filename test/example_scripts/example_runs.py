@@ -376,5 +376,5 @@ if __name__ == '__main__':
     # tx_example()
     # channel_example(pulse_eye=True, awgn_ch_eye=False)
     # rx_example(ch_out_eye=True, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=True)
-    rx_genie_checker()
-    # rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer_in_eye=True)
+    # rx_genie_checker()
+    rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer_in_eye=True)
