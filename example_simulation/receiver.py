@@ -9,24 +9,29 @@ class Ctle:
         self.fs      = ctle_data.fs       # sampling frequency
         self.osr     = ctle_data.osr      # Over Sampling
         if ctle_data.zi is None:
-            self.zi = np.zeros(max([len(self.zeros), len(self.poles)])-1)
+            self.zi = np.zeros(max([len(self.zeros), len(self.poles)]))
         else:
             self.zi = ctle_data.zi
 
     def __call__(self, signal_chunk):
         ctle_out, self.zi = cdsp.rx.ctle(signal_chunk, self.zeros, self.poles, self.dc_gain,
                                          fs=self.fs,
-                                         osr=self.osr)
+                                         osr=self.osr,
+                                         zi=self.zi)
         return ctle_out
 
 class Adc:
     def __init__(self, adc_data):
-        self.total_bits = adc_data.total_bits
-        self.frac_bits  = adc_data.frac_bits
-        self.quant_type = adc_data.quant_type
+        self.total_bits  = adc_data.total_bits
+        self.frac_bits   = adc_data.frac_bits
+        self.quant_type  = adc_data.quant_type
+        self.osr         = adc_data.osr
+        self.phase       = adc_data.phase
+        self.sample_rate = adc_data.sample_rate
 
     def __call__(self, signal_chunk):
-        adc_out = cdsp.rx.quantize(signal_chunk, self.total_bits, self.frac_bits, self.quant_type)
+        sampled_signal = signal_chunk[np.arange(self.phase, len(signal_chunk), self.osr//self.sample_rate)]
+        adc_out        = cdsp.rx.quantize(sampled_signal, self.total_bits, self.frac_bits, self.quant_type)
         return adc_out
 
 class FfeDfe:

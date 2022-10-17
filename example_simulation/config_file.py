@@ -2,7 +2,7 @@ import numpy as np
 import CommDspy as cdsp
 import os
 import json
-from example_simulation.data_objects import PrbsData, CodingData, MappingData, ChannelData
+from example_simulation.data_objects import PrbsData, CodingData, MappingData, ChannelData, CtleData, AdcData, FfeDfeData
 # ======================================================================================================================
 # Tx data
 # ======================================================================================================================
@@ -33,7 +33,6 @@ Mapping_data = MappingData(constellation, levels, amp_pp_mv)
 # ======================================================================================================================
 # Channel data
 # ======================================================================================================================
-
 snr        = 10     # [dB], AWGN at the moment
 pulse      = 'rcos' # raised cosine pulse
 rolloff    = 0.35   # pulse rolloff factor
@@ -53,3 +52,23 @@ Channel_data = ChannelData(pulse, pulse_span, channel_type,
                            pulse_rj_sigma=rj_sigma,
                            osr=osr,
                            snr=snr)
+# ======================================================================================================================
+# Receiver data
+# ======================================================================================================================
+# ------------------------------------------------------------------------------------------------------------------
+# CTLE
+# ------------------------------------------------------------------------------------------------------------------
+zeros     = [5e8, 11e9]
+poles     = [1e9, 20e9, 25e9]
+dc_gain   = -10  # [dB]
+fs        = 53.125e9
+Ctle_data = CtleData(zeros, poles, dc_gain, fs, osr=osr)
+# ------------------------------------------------------------------------------------------------------------------
+# ADC
+# ------------------------------------------------------------------------------------------------------------------
+total_bits  = 8
+frac_bits   = 0
+quant_type  = 'ss'
+sample_rate = 1  # samples per UI
+Adc_data    = AdcData(total_bits, frac_bits, quant_type, osr=osr, sample_rate=sample_rate)
+

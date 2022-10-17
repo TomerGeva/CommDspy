@@ -76,11 +76,13 @@ class CtleData:
         self.zi      = zi
 
 class AdcData:
-    def __init__(self, total_bits, frac_bits, quant_type):
-        self.total_bits = total_bits
-        self.frac_bits  = frac_bits
-        self.quant_type = quant_type
-
+    def __init__(self, total_bits, frac_bits, quant_type, osr, sample_rate, phase=None):
+        self.total_bits  = total_bits
+        self.frac_bits   = frac_bits
+        self.quant_type  = quant_type
+        self.osr         = osr
+        self.sample_rate = sample_rate
+        self.phase       = osr // 2 if phase is None else phase
 class FfeDfeData:
     def __init__(self, ffe_precursors, ffe_postcursors, dfe_taps,
                  ffe_vec=None, dfe_vec=None,
