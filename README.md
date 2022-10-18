@@ -3,8 +3,25 @@ Repository for the communication signal processing package
 
 Developed by: Tomer Geva
 
-## Example uses:
-### Generating OSR1 and OSR `n` signal
+# Contesnts
+1. Example cases
+   1. Generating OSR1 and OSR `n` signal
+   2. Passing a signal through channels
+      1. AWGN channel
+      2. ISI + AWGN channel
+   3. Digital over-sampling
+   4. Simple receiver model
+   5. Genie error checker
+6. Description of all the functions in the package
+   1. Auxiliary functions
+   2. Tx sub-package
+   3. Rx sub-package
+   4. Channel sub-package
+   5. Signal analysis
+   6. Misc
+
+# Example uses:
+## Generating OSR1 and OSR `n` signal
 ```mermaid
 graph LR
   subgraph Transmitter Model
@@ -272,7 +289,7 @@ def rx_example():
     # Rx FFE settings
     # ==================================================================================================================
     ffe_precursors  = 4
-    ffe_postcursors = 23
+    ffe_postcursors = 27
     ffe_len         = ffe_postcursors + ffe_precursors + 1
     dfe_taps        = 1
     # ==================================================================================================================
@@ -320,7 +337,9 @@ def rx_example():
     # Passing through the Rx FFE and DFE
     # --------------------------------------------------------------------------------------------------------------
     rx_ffe_ups   = cdsp.upsample(rx_ffe, osr)
-    rx_slicer_in = cdsp.rx.ffe_dfe(ctle_out, rx_ffe_ups, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale), osr=osr, phase=phase)
+    rx_slicer_in, _, _ = cdsp.rx.ffe_dfe(ctle_out, rx_ffe_ups, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale), osr=osr, phase=phase)
+    rx_slicer_in       = rx_slicer_in[osr*len(rx_ffe_ups):]
+    rx_slicer_in       = rx_slicer_in[:-1*(len(rx_slicer_in) % osr)] if len(rx_slicer_in) % osr != 0 else rx_slicer_in
     
     rx_slicer_in_osr1 = cdsp.rx.ffe_dfe(ctle_out_mat.T[phase], rx_ffe, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale))
     return rx_slicer_in_osr1
@@ -363,7 +382,7 @@ We can see that there is heavy ISI that can not be easily overcome by a CTLE alo
 
 And we can see that the ISI was negated by the CTLE and FFE and DFE.
 
-## Geinie error checker
+## Genie error checker
 The package allows locking a PRBS data on the true PRBS and use that to check for errors. Example of such usage will be as follows:
 1. passing the Rx FFE result through a slicer
 2. decoding the symbols
@@ -671,6 +690,8 @@ Function passes the input signal through the FFE and DFE. Function is inputted w
 * levels - Levels used in the transmission. if None assuming levels of [-3,-1,1,3]
 * osr - Over Sampling Rate w.r.t the signal. This is needed only for the DFE buffer calculations
 * phase - Indicates at which the signal will be sampled for the DFE. Assuming that the first input is at phase 0 and there are OSR phases in total
+* zi_ffe - Initial memory state for the FFE, must have the same size as the FFE filter
+* zi_dfe - Initial memory state for the DFE, must have the same size as the DFE filter
 
 Read the respective description for further information
 

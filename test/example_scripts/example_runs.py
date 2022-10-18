@@ -320,11 +320,12 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     # --------------------------------------------------------------------------------------------------------------
     # Passing through the Rx FFE and DFE
     # --------------------------------------------------------------------------------------------------------------
-    rx_ffe_ups   = cdsp.upsample(rx_ffe, osr)
-    rx_slicer_in = cdsp.rx.ffe_dfe(ctle_out, rx_ffe_ups, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale), osr=osr, phase=phase)
-    rx_slicer_in = rx_slicer_in[:-1*(len(rx_slicer_in) % osr)] if len(rx_slicer_in) % osr != 0 else rx_slicer_in
+    rx_ffe_ups         = cdsp.upsample(rx_ffe, osr)
+    rx_slicer_in, _, _ = cdsp.rx.ffe_dfe(ctle_out, rx_ffe_ups, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale), osr=osr, phase=phase)
+    rx_slicer_in       = rx_slicer_in[osr*len(rx_ffe_ups):]
+    rx_slicer_in       = rx_slicer_in[:-1*(len(rx_slicer_in) % osr)] if len(rx_slicer_in) % osr != 0 else rx_slicer_in
 
-    rx_slicer_in_osr1 = cdsp.rx.ffe_dfe(ctle_out_mat.T[phase], rx_ffe, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale))
+    rx_slicer_in_osr1, _, _ = cdsp.rx.ffe_dfe(ctle_out_mat.T[phase], rx_ffe, rx_dfe,levels=cdsp.get_levels(constellation, full_scale=full_scale))
 
     if rx_slicer_in_eye:
         eye_d, amp_vec = cdsp.eye_diagram(rx_slicer_in, osr, 128, fs_value=3, quantization=1024, logscale=False)
@@ -334,7 +335,7 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
         plt.xlabel('Time [UI]')
         plt.ylabel('Amplitude')
         plt.show()
-    return rx_slicer_in_osr1
+    return rx_slicer_in_osr1[len(rx_ffe):]
 
 def rx_genie_checker():
     # ==================================================================================================================
