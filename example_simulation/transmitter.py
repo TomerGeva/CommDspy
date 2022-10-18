@@ -63,7 +63,7 @@ class Encoder:
         if self.coding_diff_manchester:
             pattern_coded = cdsp.tx.coding_differential_manchester(pattern_coded)
         if self.coding_linear:
-            pattern_coded = cdsp.tx.coding_linear(pattern_coded)
+            pattern_coded = cdsp.tx.coding_linear(pattern_coded, self.G)
         if self.coding_conv:
             pattern_coded = cdsp.tx.coding_conv(pattern_coded, self.G, self.feedback, self.use_feedback)
         # ==============================================================================================================
@@ -78,10 +78,12 @@ class Encoder:
                                                pn_inv=self.pn_inv)
         elif np.isclose(int(self.bits_per_symbol), self.bits_per_symbol):
         # meaning two levels, only pn_inv is relevant here
-            pattern_coded = 1 - pattern_coded
+            if self.pn_inv:
+                pattern_coded = 1 - pattern_coded
         else:
         # meaning three levels, at this point it is {0, 1, 2}
-            pattern_coded = 2 - pattern_coded
+            if self.pn_inv:
+                pattern_coded = 2 - pattern_coded
         # ==============================================================================================================
         # Symbol encoding
         # ==============================================================================================================
@@ -98,13 +100,19 @@ class Transmitter:
         self.encoder  = Encoder(coding_data)
         self.constellation = mapping_data.constellation
         self.levels        = mapping_data.levels
+        # ==============================================================================================================
+        # Memory
+        # ==============================================================================================================
+        self.prbs_chunk         = np.zeros(prbs_data.chunk_size).astype(int)
+        self.encoded_prbs_chunk = np.zeros(prbs_data.chunk_size).astype(int)
+        self.mapped_prbs_chunk  = np.zeros(prbs_data.chunk_size).astype(int)
 
     def generate(self):
-        prbs_chunk         = next(self.prbs_gen)
-        encoded_prbs_chunk = self.encoder(prbs_chunk)  # need to sort memory for encoding with memory, e.g. differential
-        mapped_prbs_chunk  = cdsp.tx.mapping(encoded_prbs_chunk,
-                                             constellation=self.constellation,
-                                             levels=self.levels)
-        return mapped_prbs_chunk
+        self.prbs_chunk         = next(self.prbs_gen)
+        self.encoded_prbs_chunk = self.encoder(self.prbs_chunk)  # need to sort memory for encoding with memory, e.g. differential
+        self.mapped_prbs_chunk  = cdsp.tx.mapping(self.encoded_prbs_chunk,
+                                                  constellation=self.constellation,
+                                                  levels=self.levels)
+        return self.mapped_prbs_chunk
 
 

@@ -9,7 +9,7 @@ class PrbsData:
         self.seed       = init_seed if init_seed is not None else np.ones_like(self.gen_poly)
 
 class CodingData:
-    def __init__(self, bits_per_symbol, constellation,
+    def __init__(self, bits_per_symbol, constellation, chunk_size,
                  bit_order_inv=False,
                  inv_msb=False, inv_lsb=False,
                  pn_inv=False,
@@ -27,6 +27,7 @@ class CodingData:
                  use_feedback=None):
         self.constellation   = constellation
         self.bits_per_symbol = bits_per_symbol
+        self.chunk_size      = chunk_size
         self.bit_order_inv   = bit_order_inv
         self.inv_msb         = inv_msb
         self.inv_lsb         = inv_lsb
@@ -45,8 +46,10 @@ class CodingData:
         self.use_feedback = use_feedback
 
 class MappingData:
-    def __init__(self, constellation, levels=None, amp_pp_mv=2):
+    def __init__(self, constellation, levels=None, amp_pp_mv=2, rx_factor=1):
         self.constellation = constellation
+        self.amp_pp_mv     = amp_pp_mv
+        self.rx_factor     = rx_factor
         if levels is None:
             self.levels = cdsp.get_levels(constellation)
         else:
@@ -83,15 +86,21 @@ class AdcData:
         self.osr         = osr
         self.sample_rate = sample_rate
         self.phase       = osr // 2 if phase is None else phase
+
 class FfeDfeData:
     def __init__(self, ffe_precursors, ffe_postcursors, dfe_taps,
                  ffe_vec=None, dfe_vec=None,
-                 levels=None):
+                 levels=None,
+                 zi_ffe=None, zi_dfe=None):
         self.ffe_precursors  = ffe_precursors
         self.ffe_postcursors = ffe_postcursors
         self.dfe_taps        = dfe_taps
+        # ==============================================================================================================
+        # FFE DFE vectors, validation that the vectors are valid
+        # ==============================================================================================================
         if ffe_vec is None:
             self.ffe_vec = np.zeros(ffe_precursors+1+ffe_postcursors)
+            self.ffe_vec[ffe_precursors] = 1
         elif len(ffe_vec) == ffe_precursors+ffe_postcursors+1:
             self.ffe_vec = ffe_vec
         else:
@@ -106,3 +115,18 @@ class FfeDfeData:
             raise ValueError('DFE is needed, but constellation levels are not provided')
         else:
             self.levels = levels
+        # ==============================================================================================================
+        # FFE DFE memory init, validation that the length is valid
+        # ==============================================================================================================
+        if zi_ffe is None:
+            self.zi_ffe = np.zeros(ffe_precursors + ffe_postcursors + 1)
+        elif len(zi_ffe) == ffe_precursors + ffe_postcursors + 1:
+            self.zi_ffe = zi_ffe
+        else:
+            raise ValueError(f'zi_ffe is not in the same size as the FFE, length is {len(zi_ffe):d} instead of {ffe_precursors + ffe_postcursors + 1:d}')
+        if zi_dfe is None:
+            self.zi_dfe = np.zeros(dfe_taps)
+        elif len(zi_dfe) == dfe_taps:
+            self.zi_dfe = zi_dfe
+        else:
+            raise ValueError(f'zi_dfe is not in the same size as the FFE, length is {len(zi_dfe):d} instead of {dfe_taps:d}')

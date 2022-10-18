@@ -241,7 +241,7 @@ def rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer
     # Rx FFE DFE settings
     # ==================================================================================================================
     ffe_precursors  = 4
-    ffe_postcursors = 23
+    ffe_postcursors = 27
     ffe_len         = ffe_postcursors + ffe_precursors + 1
     dfe_taps        = 1
     # ==================================================================================================================

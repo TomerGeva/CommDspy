@@ -62,11 +62,10 @@ def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None, os
     if dfe_taps is not None:
         if zi_dfe is None:
             dfe_memory = np.zeros([len(dfe_taps)])
-        elif len(zi_dfe) == dfe_taps:
+        elif len(zi_dfe) == len(dfe_taps):
             dfe_memory = zi_dfe
         else:
             raise ValueError(f'zi_dfe is not in the same size as the FFE, length is {len(zi_dfe):d} instead of {dfe_taps:d}')
-
     # ==================================================================================================================
     # If we only have FFE and without DFE we can use convolution for speed
     # ==================================================================================================================
