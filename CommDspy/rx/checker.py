@@ -3,12 +3,13 @@ from CommDspy.tx.prbs_generator import prbs_generator
 from CommDspy.auxiliary import get_polynomial
 from CommDspy.rx.lock_pattern import lock_pattern_to_signal_binary
 
-def prbs_checker(prbs_type, data_in, init_lock, loss_th=100):
+def prbs_checker(prbs_type, data_in, init_lock, loss_th=100, prbs_seq=None):
     """
     :param prbs_type: should be an enumeration from the toolbox
     :param data_in: received bits after slicing - 1 dimensional binary array
     :param init_lock: Boolean indicating weather the data_in is locked to the all ones seed
     :param loss_th: if there are over this number of consecutive errors, losing lock
+    :param prbs_seq: If None, generating the PRBS sequence, else, assumes that the input is the reference PRBS sequence
     :return: If init_lock is False, lock on the PRBS pattern and computes the error. If already locked, simply computing
              the erred bits
          poly_coeff: Row vector of generating polynomial coefficients excluding the leading 1. Note that size of
@@ -25,10 +26,11 @@ def prbs_checker(prbs_type, data_in, init_lock, loss_th=100):
     # ==================================================================================================================
     # Getting reference PRBS
     # ==================================================================================================================
-    poly_coeff = get_polynomial(prbs_type)
-    if poly_coeff[0] == -1:
-        return True, 0, [0]
-    prbs_seq, _ = prbs_generator(poly_coeff, init_seed, prbs_len)
+    if prbs_seq is None:
+        poly_coeff = get_polynomial(prbs_type)
+        if poly_coeff[0] == -1:
+            return True, 0, [0]
+        prbs_seq, _ = prbs_generator(poly_coeff, init_seed, prbs_len)
     # ==================================================================================================================
     # Locking on the pattern beginning
     # ==================================================================================================================

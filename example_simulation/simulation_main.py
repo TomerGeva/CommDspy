@@ -1,20 +1,23 @@
-from transmitter import Transmitter
-from channel import Channel
-from receiver import Receiver
+from example_simulation.simulation_parts.simulation import Simulation
+from example_simulation.analyzer.analyzer_top import Checker
 from config_file import *
 
 def main():
     np.random.seed(140993)
-    Tx = Transmitter(Prbs_data, Coding_data, Mapping_data)
-    Ch = Channel(Channel_data)
-    Rx = Receiver(Ctle_data, Adc_data, Ffe_dfe_data, Mapping_data, Coding_data)
-    for ii in range(2):
-        print('Generating')
-        chunk  = Tx.generate()
-        print('Passing channel')
-        ch_out = Ch(chunk)
-        print('Passing Rx')
-        received_data = Rx(ch_out)
+    Sim        = Simulation(Sim_data, verbose=Control_vars.simulation_verbose)
+    BitChecker = Checker(Prbs_data)
+    # Test to see that the generator is OK
+    # prbs = []
+    # for ii in range(128):
+    #     _ = Tx.generate()
+    #     prbs = prbs + list(Tx.prbs_chunk)
+    # print(np.allclose(np.array(prbs)[:-1], BitChecker.prbs_vec))
+    for ii in range(30):
+        print(f'Chunk number {ii:d}')
+        received_data = Sim()
+        if ii > 0:
+            chunk_ber = BitChecker.check_ber(received_data)
+            print(f'Chunk BER is {chunk_ber:.2e} \nAccumulated BER is {BitChecker.acc_errors/BitChecker.acc_symbols:.2e}')
     print('hi')
 
 

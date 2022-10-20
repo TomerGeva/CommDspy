@@ -7,17 +7,12 @@ class PrbsGen:
         self.gen_poly   = prbs_data.gen_poly
         self.chunk_size = prbs_data.chunk_size
         self.seed       = prbs_data.seed if prbs_data.seed is not None else np.ones_like(self.gen_poly)
-        self.seed_prev  = None
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        chunk = np.zeros(self.chunk_size).astype(int)
-        for ii in range(self.chunk_size):
-            chunk[ii] = np.mod(self.gen_poly.dot(self.seed), 2)
-            self.seed_prev = self.seed
-            self.seed      = np.concatenate(([chunk[ii]], self.seed[:-1]))
+        chunk, self.seed = cdsp.tx.prbs_gen(self.gen_poly, self.seed, self.chunk_size)
         return chunk
 
     def get_seed(self):

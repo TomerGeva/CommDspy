@@ -63,3 +63,7 @@ FFE_VEC         = np.array([ 5.07514881e-02, -2.49866354e-01,  8.38558833e-01, -
                              6.00878497e-02, -4.06378296e-02,  6.33841413e-02, -1.79156648e-02])
 DFE_VEC         = np.array([0.4147687])
 SLICER_LEVELS   = LEVELS
+
+class ControlVars:
+    def __init__(self):
+        self.simulation_verbose = False

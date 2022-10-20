@@ -1,7 +1,7 @@
 import os
 import json
 from constants import *
-from example_simulation.data_objects import PrbsData, CodingData, MappingData, ChannelData, CtleData, AdcData, FfeDfeData
+from example_simulation.simulation_parts.data_objects import PrbsData, CodingData, MappingData, ChannelData, CtleData, AdcData, FfeDfeData, SimulationPartsData
 # ======================================================================================================================
 # Tx data
 # ======================================================================================================================
@@ -39,3 +39,9 @@ Ctle_data    = CtleData(ZEROS, POLES, DC_GAIN, FS, osr=OSR)
 Adc_data     = AdcData(ADC_BITS, FRAC_BITS, QUANT_TYPE, osr=OSR, sample_rate=SAMPLE_RATE)
 Ffe_dfe_data = FfeDfeData(FFE_PRECURSORS, FFE_POSTCURSORS, DFE_TAPS,
                           ffe_vec=FFE_VEC, dfe_vec=DFE_VEC, levels=SLICER_LEVELS)
+
+Sim_data = SimulationPartsData(Prbs_data, Coding_data, Mapping_data, Channel_data, Ctle_data, Adc_data, Ffe_dfe_data)
+# ======================================================================================================================
+# Control data
+# ======================================================================================================================
+Control_vars = ControlVars()
