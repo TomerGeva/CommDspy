@@ -10,7 +10,7 @@ import json
 prbs_types      = [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13, PrbsEnum.PRBS15]
 constellations  = [ConstellationEnum.OOK, ConstellationEnum.NRZ, ConstellationEnum.PAM4]
 
-def test_init():
+def init_test():
     random.seed(None)
     seed = random.randint(0, int(1e9))
     print('Seed = ' + str(seed))
@@ -18,6 +18,7 @@ def test_init():
     np.random.seed(seed)
 
 def test_dig_delay_fir_coeffs():
+    init_test()
     assert np.allclose(cdsp.dig_delay_lagrange_coeffs(1, 0), [1, 0])
     assert np.allclose(cdsp.dig_delay_lagrange_coeffs(1, 1), [0, 1])
     assert np.allclose(cdsp.dig_delay_lagrange_coeffs(2, 0), [0, 1, 0])
@@ -26,10 +27,14 @@ def test_dig_delay_fir_coeffs():
     assert np.allclose(cdsp.dig_delay_lagrange_coeffs(3, 0, forward=False), [0, 0, 1, 0])
 
 def test_equalization():
+    init_test()
+    np.random.seed(140993)
     for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
         test.equalization_prbs_test(prbs_type)
+        test.equalization_lms_test(prbs_type)
 
 def test_buffer():
+    init_test()
     a = np.array([1, 2, 3, 4, 5, 6, 7])
     matrix_dut = cdsp.buffer(a, 2, delay=2, overlap=0, clip=False)
     matrix_ref = np.array([[0, 0], [1, 2], [3, 4], [5, 6], [7, 0]])
@@ -60,6 +65,7 @@ def test_channel_estimation_prbs():
     """
     :return: Testing the channel_estimation_prbs function
     """
+    init_test()
     for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
         test.channel_estimation_prbs_test(prbs_type)
 
@@ -67,6 +73,7 @@ def test_noise_awgn():
     """
     :return: Testing the AWGN function
     """
+    init_test()
     for prbs_type in prbs_types:
         for constellation in constellations:
             test.awgn_test(prbs_type, constellation)
@@ -75,6 +82,7 @@ def test_prbs_analisys():
     """
     :return: Testing both the prbs_ana and the prbs_ana_econ
     """
+    init_test()
     loss_th = 10
     for prbs_type in prbs_types:
         test.prbs_analysis_test(prbs_type, loss_th, lock_th=15, econ=False)
@@ -84,6 +92,7 @@ def test_lock_pattern_to_signal_1():
     """
     :return:Testing the locking of the pattern on a signal length of 2 PRBS cycles with a small amount of errors
     """
+    init_test()
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
@@ -116,6 +125,7 @@ def test_lock_pattern_to_signal_2():
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
+    init_test()
     p_err           = 1e-4
     for prbs_type in prbs_types:
         pattern_length = 2 ** prbs_type.value - 1
@@ -145,6 +155,7 @@ def test_lock_pattern_to_signal_3():
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
+    init_test()
     p_err           = 1e-4
     for prbs_type in prbs_types:
         pattern_length = 2 ** prbs_type.value - 1
@@ -172,6 +183,7 @@ def test_lock_pattern_to_signal_binary_1():
     """
     :return:Testing the locking of the pattern on a signal length of 2 PRBS cycles with a small amount of errors
     """
+    init_test()
     p_err = 1e-4
     for prbs_type in prbs_types:
         # ----------------------------------------------------------------------------------------------------------
@@ -198,6 +210,7 @@ def test_lock_pattern_to_signal_binary_2():
     """
     :return:Testing the locking of the pattern on a signal length of 1 PRBS cycles with a small amount of errors
     """
+    init_test()
     p_err = 1e-4
     for prbs_type in prbs_types:
         # ----------------------------------------------------------------------------------------------------------
@@ -224,6 +237,7 @@ def test_lock_pattern_to_signal_binary_3():
     """
     :return:Testing the locking of the pattern on a signal length of less than 1 PRBS cycles with a small amount of errors
     """
+    init_test()
     p_err = 1e-4
     for prbs_type in prbs_types:
         # ----------------------------------------------------------------------------------------------------------
@@ -248,12 +262,14 @@ def test_lock_pattern_to_signal_binary_3():
         test.lock_pattern_to_signal_binary_test(pattern, signal, shift_idx)
 
 def test_symbol2bin():
+    init_test()
     test.symbol2bin_test()
 
 def test_demapping_plus_decoding_gray():
     """
     :return: Testing the coding function
     """
+    init_test()
     pattern_2bit = np.array([0, 1, 2, 3, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3])
     pattern_1bit = np.array([0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1])
     # ==================================================================================================================
@@ -302,6 +318,7 @@ def test_demapping_plus_decoding_gray():
     assert np.all(pattern_1bit == cdsp.rx.decoding_gray(cdsp.rx.demapping(coded_1bit_ook_gray_inv, ConstellationEnum.OOK, True), ConstellationEnum.OOK)),  'OOK GRAY inverted'
 
 def test_bin2symbol():
+    init_test()
     test.bin2symbol_test()
 
 def test_prbs_gen_1():
@@ -309,6 +326,7 @@ def test_prbs_gen_1():
     :return: Testing the generation of all PRBS values except PRBS 31 in all constellations for 1 complete pattern
     generation
     """
+    init_test()
     # ==============================================================================================================
     # Partial length PRBS generator tests
     # ==============================================================================================================
@@ -320,6 +338,7 @@ def test_prbs_gen_2():
     """
     :return: Testing the generation of all PRBS values except PRBS 31 in all constellations for 1 partial pattern length
     """
+    init_test()
     # ==============================================================================================================
     # Partial length PRBS generator tests
     # ==============================================================================================================
@@ -333,6 +352,7 @@ def test_prbs_gen_3():
     :return: Testing the generation of all PRBS values except PRBS 31 in all constellations for 1 full pattern and
              another partial length
     """
+    init_test()
     # ==============================================================================================================
     # Partial length PRBS generator tests
     # ==============================================================================================================
@@ -353,60 +373,78 @@ def test_prbs_gen_4():
         test.prbs_gen_test(prbs_type, required_length)
 
 def test_coding_conv_feedback():
+    init_test()
     test.coding_conv_feedback_test()
 
 def test_decoding_conv_feedback():
+    init_test()
     test.decoding_conv_feedback_test()
 
 def test_coding_conv_basic():
+    init_test()
     test.coding_conv_basic_test()
 
 def test_decoding_conv_basic():
+    init_test()
     test.decoding_conv_basic_test()
 
 def test_coding_linear_block():
+    init_test()
     test.coding_linear_block_test()
 
 def test_decoding_linear_block():
+    init_test()
     test.decoding_linear_block_test()
 
 def test_coding_diffferential_manchester():
+    init_test()
     test.coding_differential_manchester_test()
 
 def test_decoding_diffferential_manchester():
+    init_test()
     test.decoding_differential_manchester_test()
 
 def test_coding_mlt3():
+    init_test()
     test.coding_mlt3_test()
 
 def test_decoding_mlt3():
+    init_test()
     test.decoding_mlt3_test()
 
 def test_coding_bipolar():
+    init_test()
     test.coding_bipolar_test()
 
 def test_decoding_bipolar():
+    init_test()
     test.decoding_bipolar_test()
 
 def test_coding_manchester():
+    init_test()
     test.coding_manchester_test()
 
 def test_decoding_manchester():
+    init_test()
     test.decoding_manchester_test()
 
 def test_coding_diff():
+    init_test()
     for constellation in constellations:
         test.coding_differential_test(constellation)
 
 def test_decoding_diff():
+    init_test()
     for constellation in constellations:
         test.decoding_differential_test(constellation)
 
 def test_coding_gray():
+    init_test()
     for constellation in constellations:
         test.coding_gray_test(constellation)
 
 def test_decoding_gray():
+    init_test()
     for constellation in constellations:
         test.decoding_gray_test(constellation)
 
@@ -414,6 +452,7 @@ def test_coding_gray_plus_mapping():
     """
     :return: Testing the coding function
     """
+    init_test()
     pattern_2bit = np.array([0, 1, 2, 3, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3])
     pattern_1bit = np.array([0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1])
     # ==================================================================================================================
@@ -467,4 +506,5 @@ if __name__ == '__main__':
     # test_decoding_conv_basic()
     # test_coding_conv_feedback()
     # test_decoding_conv_feedback()
+    test_equalization()
     pass

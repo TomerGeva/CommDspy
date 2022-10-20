@@ -695,6 +695,20 @@ Function passes the input signal through the FFE and DFE. Function is inputted w
 
 Read the respective description for further information
 
+### 2.19 lms_grad
+Function computes the MSE as well as the gradient w.r.t. each tap of the FFE and DFE. Function is inputted with:
+* input_vec - Numpy array of inputs used to compute the MSE and tap gradients
+* levels - Constellation levels, should be a numpy array of floats
+* ffe_tap_idx - numpy array containing the indices of the FFE taps for which we want to compute the gradient
+* dfe_tap_idx - numpy array containing the indices of the DFE taps for which we want to compute the gradient
+* reference_vec - If None, assuming that there are no slicer errors and performing slicing to recover the reference data. If not None, should have the same length as "input_vec" and correspond to the reference level for each input
+
+Function returns:
+1. If ffe_tap_idx and dfe_tap_idx are empty, only the MSE
+2. If ffe_tap_idx is empty and dfe_tap_idx is not empty, returns the MSE and DFE grad
+3. If ffe_tap_idx is not empty and dfe_tap_idx is empty, returns the MSE and FFE grad
+4. If neither are empty, returns the MSE, FFE grad and DFE grad 
+
 ## 3. Channel sub-package information
 ### 3.0. Various pulse generators
 The package supports all the pulses written in 3.1. The function names are:
