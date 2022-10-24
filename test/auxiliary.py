@@ -76,3 +76,4 @@ def generate_and_pass_channel(ref_pattern, prbs_type, constellation, gray_coding
     channel_out    = channel_out[len(channel_ref) + 1:]
 
     return channel_ref, channel_out, constellation, assert_str
+

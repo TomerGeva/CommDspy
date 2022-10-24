@@ -36,7 +36,7 @@ def lms_grad(input_vec, levels, ffe_tap_idx=np.array([]), dfe_tap_idx=np.array([
 
                  N-1                                ;                  N-1
                 -----                               ;                 -----
-    dMSE      1 \                                   ;     dMSE      1 \
+    dMSE      1 \                                   ;     dMSE     -1 \
     ----- =  --- > e_n * y_{n-i}                    ;     ----- =  --- > e_n * hat{x_{n-j}}
     db_i     2N /                                   ;     da_j     2N /
                 -----                               ;                 -----

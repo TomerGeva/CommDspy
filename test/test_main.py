@@ -10,12 +10,18 @@ import json
 prbs_types      = [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13, PrbsEnum.PRBS15]
 constellations  = [ConstellationEnum.OOK, ConstellationEnum.NRZ, ConstellationEnum.PAM4]
 
-def init_test():
+def init_test(seed=None):
     random.seed(None)
-    seed = random.randint(0, int(1e9))
+    if seed is None:
+        seed = random.randint(0, int(1e9))
     print('Seed = ' + str(seed))
     random.seed(seed)
     np.random.seed(seed)
+
+def test_mm_cdr(seed=None):
+    init_test(seed)
+    for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
+        test.mueller_muller_step_test(prbs_type)
 
 def test_dig_delay_fir_coeffs():
     init_test()
@@ -26,9 +32,8 @@ def test_dig_delay_fir_coeffs():
     assert np.allclose(cdsp.dig_delay_lagrange_coeffs(3, 0), [0, 1, 0, 0])
     assert np.allclose(cdsp.dig_delay_lagrange_coeffs(3, 0, forward=False), [0, 0, 1, 0])
 
-def test_equalization():
-    init_test()
-    np.random.seed(140993)
+def test_equalization(seed=None):
+    init_test(seed)
     for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
         test.equalization_prbs_test(prbs_type)
         test.equalization_lms_test(prbs_type)
@@ -506,5 +511,6 @@ if __name__ == '__main__':
     # test_decoding_conv_basic()
     # test_coding_conv_feedback()
     # test_decoding_conv_feedback()
-    test_equalization()
+    # test_equalization(seed=498917877)
+    test_mm_cdr()
     pass

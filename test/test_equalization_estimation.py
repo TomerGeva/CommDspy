@@ -55,8 +55,9 @@ def equalization_lms_test(prbs_type):
     # ==================================================================================================================
     equ_dut             = np.zeros_like(channel_ref)
     equ_dut[precursors] = 1
-    mse_vec = [1e3]
-    count   = 0
+    mse_vec             = [1e3]
+    count               = 0
+    prbs_len            = 2 ** prbs_type.value - 1
     while count < 100000 and mse_vec[-1] > 1e-5:
         count += 1
         # ----------------------------------------------------------------------------------------------------------
@@ -66,10 +67,9 @@ def equalization_lms_test(prbs_type):
         # ----------------------------------------------------------------------------------------------------------
         # Aligning
         # ----------------------------------------------------------------------------------------------------------
-        prbs_len = 2 ** prbs_type.value - 1
         pattern_aligned, _  = cdsp.rx.lock_pattern_to_signal(ref_pattern[:prbs_len], slicer_in_dut)
         pattern_aligned_rep = np.tile(pattern_aligned, int(np.ceil(len(ref_pattern) / prbs_len)))[:len(slicer_in_dut)]
-        mse, grad_ffe = cdsp.rx.lms_grad(slicer_in_dut, cdsp.get_levels(constellation), tap_idx_vec, reference_vec=pattern_aligned_rep)
+        mse, grad_ffe       = cdsp.rx.lms_grad(slicer_in_dut, cdsp.get_levels(constellation), tap_idx_vec, reference_vec=pattern_aligned_rep)
         equ_dut -= grad_ffe * 0.003
         if abs(mse - mse_vec[-1]) < 1e-10:
             break

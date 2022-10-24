@@ -14,3 +14,4 @@ from test.test_prbs_analysis import prbs_analysis_test
 from test.test_noise import awgn_test
 from test.test_channel_estimation import channel_estimation_prbs_test
 from test.test_equalization_estimation import equalization_prbs_test, equalization_lms_test
+from test.test_cdr import mueller_muller_step_test

@@ -709,6 +709,18 @@ Function returns:
 3. If ffe_tap_idx is not empty and dfe_tap_idx is empty, returns the MSE and FFE grad
 4. If neither are empty, returns the MSE, FFE grad and DFE grad 
 
+### 2.20 mueller_muller_step
+Function computes the estimation of the first precursor and the first postcursor and compares the amplitudes of the both. The goal of the mm CDR is to choose the phase which makes the precursor and postcursor equal in amplitude.
+
+Function is inputted with:
+* signal_chunk - The raw signal
+* reference_signal - The symbol stream without errors
+* pre_weight - the weight of precursor in the ratio between the precursor and the postcursor
+* post_weight - the weight of postcursor in the ratio between the precursor and the
+* tol - tolerance of the step direction.
+
+Function returns the direction to which we would need to change the phase of sampling.
+
 ## 3. Channel sub-package information
 ### 3.0. Various pulse generators
 The package supports all the pulses written in 3.1. The function names are:
