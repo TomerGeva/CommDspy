@@ -40,7 +40,7 @@ def mueller_muller_step_test(prbs_type):
         signale_phase_signal = adc_out_mat.T[phase]
         pattern_aligned, _   = cdsp.rx.lock_pattern_to_signal(ref_pattern[:prbs_len], signale_phase_signal)
         pattern_aligned_rep  = np.tile(pattern_aligned, int(np.ceil(len(ref_pattern) / prbs_len)))[:len(signale_phase_signal)]
-        step_dir = cdsp.rx.mueller_muller_step(signale_phase_signal, pattern_aligned_rep, tol=5)
+        step_dir = cdsp.rx.mueller_muller_step(signale_phase_signal, pattern_aligned_rep, tol=1e-3)
         phase = (phase + step_dir) % osr
         if phase == 0:
             break

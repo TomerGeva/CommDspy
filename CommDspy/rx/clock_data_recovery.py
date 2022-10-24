@@ -23,8 +23,8 @@ def mueller_muller_step(signal_chunk, reference_signal, pre_weight=1, post_weigh
     # ==================================================================================================================
     # Computing the coefs
     # ==================================================================================================================
-    pre_coef  = reference_pre.dot(signal_chunk[:-1])
-    post_coef = reference_post.dot(signal_chunk[1:])
+    pre_coef  = reference_pre.dot(signal_chunk[:-1]) / (len(reference_signal) - 1)
+    post_coef = reference_post.dot(signal_chunk[1:]) / (len(reference_signal) - 1)
     step      =  post_coef * post_weight - pre_coef * pre_weight
     if abs(step) < tol:
         return 0
