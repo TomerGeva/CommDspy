@@ -39,9 +39,12 @@ class FfeDfe:
         self.ffe_precursors  = ffe_dfe_data.ffe_precursors
         self.ffe_postcursors = ffe_dfe_data.ffe_postcursors
         self.dfe_taps        = ffe_dfe_data.dfe_taps
+        self.levels          = ffe_dfe_data.levels
+        # ==============================================================================================================
+        # Memory
+        # ==============================================================================================================
         self.ffe_vec         = ffe_dfe_data.ffe_vec
         self.dfe_vec         = ffe_dfe_data.dfe_vec
-        self.levels          = ffe_dfe_data.levels
         self.zi_ffe          = ffe_dfe_data.zi_ffe
         self.zi_dfe          = ffe_dfe_data.zi_dfe
 
@@ -166,16 +169,74 @@ class Receiver:
         self.slicer_out     = np.array([0])
         self.demapped_chunk = np.array([0])
         self.decoded_chunk  = np.array([0])
+        self.ctle_out_last       = np.array([0])
+        self.adc_out_last        = np.array([0])
+        self.slicer_in_last      = np.array([0])
+        self.slicer_out_last     = np.array([0])
+        self.demapped_chunk_last = np.array([0])
+        self.decoded_chunk_last  = np.array([0])
+
+        self.lms_mse_vec = [1e3]
+        # ==============================================================================================================
+        # Control bits
+        # ==============================================================================================================
+        self.converge        = False
+        self.converge_lms    = False
+        self.converge_cdr    = False
+        self.converge_done   = False
+        self.lms_ffe_idx     = np.arange(-1 * self.ffe_dfe.ffe_precursors, self.ffe_dfe.ffe_postcursors+1)
+        self.lms_dfe_idx     = np.arange(1, self.ffe_dfe.dfe_taps+1)
+        self.lms_lr          = 1e-3
+        self.lms_mse_diff_th = -40  # [dB]
+        self.phase           = adc_data.phase
+        self.cdr_step_vec    = []
+        self.max_pase        = ctle_data.osr
 
     def input_stage(self, continuous_chunk):
+        self.ctle_out_last = self.ctle_out
+        self.adc_out_last  = self.adc_out
         self.ctle_out = self.ctle(continuous_chunk)
         self.adc_out  = self.adc(self.ctle_out)
 
     def digital_stage(self):
+        self.slicer_in_last  = self.slicer_in
+        self.slicer_out_last = self.slicer_out
         self.slicer_in  = self.ffe_dfe(self.adc_out)
         self.slicer_out = cdsp.rx.slicer(self.slicer_in, self.levels)
+        if self.converge:
+            # ------------------------------------------------------------------------------------------------------
+            # Converging the CDR
+            # ------------------------------------------------------------------------------------------------------
+            if self.converge_cdr:
+                mm_step = cdsp.rx.mueller_muller_step(self.adc_out, self.slicer_in)
+                self.phase += mm_step
+                self.adc.phase += mm_step
+                self.cdr_step_vec.append(mm_step)
+                # **********************************************************************************************
+                # Stop condition
+                # **********************************************************************************************
+                if mm_step == 0:
+                    self.converge_cdr = False
+            # ------------------------------------------------------------------------------------------------------
+            # Converging the FFE and DFE
+            # ------------------------------------------------------------------------------------------------------
+            if self.converge_lms:
+                mse, ffe_grad_vec, dfe_grad_vec = cdsp.rx.lms_grad(self.slicer_in, self.levels, ffe_tap_idx=self.lms_ffe_idx, dfe_tap_idx=self.lms_dfe_idx)
+                self.ffe_dfe.ffe_vec += -1 * self.lms_lr * ffe_grad_vec
+                self.ffe_dfe.dfe_vec += -1 * self.lms_lr * dfe_grad_vec
+                self.lms_mse_vec.append(mse)
+                # **********************************************************************************************
+                # Stop condition
+                # **********************************************************************************************
+                if abs(mse - self.lms_mse_vec[-1]) > 10 ** (self.lms_mse_diff_th / 20):
+                    self.converge_lms = False
+            if not self.converge_cdr and not self.converge_lms:
+                self.converge      = False
+                self.converge_done = True
 
     def extract_data(self):
+        self.demapped_chunk_last = self.demapped_chunk
+        self.decoded_chunk_last  = self.decoded_chunk
         self.demapped_chunk = cdsp.rx.demapping(self.slicer_out, self.constellation)
         self.decoded_chunk  = self.decoder(self.demapped_chunk)
         return self.decoded_chunk

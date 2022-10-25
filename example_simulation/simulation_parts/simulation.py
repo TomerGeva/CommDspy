@@ -19,6 +19,13 @@ class Simulation:
 
         self.verbose = verbose
 
+    def start_convergence(self):
+        self.Rx.converge     = True
+        self.Rx.converge_lms = True
+        self.Rx.converge_cdr = True
+        self.Rx.lms_mse_vec  = []
+        self.Rx.cdr_step_vec = []
+
     def __call__(self):
         if self.verbose:
             print('Generating chunk')

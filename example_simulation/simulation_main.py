@@ -15,6 +15,8 @@ def main():
     for ii in range(30):
         print(f'Chunk number {ii:d}')
         received_data = Sim()
+        if ii == 1:
+            Sim.start_convergence()
         if ii > 0:
             chunk_ber = BitChecker.check_ber(received_data)
             print(f'Chunk BER is {chunk_ber:.2e} \nAccumulated BER is {BitChecker.acc_errors/BitChecker.acc_symbols:.2e}')
