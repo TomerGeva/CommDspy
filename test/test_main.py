@@ -511,6 +511,6 @@ if __name__ == '__main__':
     # test_decoding_conv_basic()
     # test_coding_conv_feedback()
     # test_decoding_conv_feedback()
-    # test_equalization(seed=498917877)
-    test_mm_cdr()
+    test_equalization(seed=71816285)
+    # test_mm_cdr()
     pass
