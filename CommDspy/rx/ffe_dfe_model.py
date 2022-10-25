@@ -68,7 +68,7 @@ def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None, os
     # If we only have FFE and without DFE we can use convolution for speed
     # ==================================================================================================================
     if dfe_taps is None:
-        rx_ffe_out = signal.lfilter(ffe_taps, 1, input_signal, zi=zi_ffe)[ffe_len:]
+        rx_ffe_out = signal.lfilter(ffe_taps, 1, input_signal, zi=zi_ffe[1:])
         return rx_ffe_out
     # ==================================================================================================================
     # In case we hae DFE taps we need to make a decision, therefore we can not use convolution
