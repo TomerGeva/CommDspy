@@ -20,7 +20,7 @@ def pulse_shape(signal, osr=1, span=1, pulse='rect', beta=0.5, rj_sigma=0.0, zi=
                      Example: for Baud rate of 53.125 [GHz] UI is ~18.8[psec]. Using rj_sigma=0.05 [UI] means:
                       rj_sigma = 0.05*18.8e-12 = 0.94e-12 = 940[fsec]
     :param zi: memory for the pulse shaping. If None, assuming reset, i.e. all '0' memory. MUST be with length of:
-               'osr' * 'span' * 2
+               'osr' * 'span' * 2 - 1
     :return: the signal after the pulse shaping. This function simulated an ideal channel of ch[n] = delta[n] without
     noise. This is not a practical use-case but more of a feature to gain insight. For practical channels use the
     channel sub-package
@@ -31,9 +31,9 @@ def pulse_shape(signal, osr=1, span=1, pulse='rect', beta=0.5, rj_sigma=0.0, zi=
     sig_ups   = upsample(signal, osr)
     pulse_vec = _get_pulse(pulse, osr, span, beta)
     if zi is None:
-        zi = np.zeros(osr * span * 2)
-    elif len(zi) != osr * span * 2:
-        raise ValueError(f'Memory length does not match the requested pulse, length should be {osr*span*2:d}')
+        zi = np.zeros(osr * span * 2 - 1)
+    elif len(zi) != osr * span * 2 - 1:
+        raise ValueError(f'Memory length does not match the requested pulse, length should be {osr*span*2-1:d}')
     # ==================================================================================================================
     # Convolving
     # ==================================================================================================================
@@ -138,7 +138,7 @@ def _time_vec_pulse(osr, span):
     # Local variables
     # ==================================================================================================================
     time_len = osr * 2 * span
-    t = np.arange(-1 * (time_len // 2), (time_len // 2) + 1, 1) / osr
+    t = np.arange(-1 * (time_len // 2), (time_len // 2), 1) / osr
     return t
 
 def _get_pulse(method, osr=1, span=1, beta=0.5, t=None):

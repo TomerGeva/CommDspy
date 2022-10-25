@@ -55,10 +55,8 @@ def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None, os
     # Local Variables
     # ==================================================================================================================
     ffe_len    = len(ffe_taps)
-    slicer_in  = np.zeros([len(input_signal) + 1])
-    slicer_out = np.zeros([len(input_signal) + 1])
-    # slicer_in  = np.zeros([len(input_signal) - ffe_len + 1])
-    # slicer_out = np.zeros([len(input_signal) - ffe_len + 1])
+    slicer_in  = np.zeros([len(input_signal)])
+    slicer_out = np.zeros([len(input_signal)])
     if dfe_taps is not None:
         if zi_dfe is None:
             dfe_memory = np.zeros([len(dfe_taps)])
@@ -80,7 +78,7 @@ def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None, os
         # bufferred_signal = buffer(input_signal, ffe_len, ffe_len-1)
     elif len(zi_ffe) != ffe_len:
         raise ValueError(f'zi_ffe is not in the same size as the FFE, length is {len(zi_ffe):d} instead of {ffe_len:d}')
-    bufferred_signal = buffer(np.concatenate([zi_ffe, input_signal]), ffe_len, ffe_len-1)
+    bufferred_signal = buffer(np.concatenate([zi_ffe[1:], input_signal]), ffe_len, ffe_len-1)
     for ii, buffed_signal in enumerate(bufferred_signal):
         # ----------------------------------------------------------------------------------------------------------
         # Getting the slicer in value

@@ -74,10 +74,10 @@ pattern = tx_example()
 # Pulse shaping
 # ==================================================================================================================
 rolloff     = 0.5
-tx_out_rect, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rect')
-tx_out_sinc, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='sinc')
-tx_out_rcos, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
-tx_out_rrc, zo  = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
+tx_out_rect, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, pulse='rect')
+tx_out_sinc, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, pulse='sinc')
+tx_out_rcos, zo = cdsp.channel.pulse_shape(pattern,osr=32, span=8, pulse='rcos', beta=rolloff)
+tx_out_rrc, zo  = cdsp.channel.pulse_shape(pattern,osr=32, span=8, pulse='rrc', beta=rolloff)
 ```
 Results:
 

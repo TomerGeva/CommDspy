@@ -46,10 +46,10 @@ def channel_example(pulse_show=False, pulse_eye=False,  awgn_eye=False, awgn_ch_
     # Pulse shaping
     # ==================================================================================================================
     if pulse_show:
-        tx_out_rect = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rect')
-        tx_out_sinc = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='sinc')
-        tx_out_rcos = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rcos', beta=rolloff)
-        tx_out_rrc  = cdsp.channel.pulse_shape(pattern,osr=32, span=8, method='rrc', beta=rolloff)
+        tx_out_rect = cdsp.channel.pulse_shape(pattern,osr=32, span=8, pulse='rect')
+        tx_out_sinc = cdsp.channel.pulse_shape(pattern,osr=32, span=8, pulse='sinc')
+        tx_out_rcos = cdsp.channel.pulse_shape(pattern,osr=32, span=8, pulse='rcos', beta=rolloff)
+        tx_out_rrc  = cdsp.channel.pulse_shape(pattern,osr=32, span=8, pulse='rrc', beta=rolloff)
         plt.figure()
         plt.plot(np.arange(0, len(tx_out_rect[0]))/32, tx_out_rect, '-')
         plt.plot(np.arange(0, len(tx_out_rect[0]))/32, tx_out_sinc, '-')
@@ -375,7 +375,7 @@ def rx_genie_checker():
 if __name__ == '__main__':
     np.random.seed(140993)
     # tx_example()
-    # channel_example(pulse_eye=True, awgn_ch_eye=False)
+    # channel_example(pulse_show=True, pulse_eye=False, awgn_ch_eye=False)
     # rx_example(ch_out_eye=True, show_ctle=False, ctle_out_eye=False, rx_ffe_eye=True)
     # rx_genie_checker()
     rx_example2(ch_out_eye=False, show_ctle=False, ctle_out_eye=False, rx_slicer_in_eye=True)

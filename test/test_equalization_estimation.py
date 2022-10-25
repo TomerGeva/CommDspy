@@ -39,9 +39,10 @@ def equalization_prbs_test(prbs_type):
     dfe_taps = np.array([0])
     levels = np.array([-1, 1])
     ffe_taps = equ_dut[0]
-    slicer_in_dut = ffe_dfe(channel_out, ffe_taps, dfe_taps, levels=levels)
-    slicer_in_ref = signal.lfilter(ffe_taps, 1, channel_out)[len(ffe_taps):]
-    assert np.allclose(slicer_in_ref, slicer_in_dut[0][len(ffe_taps) + len(dfe_taps):]), assert_str
+    slicer_in_dut     = ffe_dfe(channel_out, ffe_taps, dfe_taps, levels=levels)
+    slicer_in_vec_dut = slicer_in_dut[0][len(ffe_taps):]
+    slicer_in_ref     = signal.lfilter(ffe_taps, 1, channel_out)[len(ffe_taps):]
+    assert np.allclose(slicer_in_ref, slicer_in_vec_dut), assert_str
 
 
 def equalization_lms_test(prbs_type):
@@ -77,7 +78,7 @@ def equalization_lms_test(prbs_type):
     # ==================================================================================================================
     # Comparing results
     # ==================================================================================================================
-    assert np.all(np.abs(channel_ref - equ_dut) < 5e-3), assert_str
+    assert np.all(np.abs(channel_ref - equ_dut) < 1e-2), assert_str
 
 
 def _get_test_parameters(prbs_type):
