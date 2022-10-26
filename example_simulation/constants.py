@@ -31,7 +31,7 @@ SNR             = 10     # [dB], AWGN at the moment
 PULSE           = 'rcos' # raised cosine pulse
 ROLLOFF         = 0.35   # pulse rolloff factor
 PULSE_SPAN      = 8      # [UI], how long is the pulse
-OSR             = 32     # over sampling rate
+OSR             = 64     # over sampling rate
 RJ_SIGMA        = 0      # [UI], random jitter std for the pulse shaping
 CHANNEL_TYPE    = 'isi_awgn'
 # ------------------------------------------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import os
 import json
 from constants import *
-from example_simulation.simulation_parts.data_objects import PrbsData, CodingData, MappingData, ChannelData, CtleData, AdcData, FfeDfeData, SimulationPartsData
+from example_simulation.simulation_parts.data_objects import PrbsData, CodingData, MappingData, ChannelData, CtleData, AdcData, FfeDfeData, FullLinkData
 # ======================================================================================================================
 # Tx data
 # ======================================================================================================================
@@ -25,6 +25,7 @@ f    = open(os.path.join('../test/example_scripts', '..', 'test_data', 'example_
 data = json.load(f)
 f.close()
 channel_isi = cdsp.upsample(data['channel_sampled'], OSR)
+# channel_isi = cdsp.upsample(np.array([0,0.02,0.15,0.04]), OSR)
 del f, data
 Channel_data = ChannelData(PULSE, PULSE_SPAN, CHANNEL_TYPE,
                            fir_coefs=channel_isi,
@@ -40,7 +41,7 @@ Adc_data     = AdcData(ADC_BITS, FRAC_BITS, QUANT_TYPE, osr=OSR, sample_rate=SAM
 Ffe_dfe_data = FfeDfeData(FFE_PRECURSORS, FFE_POSTCURSORS, DFE_TAPS,
                           ffe_vec=FFE_VEC, dfe_vec=DFE_VEC, levels=SLICER_LEVELS)
 
-Sim_data = SimulationPartsData(Prbs_data, Coding_data, Mapping_data, Channel_data, Ctle_data, Adc_data, Ffe_dfe_data)
+Link_data = FullLinkData(Prbs_data, Coding_data, Mapping_data, Channel_data, Ctle_data, Adc_data, Ffe_dfe_data)
 # ======================================================================================================================
 # Control data
 # ======================================================================================================================

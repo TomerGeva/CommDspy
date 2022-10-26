@@ -153,7 +153,7 @@ class Decoder:
                                                                use_feedback=self.use_feedback)
         return pattern_decoded
 class Receiver:
-    def __init__(self, ctle_data, adc_data, ffe_dfe_data, mapping_data, coding_data):
+    def __init__(self, ctle_data, adc_data, ffe_dfe_data, mapping_data, coding_data, lms_lr=2**(-10)):
         self.ctle    = Ctle(ctle_data)
         self.adc     = Adc(adc_data)
         self.ffe_dfe = FfeDfe(ffe_dfe_data)
@@ -176,7 +176,7 @@ class Receiver:
         self.demapped_chunk_last = np.array([0])
         self.decoded_chunk_last  = np.array([0])
 
-        self.lms_mse_vec = [1e3]
+        self.lms_mse_last = 1e3
         # ==============================================================================================================
         # Control bits
         # ==============================================================================================================
@@ -186,7 +186,7 @@ class Receiver:
         self.converge_done   = False
         self.lms_ffe_idx     = np.arange(-1 * self.ffe_dfe.ffe_precursors, self.ffe_dfe.ffe_postcursors+1)
         self.lms_dfe_idx     = np.arange(1, self.ffe_dfe.dfe_taps+1)
-        self.lms_lr          = 1e-3
+        self.lms_lr          = lms_lr
         self.lms_mse_diff_th = -40  # [dB]
         self.phase           = adc_data.phase
         self.cdr_step_vec    = []
@@ -204,12 +204,23 @@ class Receiver:
         self.slicer_in  = self.ffe_dfe(self.adc_out)
         self.slicer_out = cdsp.rx.slicer(self.slicer_in, self.levels)
         if self.converge:
+            delay          = self.ffe_dfe.ffe_precursors
+            if delay > 0:
+                adc_vec    = np.concatenate([self.adc_out_last[-1*delay:], self.adc_out[:-1*delay]])
+            else:
+                adc_vec    = self.adc_vec
+            # adc_vec        = np.concatenate([self.adc_out_last, self.adc_out])
+            # slicer_out_vec = np.concatenate([self.slicer_out_last, self.slicer_out])
             # ------------------------------------------------------------------------------------------------------
             # Converging the CDR
             # ------------------------------------------------------------------------------------------------------
             if self.converge_cdr:
-                mm_step = cdsp.rx.mueller_muller_step(self.adc_out, self.slicer_in)
-                self.phase += mm_step
+                mm_step = cdsp.rx.mueller_muller_step(adc_vec, self.slicer_out)
+                # if delay > 0:
+                #     mm_step = cdsp.rx.mueller_muller_step(adc_vec[:-1*delay], slicer_out_vec[delay:])
+                # else:
+                #     mm_step = cdsp.rx.mueller_muller_step(adc_vec, slicer_out_vec)
+                self.phase     += mm_step
                 self.adc.phase += mm_step
                 self.cdr_step_vec.append(mm_step)
                 # **********************************************************************************************
@@ -221,14 +232,16 @@ class Receiver:
             # Converging the FFE and DFE
             # ------------------------------------------------------------------------------------------------------
             if self.converge_lms:
-                mse, ffe_grad_vec, dfe_grad_vec = cdsp.rx.lms_grad(self.slicer_in, self.levels, ffe_tap_idx=self.lms_ffe_idx, dfe_tap_idx=self.lms_dfe_idx)
+                mse, ffe_grad_vec, dfe_grad_vec = cdsp.rx.lms_grad(adc_vec, self.slicer_in, self.levels,
+                                                                   ffe_tap_idx=self.lms_ffe_idx,
+                                                                   dfe_tap_idx=self.lms_dfe_idx)
                 self.ffe_dfe.ffe_vec += -1 * self.lms_lr * ffe_grad_vec
                 self.ffe_dfe.dfe_vec += -1 * self.lms_lr * dfe_grad_vec
-                self.lms_mse_vec.append(mse)
+                self.lms_mse_last = mse
                 # **********************************************************************************************
                 # Stop condition
                 # **********************************************************************************************
-                if abs(mse - self.lms_mse_vec[-1]) > 10 ** (self.lms_mse_diff_th / 20):
+                if abs(mse - self.lms_mse_last) > 10 ** (self.lms_mse_diff_th / 20):
                     self.converge_lms = False
             if not self.converge_cdr and not self.converge_lms:
                 self.converge      = False
