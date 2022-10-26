@@ -1,9 +1,10 @@
 import numpy as np
 from CommDspy.rx.slicer import slicer
 
-def lms_grad(input_vec, levels, ffe_tap_idx=np.array([]), dfe_tap_idx=np.array([]), reference_vec=None):
+def lms_grad(input_vec, output_vec, levels, ffe_tap_idx=np.array([]), dfe_tap_idx=np.array([]), reference_vec=None):
     """
-    :param input_vec: Numpy array of inputs used to compute the MSE and tap gradients
+    :param input_vec: Numpy array of inputs to the FFE-DFEused to compute the MSE and tap gradients
+    :param output_vec: Numpy array of outputs of the FFE-DFE used to compute the MSE and tap gradients
     :param levels: Constellation levels, should be a numpy array of floats
     :param ffe_tap_idx: numpy array containing the indices of the FFE taps for which we want to compute the gradient
     :param dfe_tap_idx: numpy array containing the indices of the DFE taps for which we want to compute the gradient
@@ -44,9 +45,9 @@ def lms_grad(input_vec, levels, ffe_tap_idx=np.array([]), dfe_tap_idx=np.array([
 
     """
     if reference_vec is None:
-        reference_vec = slicer(input_vec, levels)
-    elif len(reference_vec) != len(input_vec):
-        raise ValueError(f'Length of the reference vector ({len(reference_vec):d} is different than the input vector ({len(input_vec)}')
+        reference_vec = slicer(output_vec, levels)
+    elif len(reference_vec) != len(output_vec):
+        raise ValueError(f'Length of the reference vector ({len(reference_vec):d} is different than the input vector ({len(output_vec)}')
     # ==================================================================================================================
     # Local variables
     # ==================================================================================================================
@@ -56,7 +57,7 @@ def lms_grad(input_vec, levels, ffe_tap_idx=np.array([]), dfe_tap_idx=np.array([
     # ==================================================================================================================
     # Computing the MSE
     # ==================================================================================================================
-    e_n = input_vec - reference_vec
+    e_n = output_vec - reference_vec
     mse = np.mean(e_n**2)
     # ==================================================================================================================
     # Computing the FFE derivatives
