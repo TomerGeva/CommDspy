@@ -63,22 +63,28 @@ def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None, os
         elif len(zi_dfe) == len(dfe_taps):
             dfe_memory = zi_dfe
         else:
-            raise ValueError(f'zi_dfe is not in the same size as the FFE, length is {len(zi_dfe):d} instead of {dfe_taps:d}')
+            raise ValueError(f'zi_dfe is not in the same size as the DFE, length is {len(zi_dfe):d} instead of {dfe_taps:d}')
+    if zi_ffe is None:
+        zi_ffe = np.zeros(ffe_len - 1)
+    elif len(zi_ffe) == ffe_len:
+        zi_ffe = zi_ffe[1:]
+    elif len(zi_ffe) != len(ffe_len) - 1:
+        raise ValueError(f'zi_ffe is not in the same size as the FFE, length is {len(zi_ffe):d} instead of {ffe_len - 1:d}')
     # ==================================================================================================================
     # If we only have FFE and without DFE we can use convolution for speed
     # ==================================================================================================================
     if dfe_taps is None:
-        rx_ffe_out = signal.lfilter(ffe_taps, 1, input_signal, zi=zi_ffe[1:])
-        return rx_ffe_out
+        rx_ffe_out = signal.convolve(ffe_taps, np.concatenate([zi_ffe, input_signal]), mode='valid')
+        return rx_ffe_out, input_signal[-1*ffe_len:]
     # ==================================================================================================================
     # In case we hae DFE taps we need to make a decision, therefore we can not use convolution
     # ==================================================================================================================
-    if zi_ffe is None:
-        zi_ffe = np.zeros(ffe_len)
-        # bufferred_signal = buffer(input_signal, ffe_len, ffe_len-1)
-    elif len(zi_ffe) != ffe_len:
-        raise ValueError(f'zi_ffe is not in the same size as the FFE, length is {len(zi_ffe):d} instead of {ffe_len:d}')
-    bufferred_signal = buffer(np.concatenate([zi_ffe[1:], input_signal]), ffe_len, ffe_len-1)
+    # if zi_ffe is None:
+    #     zi_ffe = np.zeros(ffe_len)
+    #     # bufferred_signal = buffer(input_signal, ffe_len, ffe_len-1)
+    # elif len(zi_ffe) != ffe_len:
+    #     raise ValueError(f'zi_ffe is not in the same size as the FFE, length is {len(zi_ffe):d} instead of {ffe_len:d}')
+    bufferred_signal = buffer(np.concatenate([zi_ffe, input_signal]), ffe_len, ffe_len-1)
     for ii, buffed_signal in enumerate(bufferred_signal):
         # ----------------------------------------------------------------------------------------------------------
         # Getting the slicer in value
