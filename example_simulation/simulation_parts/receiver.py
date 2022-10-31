@@ -153,13 +153,14 @@ class Decoder:
                                                                use_feedback=self.use_feedback)
         return pattern_decoded
 class Receiver:
-    def __init__(self, ctle_data, adc_data, ffe_dfe_data, mapping_data, coding_data, lms_lr=2**(-10)):
-        self.ctle    = Ctle(ctle_data)
-        self.adc     = Adc(adc_data)
-        self.ffe_dfe = FfeDfe(ffe_dfe_data)
+    def __init__(self, ctle_data, adc_data, ffe_dfe_data, mapping_data, coding_data, lms_lr=2**(-10), digital_gain=1):
+        self.ctle     = Ctle(ctle_data)
+        self.adc      = Adc(adc_data)
+        self.ffe_dfe  = FfeDfe(ffe_dfe_data)
+        self.dig_gain = digital_gain
         self.constellation = mapping_data.constellation
         self.levels        = (mapping_data.levels * 2 / mapping_data.amp_pp_mv) * mapping_data.rx_factor
-        self.decoder = Decoder(coding_data)
+        self.decoder       = Decoder(coding_data)
         # ==============================================================================================================
         # Memory
         # ==============================================================================================================
@@ -189,7 +190,6 @@ class Receiver:
         self.lms_lr          = lms_lr
         self.lms_mse_diff_th = -40  # [dB]
         self.phase           = adc_data.phase
-        self.cdr_step_vec    = []
         self.max_pase        = ctle_data.osr
 
     def input_stage(self, continuous_chunk):
@@ -201,28 +201,32 @@ class Receiver:
     def digital_stage(self):
         self.slicer_in_last  = self.slicer_in
         self.slicer_out_last = self.slicer_out
-        self.slicer_in  = self.ffe_dfe(self.adc_out)
+        self.slicer_in  = self.dig_gain * self.ffe_dfe(self.adc_out)
         self.slicer_out = cdsp.rx.slicer(self.slicer_in, self.levels)
         if self.converge:
-            delay          = self.ffe_dfe.ffe_precursors
+            delay = self.ffe_dfe.ffe_precursors
             if delay > 0:
-                adc_vec    = np.concatenate([self.adc_out_last[-1*delay:], self.adc_out[:-1*delay]])
+                adc_vec = np.concatenate([self.adc_out_last[-1 * delay:], self.adc_out[:-1 * delay]])
             else:
-                adc_vec    = self.adc_vec
+                adc_vec = self.adc_out
+            # ------------------------------------------------------------------------------------------------------
+            # Changing the digital such that the adc_out gain will match the slicer in gain
+            # ------------------------------------------------------------------------------------------------------
+            dig_gain_change  = cdsp.power(self.levels) - cdsp.power(self.slicer_in)
+            self.dig_gain    = self.dig_gain + 100*self.lms_lr * dig_gain_change
             # adc_vec        = np.concatenate([self.adc_out_last, self.adc_out])
             # slicer_out_vec = np.concatenate([self.slicer_out_last, self.slicer_out])
             # ------------------------------------------------------------------------------------------------------
             # Converging the CDR
             # ------------------------------------------------------------------------------------------------------
             if self.converge_cdr:
-                mm_step = cdsp.rx.mueller_muller_step(adc_vec, self.slicer_out)
+                mm_step = cdsp.rx.mueller_muller_step(adc_vec, self.slicer_out, tol=1e-3)
                 # if delay > 0:
                 #     mm_step = cdsp.rx.mueller_muller_step(adc_vec[:-1*delay], slicer_out_vec[delay:])
                 # else:
                 #     mm_step = cdsp.rx.mueller_muller_step(adc_vec, slicer_out_vec)
-                self.phase     += mm_step
-                self.adc.phase += mm_step
-                self.cdr_step_vec.append(mm_step)
+                self.phase     = (self.phase + mm_step) % self.max_pase
+                self.adc.phase = self.phase
                 # **********************************************************************************************
                 # Stop condition
                 # **********************************************************************************************
@@ -232,7 +236,7 @@ class Receiver:
             # Converging the FFE and DFE
             # ------------------------------------------------------------------------------------------------------
             if self.converge_lms:
-                mse, ffe_grad_vec, dfe_grad_vec = cdsp.rx.lms_grad(adc_vec, self.slicer_in, self.levels,
+                mse, ffe_grad_vec, dfe_grad_vec = cdsp.rx.lms_grad(adc_vec, self.dig_gain * self.slicer_in, self.levels,
                                                                    ffe_tap_idx=self.lms_ffe_idx,
                                                                    dfe_tap_idx=self.lms_dfe_idx)
                 self.ffe_dfe.ffe_vec += -1 * self.lms_lr * ffe_grad_vec

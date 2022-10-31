@@ -14,25 +14,27 @@ class Memory:
         self.rx_demapped_chunks     = []
         self.rx_decoded_chunks      = []
 
+        self.cdr_phase_vec          = []
         self.lms_mse_vec            = []
         self.lms_ffe_vecs           = []
         self.lms_dfe_vecs           = []
 
     def reset(self):
-        self.tx_prbs_chunks = []
+        self.tx_prbs_chunks         = []
         self.tx_encoded_prbs_chunks = []
-        self.tx_mapped_prbs_chunks = []
-        self.ch_out_chunks = []
-        self.rx_ctle_out_chunks = []
-        self.rx_adc_out_chunks = []
-        self.rx_slicer_in_chunks = []
-        self.rx_slicer_out_chunks = []
-        self.rx_demapped_chunks = []
-        self.rx_decoded_chunks = []
+        self.tx_mapped_prbs_chunks  = []
+        self.ch_out_chunks          = []
+        self.rx_ctle_out_chunks     = []
+        self.rx_adc_out_chunks      = []
+        self.rx_slicer_in_chunks    = []
+        self.rx_slicer_out_chunks   = []
+        self.rx_demapped_chunks     = []
+        self.rx_decoded_chunks      = []
 
-        self.lms_mse_vec = []
-        self.lms_ffe_vecs = []
-        self.lms_dfe_vecs = []
+        self.cdr_phase_vec = []
+        self.lms_mse_vec   = []
+        self.lms_ffe_vecs  = []
+        self.lms_dfe_vecs  = []
 
 class Checker:
     def __init__(self, prbs_data):

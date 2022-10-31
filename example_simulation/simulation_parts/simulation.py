@@ -21,6 +21,7 @@ class Simulation:
         self.Memory.rx_demapped_chunks.append(self.Link.Rx.demapped_chunk.copy())
         self.Memory.rx_decoded_chunks.append(self.Link.Rx.decoded_chunk.copy())
 
+        self.Memory.cdr_phase_vec.append(self.Link.Rx.phase)
         self.Memory.lms_mse_vec.append(self.Link.Rx.lms_mse_last)
         self.Memory.lms_ffe_vecs.append(self.Link.Rx.ffe_dfe.ffe_vec.copy())
         self.Memory.lms_dfe_vecs.append(self.Link.Rx.ffe_dfe.dfe_vec.copy())
@@ -38,9 +39,11 @@ class Simulation:
             self.gather_memory()
             if count % 128 == 0:
                 plt.figure()
+                plt.plot(self.Memory.cdr_phase_vec)
+                plt.figure()
                 plt.plot(10 * np.log10(self.Memory.lms_mse_vec))
                 plt.figure()
-                plt.plot(np.reshape(4*np.array(self.Memory.rx_slicer_in_chunks), -1), 'o')
+                plt.plot(np.concatenate(self.Memory.rx_slicer_in_chunks), '.')
                 plt.show()
                 print('hi')
 
