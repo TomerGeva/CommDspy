@@ -35,8 +35,13 @@ def test_dig_delay_fir_coeffs():
 def test_equalization(seed=None):
     init_test(seed)
     for prbs_type in [PrbsEnum.PRBS7, PrbsEnum.PRBS9, PrbsEnum.PRBS11, PrbsEnum.PRBS13]:
+        print(prbs_type.name)
+        print('Least square')
         test.equalization_prbs_test(prbs_type)
-        test.equalization_lms_test(prbs_type)
+        print('Decision directed LMS')
+        test.equalization_lms_test(prbs_type, algo='hard')
+        print('Soft decision directed LMS')
+        test.equalization_lms_test(prbs_type, algo='soft')
 
 def test_buffer():
     init_test()
@@ -511,6 +516,6 @@ if __name__ == '__main__':
     # test_decoding_conv_basic()
     # test_coding_conv_feedback()
     # test_decoding_conv_feedback()
-    test_equalization(seed=71816285)
+    test_equalization(seed=971973531)
     # test_mm_cdr()
     pass

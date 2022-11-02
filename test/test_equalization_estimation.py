@@ -45,8 +45,15 @@ def equalization_prbs_test(prbs_type):
     assert np.allclose(slicer_in_ref, slicer_in_vec_dut), assert_str
 
 
-def equalization_lms_test(prbs_type):
+def equalization_lms_test(prbs_type, algo='hard'):
+    # ==================================================================================================================
+    # Local variables
+    # ==================================================================================================================
     channel_ref, channel_out, constellation, ref_pattern, assert_str =  _get_test_parameters(prbs_type)
+    while constellation != cdsp.ConstellationEnum.OOK:
+        channel_ref, channel_out, constellation, ref_pattern, assert_str = _get_test_parameters(prbs_type)
+    levels            = cdsp.get_levels(constellation)
+    sigma             = 0.25  #  if constellation != cdsp.ConstellationEnum.OOK else 0.1
     precursors        = np.argmax(abs(channel_ref))
     postcursors       = len(channel_ref) - precursors - 1
     pn_inv_postcoding = channel_ref[precursors] != np.max(channel_ref)
@@ -56,10 +63,12 @@ def equalization_lms_test(prbs_type):
     # ==================================================================================================================
     equ_dut             = np.zeros_like(channel_ref)
     equ_dut[precursors] = 1
-    mse_vec             = [1e3]
+    loss_vec            = [1e3]
+    mse_vec             = []
+    histogram           = []
     count               = 0
     prbs_len            = 2 ** prbs_type.value - 1
-    while count < 100000 and mse_vec[-1] > 1e-5:
+    while count < 100000 and loss_vec[-1] > 1e-5:
         count += 1
         # ----------------------------------------------------------------------------------------------------------
         # Passing through the FFE + DFE
@@ -71,15 +80,23 @@ def equalization_lms_test(prbs_type):
         # ----------------------------------------------------------------------------------------------------------
         pattern_aligned, _  = cdsp.rx.lock_pattern_to_signal(ref_pattern[:prbs_len], slicer_in_dut)
         pattern_aligned_rep = np.tile(pattern_aligned, int(np.ceil(len(ref_pattern) / prbs_len)))[:len(slicer_in_dut)]
-        mse, grad_ffe       = cdsp.rx.lms_grad(channel_out[len(equ_dut):], slicer_in_dut, cdsp.get_levels(constellation), tap_idx_vec, reference_vec=pattern_aligned_rep)
+        if algo == 'hard':
+            loss, grad_ffe  = cdsp.rx.lms_grad(channel_out[len(equ_dut):], slicer_in_dut, levels, tap_idx_vec, reference_vec=pattern_aligned_rep)
+        elif algo == 'soft':
+            loss, grad_ffe  = cdsp.rx.soft_lms_grad(channel_out[len(equ_dut):], slicer_in_dut, levels, sigma, tap_idx_vec)
+            mse_vec.append(cdsp.power(slicer_in_dut - cdsp.rx.slicer(slicer_in_dut, levels)))
+        else:
+            raise ValueError('Not supposed to get here!')
         equ_dut -= grad_ffe * 0.001
-        if abs(mse - mse_vec[-1]) < 1e-7:
+        if abs(loss - loss_vec[-1]) < 1e-7:
             break
-        mse_vec.append(mse)
+        loss_vec.append(loss)
+        temp = np.histogram(slicer_in_dut, bins=100)
+        histogram.append(temp[0])
     # ==================================================================================================================
     # Comparing results
     # ==================================================================================================================
-    assert np.all(np.abs(channel_ref - equ_dut) < 1e-2), assert_str
+    assert np.all(np.abs(channel_ref - equ_dut) < 1e-2), assert_str + ' ' + algo
 
 
 def _get_test_parameters(prbs_type):

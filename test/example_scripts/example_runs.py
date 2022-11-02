@@ -10,12 +10,13 @@ def tx_example():
     # Local variables
     # ==================================================================================================================
     prbs_type       = cdsp.constants.PrbsEnum.PRBS13
-    bits_per_symbol = 2
+    bits_per_symbol = 1
     bit_order_inv   = False
     inv_msb         = False
     inv_lsb         = False
     pn_inv          = False
-    constellation   = cdsp.constants.ConstellationEnum.PAM4
+    # constellation   = cdsp.constants.ConstellationEnum.PAM4
+    constellation   = cdsp.constants.ConstellationEnum.NRZ
     full_scale      = True
     gray_coding     = False
     poly_coeff      = cdsp.get_polynomial(prbs_type)
