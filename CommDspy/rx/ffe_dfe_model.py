@@ -3,6 +3,7 @@ from scipy import signal
 from CommDspy.auxiliary import buffer
 from CommDspy.rx.slicer import slicer
 
+
 def ffe_dfe(input_signal, ffe_taps=np.array([1]), dfe_taps=None, levels=None, osr=1, phase=0, zi_ffe=None, zi_dfe=None):
     """
     :param input_signal: input signal to pass through the FFE-DFE
