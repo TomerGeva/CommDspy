@@ -15,6 +15,7 @@ class Channel:
         self.osr            = channel_data.osr
         self.snr            = channel_data.snr
         self.pulse_rj_sigma = channel_data.pulse_rj_sigma
+        self.ch_out         = []
         # ==============================================================================================================
         # Memory
         # ==============================================================================================================
@@ -26,7 +27,7 @@ class Channel:
         else:
             self.ch_zi     = channel_data.ch_zi
         if channel_data.pulse_zi is None:
-            pulse_len_fui = self.pulse_span * self.osr * 2  # pulse length is fractional of UI
+            pulse_len_fui = self.pulse_span * self.osr * 2 - 1  # pulse length is fractional of UI
             self.pulse_zi = np.zeros(pulse_len_fui)
         else:
             self.pulse_zi  = channel_data.pulse_zi
@@ -40,12 +41,14 @@ class Channel:
                                                                 rj_sigma=self.pulse_rj_sigma,
                                                                 zi=self.pulse_zi)
         if self.ch_type == 'pulse':
+            self.ch_out = pulse_out
             return pulse_out
         elif self.ch_type == 'awgn':
-            return cdsp.channel.awgn(pulse_out, snr=self.snr)
+            self.ch_out = cdsp.channel.awgn(pulse_out, snr=self.snr)
+            return self.ch_out
         elif self.ch_type == 'isi_awgn':
-            ch_out, self.ch_zi = cdsp.channel.awgn_channel(pulse_out, self.fir_coefs, self.iir_coefs,
+            self.ch_out, self.ch_zi = cdsp.channel.awgn_channel(pulse_out, self.fir_coefs, self.iir_coefs,
                                                            zi=self.ch_zi,
                                                            snr=self.snr)
-            return ch_out
+            return self.ch_out
 

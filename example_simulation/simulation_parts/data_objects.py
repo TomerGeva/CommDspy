@@ -131,7 +131,7 @@ class FfeDfeData:
         else:
             raise ValueError(f'zi_dfe is not in the same size as the FFE, length is {len(zi_dfe):d} instead of {dfe_taps:d}')
 
-class SimulationPartsData:
+class FullLinkData:
     def __init__(self, prbs_data, coding_data, mapping_data, channel_data, ctle_data, adc_data, ffe_dfe_data):
         self.prbs_data    = prbs_data
         self.coding_data  = coding_data
