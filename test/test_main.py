@@ -38,10 +38,14 @@ def test_equalization(seed=None):
         print(prbs_type.name)
         print('Least square')
         test.equalization_prbs_test(prbs_type)
-        print('Decision directed LMS')
-        test.equalization_lms_test(prbs_type, algo='hard')
-        print('Soft decision directed LMS')
-        test.equalization_lms_test(prbs_type, algo='soft')
+        print('Decision directed FFE LMS')
+        test.equalization_lms_ffe_test(prbs_type, algo='hard')
+        print('Soft decision directed FFE LMS')
+        test.equalization_lms_ffe_test(prbs_type, algo='soft')
+        print('Decision directed DFE LMS')
+        test.equalization_lms_dfe_test(prbs_type, algo='hard')
+        print('Soft decision directed DFE LMS')
+        test.equalization_lms_dfe_test(prbs_type, algo='soft')
 
 def test_buffer():
     init_test()

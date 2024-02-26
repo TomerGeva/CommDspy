@@ -1,12 +1,13 @@
 import numpy as np
 import CommDspy as cdsp
-from test.auxiliary import generate_pattern, generate_and_pass_channel
+from test.auxiliary import generate_pattern, generate_and_pass_channel_ar
 
 
 def mueller_muller_step_test(prbs_type, estimate_optimal=False):
     osr = 64
     ref_pattern, constellation, gray_coding             = generate_pattern(prbs_type)
-    channel_ref, channel_out, constellation, assert_str = generate_and_pass_channel(ref_pattern, prbs_type, constellation, gray_coding)
+    channel_ref, channel_out, constellation, assert_str = generate_and_pass_channel_ar(ref_pattern, prbs_type,
+                                                                                       constellation, gray_coding)
     channel_out, _ = cdsp.channel.pulse_shape(channel_out, osr=osr, span=8, pulse='rcos', beta=0.5)
     channel_out    = channel_out[osr*16:]
     adc_out        = cdsp.rx.quantize(channel_out, 9, 7, 'ss')

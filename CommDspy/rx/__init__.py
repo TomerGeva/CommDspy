@@ -8,5 +8,5 @@ from CommDspy.rx.checker import prbs_checker_economy as prbs_checker_econ
 from CommDspy.rx.ctle_model import get_ctle_filter, ctle
 from CommDspy.rx.ffe_dfe_model import ffe_dfe
 from CommDspy.rx.quantiztion import quantize
-from CommDspy.rx.least_mean_squares import lms_grad, soft_lms_grad
+from CommDspy.rx.least_mean_squares import ddlms_grad, soft_ddlms_grad
 from CommDspy.rx.clock_data_recovery import mueller_muller_step

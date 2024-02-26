@@ -52,7 +52,15 @@ def generate_pattern(prbs_type):
 
     return ref_pattern, constellation, gray_coding
 
-def generate_and_pass_channel(ref_pattern, prbs_type, constellation, gray_coding):
+def generate_and_pass_channel_ar(ref_pattern, prbs_type, constellation, gray_coding):
+    """
+    :param ref_pattern:
+    :param prbs_type:
+    :param constellation:
+    :param gray_coding:
+
+    Function generates an Auto-Regressive channel and passes the reference pattern through the channel
+    """
     num_poles = random.randint(1, 8)
     assert_str = '|{0:^6s}| Constellation = {1:^6s} | Gray Coding = {2:^6s} | {3:^3d} poles  ; {4:^3d} DFE taps '.format(
         prbs_type.name,
@@ -74,6 +82,42 @@ def generate_and_pass_channel(ref_pattern, prbs_type, constellation, gray_coding
     # ==================================================================================================================
     channel_out, _ = cdsp.channel.awgn_channel(ref_pattern, [1], channel_ref)
     channel_out    = channel_out[len(channel_ref) + 1:]
+
+    return channel_ref, channel_out, constellation, assert_str
+
+
+def generate_and_pass_channel_ma(ref_pattern, prbs_type, constellation, gray_coding):
+    """
+    :param ref_pattern:
+    :param prbs_type:
+    :param constellation:
+    :param gray_coding:
+    :return:
+    Function generates a Moving-Average channel and passes the reference pattern through the channel
+    """
+    num_poles = random.randint(1, 8)
+    assert_str = '|{0:^6s}| Constellation = {1:^6s} | Gray Coding = {2:^6s} | {3:^3d} zeros  ; {4:^3d} DFE taps '.format(
+        prbs_type.name,
+        constellation.name,
+        str(gray_coding),
+        num_poles,
+        0
+    )
+    # ==================================================================================================================
+    # Creating reference channel
+    # ==================================================================================================================
+    while True:
+        roots = np.around(np.random.random(num_poles), decimals=3) - 0.5
+        channel_ref = np.poly(roots)
+        if np.max(np.abs(channel_ref)) == channel_ref[0]:
+            break
+    channel_ref = channel_ref / channel_ref[0]
+    # channel_ref = [1, 0.5]
+    # ==================================================================================================================
+    # Passing data through the channel
+    # ==================================================================================================================
+    channel_out, _ = cdsp.channel.awgn_channel(ref_pattern, channel_ref, [1])
+    channel_out = channel_out[len(channel_ref) + 1:]
 
     return channel_ref, channel_out, constellation, assert_str
 
