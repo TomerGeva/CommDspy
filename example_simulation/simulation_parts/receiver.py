@@ -145,7 +145,7 @@ class Decoder:
         if self.coding_diff_manchester:
             pattern_decoded = cdsp.rx.decoding_differential_manchester(pattern_decoded)
         if self.coding_linear:
-            pattern_decoded = cdsp.rx.decoding_linear(pattern_decoded, self.G)
+            pattern_decoded = cdsp.rx.decoding_linear_ml(pattern_decoded, self.G)
         if self.coding_conv:
             pattern_decoded, _ = cdsp.rx.decoding_conv_viterbi(pattern_decoded, self.G,
                                                                tb_len=self.chunk_size,

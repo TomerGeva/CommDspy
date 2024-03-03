@@ -695,8 +695,35 @@ Function passes the input signal through the FFE and DFE. Function is inputted w
 
 Read the respective description for further information
 
-### 2.19 lms_grad
-Function computes the MSE as well as the gradient w.r.t. each tap of the FFE and DFE. Function is inputted with:
+### 2.19 ddlms_grad
+Assuming the FFE-DFE model:
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?\tilde{x}_n=\sum_i&amp;space;b_i\cdot&amp;space;y_{n-i}-\sum_{j&gt;0}a_j\hat{x}_{n-j}"/>
+
+where:
+* y is the input to the FFE-DFE
+* \tilde{x} is the slicer input
+* \hat{x} is the slicer output
+* b_i is the ith FFE coefficient
+* a_j is the jth DFE coefficient
+
+Function computes the MSE as well as the gradient w.r.t. each tap of the FFE and DFE. MSE takes the following form
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?MSE=\frac{1}{2N}\sum_{n=0}^{N-1}(\tilde{x}_n-x_n)^2=\frac{1}{N}\sum_{n=0}^{N-1}MSE[n]">
+
+The derivative w.r.t. the slicer input is given by:
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?\frac{\partial&space;MSE[n]}{\partial\tilde{x_n}}=(\tilde{x}_n-x_n)=e_n">
+
+The derivative w.r.t. an FFE tap is given by:
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?\frac{\partial&space;MSE}{\partial&space;b_i}=\frac{1}{N}\sum_{n=0}^{N-1}\frac{\partial&space;MSE[n]}{\partial\tilde{x}_n}\cdot\frac{\partial\tilde{x}_n}{\partial&space;b_i}=\frac{1}{N}\sum_{n=0}^{N-1}e_n\cdot&space;y_{n-i}">
+
+The derivative w.r.t. a DFE tap is given by:
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?\frac{\partial&space;MSE}{\partial&space;a_j}=\frac{1}{N}\sum_{n=0}^{N-1}\frac{\partial&space;MSE[n]}{\partial\tilde{x}_n}\frac{\partial\tilde{x}_n}{\partial&space;a_j}=\frac{1}{N}\sum_{n=0}^{N-1}e_n\cdot&space;\hat{x}_{n-j}">
+
+Function is inputted with:
 * input_vec - Numpy array of inputs used to compute the MSE and tap gradients
 * levels - Constellation levels, should be a numpy array of floats
 * ffe_tap_idx - numpy array containing the indices of the FFE taps for which we want to compute the gradient
@@ -709,7 +736,56 @@ Function returns:
 3. If ffe_tap_idx is not empty and dfe_tap_idx is empty, returns the MSE and FFE grad
 4. If neither are empty, returns the MSE, FFE grad and DFE grad 
 
-### 2.20 mueller_muller_step
+### 2.20 soft_ddlms_grad
+This function is based on the following article:
+
+     A soft decision-directed LMS algorithm for blind equalization" (1993). DOI: 10.1109/26.216497
+
+     Soft Decision Directed Least Mean Square gradient calculator.
+    
+     Function computes thee soft-decision directed LMS function and gradients. This function assumes that
+     all levels are transmitted in equi-probable probabilities and that the received signal should be a
+     gaussian mixture with equal standard deviation of sigma.
+
+Assuming the FFE-DFE model:
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?\tilde{x}_n=\sum_i&amp;space;b_i\cdot&amp;space;y_{n-i}-\sum_{j&gt;0}a_j\hat{x}_{n-j}"/>
+
+Assuming the gaussian mixture model, we get that the PDF of the slicer input is given by:
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?f_{\tilde{x}}(\tilde{x})=\frac{p}{\sqrt{2\pi\sigma^2}}\sum_je^{-\frac{(\tilde{x}-\mu_j)^2}{2\sigma^2}}">
+
+Where:
+* p      - the probability of getting a single level, p_j = p \forall j
+* \sigma - the standard deviation of each level, assuming equal std for all levels
+* \mu_j  - the expectation of the j-th level, i.e. the constellation points
+
+Soft DDLMS tries to minimize the following function through gradient descent:
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?\mathbb{L}(\tilde{x})=-\log(f_{\tilde{x}}(\tilde{x}))">
+
+And the derivative w.r.t. the slicer input is given by:
+
+<img alt="equation" src="https://latex.codecogs.com/svg.image?\frac{\partial&space;MSE[n]}{\partial\tilde{x}_n}=\frac{1}{f_{\tilde{x}_n}(\tilde{x}_n)}\sum_j\frac{\tilde{x}_n-\mu_j}{\sigma^2}\cdot&space;e^{-\frac{(\tilde{x}_n-\mu_j)^2}{2\sigma^2}}=e_n">
+
+Function is inputted with:
+* input_vec - Numpy array of inputs to the FFE-DFE used to compute the MSE and tap gradients
+* output_vec - Numpy array of outputs of the FFE-DFE (Slicer inputs), used to compute the loss and tap gradients
+* levels - Constellation levels, should be a numpy array of floats
+* sigma - standatd deviation of each gaussians composing the gaussian mixture
+* ffe_tap_idx - numpy array containing the indices of the FFE taps for which we want to compute the gradient
+* dfe_tap_idx - numpy array containing the indices of the DFE taps for which we want to compute the gradient
+* reference_vec - used for DFE gradient computations.
+  * If None, assuming that there are no slicer errors and performing slicing to recover the reference data
+  * If not None, should have the same length as "input_vec" and correspond to the reference level for each input
+
+Function returns:
+1. If ffe_tap_idx and dfe_tap_idx are empty, only the MSE
+2. If ffe_tap_idx is empty and dfe_tap_idx is not empty, returns the MSE and DFE grad
+3. If ffe_tap_idx is not empty and dfe_tap_idx is empty, returns the MSE and FFE grad
+4. If neither are empty, returns the MSE, FFE grad and DFE grad 
+
+### 2.21 mueller_muller_step
 Function computes the estimation of the first precursor and the first postcursor and compares the amplitudes of the both. The goal of the mm CDR is to choose the phase which makes the precursor and postcursor equal in amplitude.
 
 Function is inputted with:
